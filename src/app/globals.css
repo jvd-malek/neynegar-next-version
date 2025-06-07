@@ -1,0 +1,112 @@
+@import "tailwindcss";
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.radios {
+  border-radius: 68% 32% 83% 17% / 51% 30% 70% 49% ;
+}
+
+.text-shadow{
+  text-shadow: 0px 1px 1px rgb(0 0 0 / 0.2);
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.shadow-cs {
+  box-shadow: 0 3px 26px rgba(0, 0, 0, 0.2);
+}
+
+.shadow-css {
+  box-shadow: 0 3px 26px rgba(0, 0, 0, 0.4);
+}
+
+.bg-glass {
+  @apply bg-white/20 backdrop-blur-xs shadow-[0_4px_10px_0_rgba(31,38,135,0.25)] border border-slate-100/20
+}
+
+.bg-dark-glass {
+  @apply bg-black/25 backdrop-blur-xs shadow-[0_4px_10px_0_rgba(31,38,135,0.37)] border border-slate-100/20
+}
+
+.bg-dark-glass-nonshadow {
+  @apply bg-black/25 backdrop-blur-xs border border-slate-100/20
+}
+
+.bg-glassh {
+   @apply bg-white/50 backdrop-blur-xs shadow-[0_4px_10px_0_rgba(31,38,135,0.37)] border border-slate-100/20
+}
+
+.bg-dark-glassh {
+  @apply bg-black/40 backdrop-blur-xs shadow-[0_4px_10px_0_rgba(31,38,135,0.37)] border border-slate-100/20
+}
+
+.bg-vije {
+  @apply md:bg-[url('../../public/Img/vije2.webp')] bg-[url('../../public/Img/vije4.webp')] bg-cover
+}
+
+@layer base {
+
+  @font-face {
+    font-family: 'Baloo';
+    src: url('../../public/Font/BalooBhaijaan2-Regular.woff2') format('woff2'),
+        url('../../public/Font/BalooBhaijaan2-Regular.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+  font-family: 'Soofee';
+  src: url('../../public/Font/sofi.woff2') format('woff2'),
+      url('../../public/Font/sofi.woff') format('woff');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* Hide scrollbar for the entire site */
+  ::-webkit-scrollbar {
+    width: 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  /* Show scrollbar only for specific sections */
+  .scrollable-section::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollable-section::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+
+  .scrollable-section::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+  }
+
+  .scrollable-section::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+}
+
+.bg-fix-for-html2canvas {
+  background: #fff !important;
+}
