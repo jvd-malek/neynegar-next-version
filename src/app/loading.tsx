@@ -3,7 +3,7 @@ import Logo from '../../public/Img/Logo-removebg.webp'
 
 function loading() {
     return (
-        <div className="container mx-auto h-[30vh] mt-32 flex justify-center items-center">
+        <div className="container relative mx-auto h-[70vh] mt-32 flex flex-col justify-between items-center">
             <Image
                 src={Logo}
                 className="w-60"
@@ -12,6 +12,7 @@ function loading() {
                 width={240}
                 height={240}
             />
+            <div className="loader text-black/75 absolute -bottom-0 left-1/2 -translate-x-1/2 z-10"></div>
         </div>
     );
 }

@@ -104,7 +104,7 @@ export default function BoxHeader({
     const updateSearchParams = (params: Record<string, string>) => {
         if (catTitle == "جستجو") {
             router.push(`/category/search/${params.search}`)
-        }else{
+        } else {
             const newParams = new URLSearchParams(searchParams.toString());
             Object.entries(params).forEach(([key, value]) => {
                 newParams.set(key, value);
@@ -298,15 +298,15 @@ export default function BoxHeader({
                     </div>
 
                     {/* جستجو */}
-                    <div className="flex justify-center items-center gap-2 bg-black text-white transition-all rounded-lg shadow-md h-fit w-fit">
+                    {/* <div className="flex justify-center items-center gap-2 bg-black text-white transition-all rounded-lg shadow-md h-fit w-fit">
                         <div className="">
                             <input
                                 type="text"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 onKeyUp={(e) => e.code == "ENTER" && updateSearchParams({ search })}
-                                className="py-1 px-4 outline-none rounded-full transition-all placeholder:text-slate-100 bg-black sm:w-full"
-                                placeholder={catTitle != "جستجو" ? `جستجو در ${title.includes("|") ? title.split(" | ")[1] : title.includes(":") ? title.split(": ")[1] : title}` : "جستجو"}
+                                className="py-1 px-4 outline-none rounded-full transition-all placeholder:text-slate-100 bg-black sm:w-full line-clamp-1"
+                                placeholder={`جستجو در ${title}`}
                                 aria-label="جستجو"
                             />
                         </div>
@@ -317,7 +317,7 @@ export default function BoxHeader({
                                 <SearchRoundedIcon />
                             </div>
                         </IconButton>
-                    </div>
+                    </div> */}
                 </form>
             )}
         </div>

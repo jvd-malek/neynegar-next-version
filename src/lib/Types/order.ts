@@ -9,13 +9,22 @@ export type orderType = {
     status: string,
     products: {
         count: number,
-        price: Number,
-        discount: Number,
+        price: number,
+        discount: number,
         productId: productSingleType
     }[],
     submition: string,
     totalPrice: number,
+    totalWeight: number,
+    shippingCost: number,
     discount: number,
     paymentId: string,
     postVerify?: string
+}
+
+export type paginatedOrdersType = {
+    orders: orderType[],
+    totalPages: number,
+    currentPage: number,
+    total: number
 }

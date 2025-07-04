@@ -109,7 +109,7 @@ function Receipt({ activeLink, products, data }: {
                                 {products.map((p: any) => (
                                     <tr key={p._id}>
                                         <td className="text-right text-gray-700">{`${p.productId.title} (${p.count.toLocaleString('fa-IR')} عدد)`}</td>
-                                        <td className="text-left text-gray-700">{p.price ? p.price.toLocaleString('fa-IR') : p.productId.price[p.productId.price.length - 1].price.toLocaleString('fa-IR')}
+                                        <td className="text-left text-gray-700">{p.price ? p.price.toLocaleString('fa-IR') : p.productId.price.toLocaleString('fa-IR')}
                                             <span className=" text-xs font-mono"> تومان</span>
                                         </td>
                                     </tr>

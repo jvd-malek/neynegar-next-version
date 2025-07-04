@@ -5,6 +5,7 @@ export interface ValidationRule {
     min?: number;
     max?: number;
     pattern?: RegExp;
+    patternMessage?: string;
     message?: string;
 }
 

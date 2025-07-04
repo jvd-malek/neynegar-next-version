@@ -54,9 +54,9 @@ export default function RootLayout({
 }>) {
   
   return (
-    <html lang="fa-IR" dir="rtl" suppressHydrationWarning>
+    <html lang="fa-IR" dir="rtl" suppressHydrationWarning className="scroll-smooth">
       <body
-        className="font-[Baloo] bg-slate-50 scroll-smooth min-h-screen flex flex-col"
+        className="font-[Baloo] bg-slate-50 min-h-screen flex flex-col"
       >
         <Header />
         <main className="flex-1">

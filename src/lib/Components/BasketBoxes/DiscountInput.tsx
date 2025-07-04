@@ -18,13 +18,14 @@ function DiscountInput({ DiscountCode, setDiscountCode, user }: { DiscountCode: 
     const discountHandler = () => {
         if (jwt) {
             if (Discount && !DiscountCode) {
-                let isValid = user?.discount.filter((d:any) => (
+                let isValid = user?.discount.find((d:any) => (
                     d.code == Discount
                 ))
-                if (isValid && isValid.length > 0 && isValid[0].date > Date.now()) {
-                    setDiscountCode(isValid[0].discount)
+                
+                if (isValid && isValid.date > Date.now()) {
+                    setDiscountCode(isValid.discount)
                     setIsValidDiscount({ state: true, msg: "تخفیف اعمال شد." })
-                } else if (isValid && isValid.length < 0 && isValid[0].date > Date.now()) {
+                } else if (isValid && isValid.date < Date.now()) {
                     setIsValidDiscount({ state: false, msg: "تخفیف منقضی شده است." })
                 } else {
                     setIsValidDiscount({ state: false, msg: "تخفیفی با این کد برای شما فعال نیست." })

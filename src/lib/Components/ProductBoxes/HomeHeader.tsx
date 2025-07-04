@@ -4,18 +4,20 @@ import { ReactNode } from 'react';
 
 interface BoxHeaderProps {
   title: string;
-  link: string;
+  link?: string;
   icon?: ReactNode;
   ariaLabel?: string;
   className?: string;
+  all?: boolean;
 }
 
-export default function BoxHeader({ 
-  title, 
-  link, 
+export default function BoxHeader({
+  title,
+  link = "",
   icon = <div className="w-6 h-6 rounded-md bg-black" />,
   ariaLabel = `مشاهده همه ${title}`,
-  className = ''
+  className = '',
+  all = true
 }: BoxHeaderProps) {
   return (
     <header className={`flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 lg:mb-6 sm:mb-2 ${className}`}>
@@ -25,10 +27,11 @@ export default function BoxHeader({
           {title}
         </h2>
       </div>
-      
-      <Link
-        href={link}
-        className="
+
+      {all &&
+        <Link
+          href={link}
+          className="
           flex items-center gap-1
           px-3 py-2
           text-gray-600 hover:text-gray-900
@@ -37,19 +40,20 @@ export default function BoxHeader({
           transition-colors duration-200
           group
         "
-        aria-label={ariaLabel}
-      >
-        <span className="text-sm font-medium">مشاهده همه</span>
-        <KeyboardBackspaceRounded 
-          className="
+          aria-label={ariaLabel}
+        >
+          <span className="text-sm font-medium">مشاهده همه</span>
+          <KeyboardBackspaceRounded
+            className="
             text-lg
             transform group-hover:-translate-x-1
             transition-transform duration-700
             animate-pulse
           "
-          aria-hidden="true"
-        />
-      </Link>
+            aria-hidden="true"
+          />
+        </Link>
+      }
     </header>
   );
 }

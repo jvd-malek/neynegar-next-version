@@ -55,7 +55,7 @@ export default function Page404() {
           </h1>
           
           {/* تصویر انیمیشن */}
-          <div className="relative w-full max-w-lg mx-auto h-64 mt-48 bg-white rounded-2xl">
+          <div className="relative w-full max-w-lg mx-auto h-64 mt-48 bg-slate-50 rounded-2xl">
             <Image 
               src={dribbble} 
               alt="انیمیشن صفحه یافت نشد" 

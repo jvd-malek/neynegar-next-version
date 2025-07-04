@@ -1,13 +1,18 @@
-import CMSForm from '@/lib/Components/CMS/CMSForm';
-import CMSBox from '@/lib/Components/CMS/CMSBox';
+import { linksType } from '@/lib/Types/links';
 import CMSProductBox from '@/lib/Components/CMS/CMSProductBox';
 import CMSAddProduct from '@/lib/Components/CMS/CMSAddProduct';
-import { linksType } from '@/lib/Types/links';
+import CMSAddAuthor from '@/lib/Components/CMS/CMSAddAuthor';
+import CMSUserBox from '@/lib/Components/CMS/CMSUserBox';
+import CMSOrderBox from '@/lib/Components/CMS/CMSOrderBox';
+import CMSTicketBox from '@/lib/Components/CMS/CMSTicketBox';
+import CMSArticleBox from '@/lib/Components/CMS/CMSArticleBox';
+import CMSAddArticle from '@/lib/Components/CMS/CMSAddArticle';
 
-async function CMS({ activeLink, ticketState, ordersState, searchParams }: any) {
+async function CMS({ activeLink, searchParams }: any) {
     const search = await searchParams;
     let links: linksType[] = [];
-    
+    let authors = [];
+
     try {
         const linkData = await fetch(`${process.env.NEXT_BACKEND_GRAPHQL_URL}`, {
             method: 'POST',
@@ -38,7 +43,7 @@ async function CMS({ activeLink, ticketState, ordersState, searchParams }: any) 
         }
 
         const response = await linkData.json();
-        
+
         if (response.errors) {
             throw new Error(response.errors[0].message);
         }
@@ -49,77 +54,88 @@ async function CMS({ activeLink, ticketState, ordersState, searchParams }: any) 
         console.error('Error fetching links:', error);
     }
 
+    try {
+        const authorData = await fetch(`${process.env.NEXT_BACKEND_GRAPHQL_URL}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                query: `
+                    query {
+                        authors {
+                            _id
+                            firstname
+                            lastname
+                            fullName
+                        }
+                    }
+                `
+            })
+        });
+
+        if (!authorData.ok) {
+            throw new Error(`HTTP error! status: ${authorData.status}`);
+        }
+
+        const response = await authorData.json();
+
+        if (response.errors) {
+            throw new Error(response.errors[0].message);
+        }
+
+        authors = response.data.authors;
+
+    } catch (error) {
+        console.error('Error fetching links:', error);
+    }
+
     const page = {
         page: parseInt(search.page || '1'),
         count: parseInt(search.count || '24'),
         search: search.search || '',
     };
-    
+
     return (
         <>
             {activeLink === 'محصولات' &&
-                <>
-                    {/* product section start */}
-                    {/* <CMSBox type={activeLink} /> */}
-                    <CMSProductBox type={activeLink} page={page} links={links} />
-                    {/* product section end */}
-                </>
+                <CMSProductBox type={activeLink} page={page} links={links} authors={authors} />
             }
 
             {activeLink === 'ثبت محصول' &&
-                <>
-                    {/* add product section start */}
-                    {/* <h3 className="absolute top-4 -right-2 text-lg rounded-r-lg rounded-l-xl pr-6 pl-4 py-2 bg-black text-white">
-                        ثبت محصول
-                    </h3>
-                    <CMSForm /> */}
-                    <CMSAddProduct links={links} />
-                    {/* add product section end */}
-                </>
+                <CMSAddProduct links={links} authors={authors} />
             }
 
             {activeLink === 'مقالات' &&
-                <>
-                    {/* add product section start */}
-                    <h3 className="absolute top-4 -right-2 text-lg rounded-r-lg rounded-l-xl pr-6 pl-4 py-2 bg-black text-white">
-                        ثبت مقاله
-                    </h3>
-                    <CMSForm article={true} />
-                    {/* add product section end */}
-
-                    {/* product section start */}
-                    <CMSBox type={activeLink} />
-                    {/* product section end */}
-
-                </>
+                <CMSArticleBox type={activeLink} page={page} links={links} authors={authors} />
             }
+            {activeLink === 'ثبت مقاله' &&
+                <CMSAddArticle links={links} authors={authors} />
+            }
+
             {activeLink === 'تیکت‌ها' &&
-                <>
-                    {/* product section start */}
-                    <CMSBox type={activeLink} row={2} ticketState={ticketState} />
-                    {/* product section end */}
-
-                </>
+                <CMSTicketBox type={activeLink} page={page} />
             }
-            {activeLink === 'سفارشات' &&
-                <>
-                    {/* product section start */}
-                    <CMSBox type={activeLink} row={2} ordersState={ordersState} />
-                    {/* product section end */}
 
-                </>
+            {activeLink === 'سفارشات' &&
+                <CMSOrderBox type={activeLink} page={page} />
             }
 
             {activeLink === 'کاربران' &&
-                <>
-                    {/* user section start */}
-                    <CMSBox type={activeLink} row={2} />
-                    {/* user section end */}
+                <CMSUserBox type={activeLink} page={page} />
+            }
 
+            {activeLink === 'ثبت نویسنده' &&
+                <>
+                    {/* برای افزودن نویسنده جدید */}
+                    <CMSAddAuthor type="add" />
+
+                    {/* برای ویرایش نویسندگان */}
+                    <CMSAddAuthor type="edit" />
                 </>
             }
 
-            {activeLink === 'تخفیف‌ها' && 'discounts'}
+            {/* {activeLink === 'تخفیف‌ها' && 'discounts'} */}
         </>
     );
 }

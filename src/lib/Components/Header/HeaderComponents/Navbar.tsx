@@ -36,7 +36,7 @@ const Navbar = ({ isOpen, setOpen, links, user }: NavbarProps) => {
                             </div>
                         </IconButton>
                     </div>
-                    <div className="flex items-center gap-20">
+                    <div className="flex items-center gap-10">
                         <div className=" text-4xl font-[Soofee] ml-10 relative">
                             <Link href={'/'}>
                                 <span className="">نی‌</span>

@@ -1,7 +1,4 @@
 import Image from "next/image";
-import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import IconButton from '@mui/material/IconButton';
-import { redirect } from 'next/navigation';
 import { Typewriter } from 'nextjs-simple-typewriter'
 import { Bounce, ToastContainer } from "react-toastify";
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
@@ -20,11 +17,11 @@ import LogoReverse from '@/../public/Img/LogoReverse.webp'
 import HomeImg from '@/../public/Img/Home.webp'
 import poem1 from '@/../public/Img/poem1.webp'
 import poem2 from '@/../public/Img/poem2.webp'
-import poem3 from '@/../public/Img/poem3.webp'
 import poem4 from '@/../public/Img/poem4.webp'
 import poem5 from '@/../public/Img/poem5.webp'
-import poem6 from '@/../public/Img/poem6.webp'
 import poem7 from '@/../public/Img/poem7.webp'
+import dribbble from "@/../../public/Img/dribbble_1.gif";
+import Tutorials from "@/lib/Components/Tutorials/Tutorials";
 
 const HOME_PAGE_QUERY = `
   query {
@@ -45,17 +42,11 @@ const HOME_PAGE_QUERY = `
       paintBooks {_id title desc price{price} discount { discount date } popularity cover brand showCount majorCat minorCat}
       gallery {_id title desc price{price} discount { discount date } popularity cover brand showCount majorCat minorCat}
       traditionalBooks {_id title desc price{price} discount { discount date } popularity cover brand showCount majorCat minorCat}
-      articles {_id title desc cover popularity}
+      articles {_id title desc cover popularity majorCat minorCat authorId{_id fullName firstname lastname}}
       discountProducts {_id title desc price{price} discount { discount date } popularity cover brand showCount majorCat minorCat }
     }
   }
 `;
-
-async function handleSearch(formData: FormData) {
-  "use server"
-  const query = formData.get('search')?.toString().trim();
-  if (query) redirect(`/category/search/${encodeURIComponent(query)}`);
-}
 
 const GlassBox = ({ name, full = false }: { name: string, full?: boolean }) => (
   <div
@@ -67,7 +58,7 @@ const GlassBox = ({ name, full = false }: { name: string, full?: boolean }) => (
   </div>
 );
 
-const SearchSection = () => (
+const HeaderSection = () => (
   <section
     className="relative bg-[url(../../public/Img/blue-low.webp)] bg-repeat bg-contain pt-10 lg:h-[80vh] sm:h-[100vh] w-full h-[80vh] text-white flex justify-center items-center"
     aria-label="بخش جستجوی محصولات خوشنویسی"
@@ -106,29 +97,7 @@ const SearchSection = () => (
         />
       </h1>
 
-      <form
-        action={handleSearch}
-        className="flex gap-4 w-full bg-black rounded-lg"
-        role="search"
-      >
-        <IconButton
-          sx={{ color: 'white' }}
-          type="submit"
-          aria-label="جستجو"
-        >
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-black opacity-75"></span>
-          <SearchRoundedIcon />
-        </IconButton>
-        <input
-          type="text"
-          name="search"
-          className="bg-black rounded-lg outline-none px-4 py-[0.55rem] placeholder:text-slate-300 text-white w-full"
-          placeholder="جستجو محصولات"
-          aria-label="عبارت جستجو"
-        />
-      </form>
-
-      <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-black border-black/30 mt-8">
+      <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-black border-black/30 mt-2">
         <GlassBox name="تخصص در خوشنویسی ✍️" />
         <GlassBox name="تخفیف‌های ویژه 💸" />
         <GlassBox name="آموزش تخصصی خوشنویسی 🎓" />
@@ -180,7 +149,7 @@ const IntroductionSection = () => (
             مشاهده محصولات
           </Link>
           <Link
-            href="/tutorials"
+            href="#section-courses"
             className="transition-all text-center cursor-pointer duration-75 active:bg-black hover:bg-black py-2.5 w-full rounded-lg hover:text-white active:text-white border-2 border-solid active:border-2"
             aria-label="آموزش‌های خوشنویسی"
           >
@@ -216,7 +185,7 @@ const IntroductionSection = () => (
             آموزش‌های گام‌به‌گام از مبتدی
           </p>
           <Link
-            href="/tutorials"
+            href="#section-courses"
             className="bg-white text-[#2c1e08] px-2 flex justify-center items-center py-1.5 rounded-lg text-xs font-medium hover:bg-white/80 transition cursor-pointer"
             aria-label="شروع یادگیری خوشنویسی"
           >
@@ -268,34 +237,53 @@ const IntroductionSection = () => (
 async function Home() {
 
   const res = await fetch(`${process.env.NEXT_BACKEND_GRAPHQL_URL}`, {
-    next: { revalidate: 3600 },
+    next: { revalidate: 1 },
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query: HOME_PAGE_QUERY }),
   });
-
-  if (!res.ok) {
-    throw new Error(`HTTP error! status: ${res.status}`);
-  }
 
   const dataJson = await res.json();
 
   // بررسی خطاهای GraphQL
   if (dataJson.errors) {
     console.error('GraphQL Errors:', dataJson.errors);
-    throw new Error('GraphQL query failed');
+    // throw new Error('GraphQL query failed');
   }
 
   // بررسی وجود داده
   if (!dataJson.data?.homePageData) {
-    throw new Error('No data received from GraphQL');
+    // throw new Error('No data received from GraphQL');
+    return (
+      <div className="container mx-auto h-[50vh] lg:mt-32 sm:mt-26 mt-20 flex justify-center items-center flex-col">
+        <div className="relative z-10 text-center px-4 w-full max-w-4xl">
+
+          <h1
+            className="text-2xl font-bold absolute top-50 left-1/2 -translate-x-1/2 z-10 text-neutral-900/75 animate-pulse"
+            role="status"
+          >
+            اینترنت خود را بررسی کنید
+          </h1>
+
+          {/* تصویر انیمیشن */}
+          <div className="relative w-full max-w-lg mx-auto h-64 bg-slate-50 rounded-2xl">
+            <Image
+              src={dribbble}
+              alt="انیمیشن صفحه یافت نشد"
+              fill
+              className="object-contain rounded-2xl"
+              priority
+            />
+          </div>
+        </div>
+      </div>)
   }
 
   const data = dataJson.data.homePageData;
 
   return (
     <>
-      <SearchSection />
+      <HeaderSection />
 
       <div className="container mx-auto px-8 mt-32">
         <HomeHeader
@@ -306,7 +294,7 @@ async function Home() {
 
         <Box books={data?.discountProducts} discount />
 
-        <div className="my-16 flex justify-center items-center mx-auto w-40">
+        <div className="my-8 flex justify-center items-center mx-auto w-40">
           <Image
             src={poem7}
             alt="تصویر شعر خوشنویسی"
@@ -319,16 +307,75 @@ async function Home() {
 
       <IntroductionSection />
 
-      <div className="mt-16 flex justify-center items-center mx-auto w-40">
-        <Image
-          src={poem2}
-          alt="تصویر شعر خوشنویسی"
-          width={200}
-          height={200}
-          loading="lazy"
-        />
-      </div>
+      <div className="container mx-auto px-8" id="section-courses">
 
+        <div className="my-8 flex justify-center items-center mx-auto w-40">
+          <Image
+            src={poem2}
+            alt="تصویر شعر خوشنویسی"
+            width={200}
+            height={200}
+            loading="lazy"
+          />
+        </div>
+
+        <HomeHeader
+          title="خط نستعلیق"
+          ariaLabel="خط نستعلیق"
+          all={false}
+        />
+
+        <Tutorials
+          title="نستعلیق"
+          articleDesc='  خوشنویسی نستعلیق، که به عنوان یکی از زیباترین و پیچیده‌ترین خطوط فارسی شناخته می‌شود، در قرن 15 میلادی به اوج خود رسید و توسط استادان بزرگی مانند "میرعماد" و "ابوالحسن صدیقی" به کمال رسید.'
+          articleLink="تست"
+          courseDesc='  خوشنویسی نستعلیق، که به عنوان یکی از زیباترین و پیچیده‌ترین خطوط فارسی شناخته می‌شود، در قرن 15 میلادی به اوج خود رسید و توسط استادان بزرگی مانند "میرعماد" و "ابوالحسن صدیقی" به کمال رسید.'
+          courseLink="تست"
+          productsLink="تست"
+        />
+
+        <HomeHeader
+          title="خط شکسته نستعلیق"
+          ariaLabel="خط شکسته نستعلیق"
+          all={false}
+        />
+
+        <Tutorials
+          title="شکسته نستعلیق"
+          articleDesc='  خوشنویسی نستعلیق، که به عنوان یکی از زیباترین و پیچیده‌ترین خطوط فارسی شناخته می‌شود، در قرن 15 میلادی به اوج خود رسید و توسط استادان بزرگی مانند "میرعماد" و "ابوالحسن صدیقی" به کمال رسید.'
+          articleLink="تست"
+          courseDesc='  خوشنویسی نستعلیق، که به عنوان یکی از زیباترین و پیچیده‌ترین خطوط فارسی شناخته می‌شود، در قرن 15 میلادی به اوج خود رسید و توسط استادان بزرگی مانند "میرعماد" و "ابوالحسن صدیقی" به کمال رسید.'
+          courseLink="تست"
+          productsLink="تست"
+        />
+
+        <HomeHeader
+          title="خط کتابت"
+          ariaLabel="خط کتابت"
+          all={false}
+        />
+
+        <Tutorials
+          title="کتابت"
+          articleDesc='  خوشنویسی نستعلیق، که به عنوان یکی از زیباترین و پیچیده‌ترین خطوط فارسی شناخته می‌شود، در قرن 15 میلادی به اوج خود رسید و توسط استادان بزرگی مانند "میرعماد" و "ابوالحسن صدیقی" به کمال رسید.'
+          articleLink="تست"
+          courseDesc='  خوشنویسی نستعلیق، که به عنوان یکی از زیباترین و پیچیده‌ترین خطوط فارسی شناخته می‌شود، در قرن 15 میلادی به اوج خود رسید و توسط استادان بزرگی مانند "میرعماد" و "ابوالحسن صدیقی" به کمال رسید.'
+          courseLink="تست"
+          productsLink="تست"
+          products={data?.caliBooks}
+        />
+
+        <div className="mt-8 flex justify-center items-center mx-auto w-40">
+          <Image
+            src={poem4}
+            alt="تصویر شعر خوشنویسی"
+            width={160}
+            height={160}
+            loading="lazy"
+          />
+        </div>
+
+      </div>
 
       {/* بخش محصولات و مقالات */}
       <section className="container mx-auto px-8 mt-12">
@@ -367,7 +414,7 @@ async function Home() {
         />
         <Box books={data?.traditionalBooks} />
 
-        <div className="my-16 flex justify-center items-center mx-auto w-40">
+        <div className="my-8 flex justify-center items-center mx-auto w-40">
           <Image
             src={poem5}
             alt="تصویر شعر خوشنویسی"

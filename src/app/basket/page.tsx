@@ -140,7 +140,6 @@ async function Basket({ searchParams }: any) {
                             _id
                             status
                             name
-                            email
                             phone
                             address
                             postCode
@@ -164,25 +163,31 @@ async function Basket({ searchParams }: any) {
                             updatedAt
                             }
                             basket {
-                            count
-                            productId {
-                                _id
-                                title
-                                desc
-                                price
-                                discount
-                                weight
-                                cover
-                                brand
-                                status
-                                majorCat
-                                minorCat
-                            }
-                            currentPrice
-                            currentDiscount
-                            itemTotal
-                            itemDiscount
-                            itemWeight
+                                count
+                                productId {
+                                    _id
+                                    title
+                                    desc
+                                    price
+                                    discount
+                                    weight
+                                    cover
+                                    brand
+                                    status
+                                    majorCat
+                                    minorCat
+                                    discountRaw {
+                                        code
+                                        date
+                                        discount
+                                    }
+                                    showCount
+                                }
+                                currentPrice
+                                currentDiscount
+                                itemTotal
+                                itemDiscount
+                                itemWeight
                             }
                             subtotal
                             totalDiscount
@@ -201,7 +206,7 @@ async function Basket({ searchParams }: any) {
         .catch(error => {
             console.error("Error fetching user data:", error);
         }) : undefined
-
+        
     const LocalBasket = localBasket.length > 0 ? await fetch(`${process.env.NEXT_PUBLIC_BASE_URL!}/api/products/localBasket`,
         {
             cache: "no-store",

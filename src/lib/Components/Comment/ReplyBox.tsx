@@ -33,7 +33,7 @@ function ReplyBox({ txt, userId, createdAt }: repliesType) {
                         {userId.name} <span className="font-bold">| {status}</span>
                     </p>
                     <p className="text-sm text-slate-500">
-                        {new Date(createdAt).toLocaleString('fa-IR')}
+                        {new Date(Number(createdAt)).toLocaleString('fa-IR')}
                     </p>
                 </div>
             </div>

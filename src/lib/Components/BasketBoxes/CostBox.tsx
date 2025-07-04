@@ -157,9 +157,9 @@ function CostBox({ data, page }: CostBoxProps) {
                     <h2>
                         <strong>{
                             data?.totalDiscount ?
-                        (data?.totalDiscount + DiscountCode).toLocaleString('fa-IR'):
-                        0
-                        .toLocaleString('fa-IR')} </strong><span className='text-sm'>تومان</span>
+                                (data?.totalDiscount + DiscountCode).toLocaleString('fa-IR') :
+                                0
+                                    .toLocaleString('fa-IR')} </strong><span className='text-sm'>تومان</span>
                     </h2>
                 </div>
                 <div className="flex justify-around w-full items-center gap-6 font-bold text-slate-800">
@@ -167,9 +167,9 @@ function CostBox({ data, page }: CostBoxProps) {
                     <h2>
                         <strong>{
                             data?.grandTotal ?
-                        ((shipment == "post" ? data?.grandTotal : data?.total) - DiscountCode).toLocaleString('fa-IR'):
-                        0
-                        .toLocaleString('fa-IR')} </strong><span className='text-sm'>تومان</span>
+                                ((shipment == "post" ? data?.grandTotal - (data?.grandTotal * (100 - DiscountCode) / 100) : data?.total - (data?.total * (100 - DiscountCode) / 100))).toLocaleString('fa-IR') :
+                                0
+                                    .toLocaleString('fa-IR')} </strong><span className='text-sm'>تومان</span>
                     </h2>
                 </div>
 

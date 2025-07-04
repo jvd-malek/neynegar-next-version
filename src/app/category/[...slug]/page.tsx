@@ -1,7 +1,7 @@
 import BoxHeader from "@/lib/Components/ProductBoxes/BoxHeader";
 import ProductBox from "@/lib/Components/ProductBoxes/ProductBox";
 import { productCoverType } from "@/lib/Types/product";
-import { articleCoverType } from "@/lib/Types/article";
+import { articleAuthorCoverType } from "@/lib/Types/article";
 import Image from "next/image";
 import poem1 from "@/../../public/Img/poem1.webp";
 import DescProductBoxes from "@/lib/Components/ProductBoxes/DescProductBoxes";
@@ -103,7 +103,7 @@ const Category = async ({ params, searchParams }: any) => {
             />
 
             {/* Hero Section */}
-            <section aria-labelledby="category-heading" className="relative bg-[url(../../public/Img/blue-low.webp)] bg-repeat-x bg-contain w-full pt-10 lg:h-[75vh] sm:h-[100vh] h-[70vh] text-white flex justify-center items-center">
+            <section aria-labelledby="category-heading" className="relative bg-[url(../../public/Img/blue-low.webp)] bg-repeat bg-contain w-full pt-10 lg:h-[75vh] sm:h-[100vh] h-[70vh] text-white flex justify-center items-center">
                 <div className="w-40 absolute -bottom-1/7 left-1/2 -translate-x-1/2 z-10">
                     <Image
                         src={poem1}
@@ -340,7 +340,7 @@ function filterAndSortProducts(products: productCoverType, page: any, loc: strin
         });
 }
 
-function filterAndSortArticles(articles: articleCoverType, page: any, loc: string[]) {
+function filterAndSortArticles(articles: articleAuthorCoverType, page: any, loc: string[]) {
     return [...articles]
         .filter(a => {
             if (page.cat === 'همه') return true;

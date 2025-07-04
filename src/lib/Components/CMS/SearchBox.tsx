@@ -5,12 +5,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
 interface SearchBoxProps {
-    search: string;
+    search?: string;
 }
 
 export default function SearchBox({ search }: SearchBoxProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
+
     const [searchValue, setSearchValue] = useState(search || "");
 
     const searchHandler = (value: string) => {
@@ -18,6 +19,7 @@ export default function SearchBox({ search }: SearchBoxProps) {
         params.set("search", value);
         params.set("page", "1"); // Reset to first page on new search
         router.push(`?${params.toString()}`);
+        setSearchValue("")
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -27,12 +29,12 @@ export default function SearchBox({ search }: SearchBoxProps) {
     };
 
     return (
-        <div className="flex justify-center absolute top-4 left-3 items-center gap-2 pl-2 text-white bg-black w-fit rounded-lg shadow-md">
-            <div className="text-slate-700">
-                <input 
+        <>
+            <div className="text-white w-full">
+                <input
                     type="text"
-                    className="py-2 px-4 outline-none rounded-full bg-black placeholder:text-slate-200 md:w-full w-36"
-                    placeholder="جستجو محصولات"
+                    className="py-1.5 outline-none px-1 bg-black placeholder:text-slate-200 w-full"
+                    placeholder="جستجو"
                     value={searchValue}
                     onChange={e => setSearchValue(e.target.value)}
                     onKeyDown={handleKeyDown}
@@ -40,12 +42,12 @@ export default function SearchBox({ search }: SearchBoxProps) {
                 />
             </div>
 
-            <button 
-                className="flex justify-center items-center hover:text-gray-300 transition-colors" 
+            <button
+                className="flex justify-center items-center hover:text-gray-300 transition-colors"
                 onClick={() => searchHandler(searchValue)}
             >
                 <SearchRoundedIcon />
             </button>
-        </div>
+        </>
     );
 } 

@@ -16,3 +16,10 @@ export type commentType = {
     response?:string
     status?:string
 }
+
+export type paginatedCommentsType = {
+    comments: commentType[],
+    totalPages: number,
+    currentPage: number,
+    total: number
+}

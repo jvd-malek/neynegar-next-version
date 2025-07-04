@@ -1,15 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import ProductInput from './ProductInput';
+import ProductInput, { DiscountInput } from './ProductInput';
+import SearchableAuthorSelect from './SearchableAuthorSelect';
 import { ProductInput as ProductInputType } from '@/types/product';
 import { validateField } from '@/lib/validation/productValidation';
 import { getCookie } from 'cookies-next';
 import { linksType } from '@/lib/Types/links';
 
 const ADD_PRODUCT = `
-    mutation AddProduct($input: ProductInput!) {
-        addProduct(input: $input) {
+    mutation CreateProduct ($input: ProductInput!) {
+        createProduct (input: $input) {
             _id
             title
             desc
@@ -20,7 +21,6 @@ const ADD_PRODUCT = `
             cost {
                 cost
                 date
-                count
             }
             count
             discount {
@@ -37,7 +37,6 @@ const ADD_PRODUCT = `
             publishDate
             brand
             status
-            state
             size
             weight
             majorCat
@@ -48,17 +47,19 @@ const ADD_PRODUCT = `
     }
 `;
 
-function CMSAddProduct({ links = [] }: { links: linksType[] }) {
+
+function CMSAddProduct({ links = [], authors = [] }: { links: linksType[], authors: any }) {
     const [formData, setFormData] = useState<Record<string, any>>({
         title: '',
         desc: '',
         price: '',
         cost: '',
-        costCount: 1,
-        count: 0,
-        discount: 0,
-        showCount: 0,
-        popularity: 0,
+        costCount: "",
+        count: "",
+        discount: "",
+        discountDuration: "30",
+        showCount: "",
+        popularity: 5,
         authorId: '',
         publisher: '',
         publishDate: '',
@@ -73,8 +74,11 @@ function CMSAddProduct({ links = [] }: { links: linksType[] }) {
         images: []
     });
 
+    const [imageFiles, setImageFiles] = useState<File[]>([]);
+    const [previewUrls, setPreviewUrls] = useState<string[]>([]);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSaving, setIsSaving] = useState(false);
+    const [showErrorBox, setShowErrorBox] = useState(false);
 
     const handleFieldChange = (field: string, value: any) => {
         const error = validateField(field, value);
@@ -101,6 +105,7 @@ function CMSAddProduct({ links = [] }: { links: linksType[] }) {
         const newErrors: Record<string, string> = {};
         let isValid = true;
 
+        // Validate all form fields
         Object.keys(formData).forEach(field => {
             const value = formData[field];
             const error = validateField(field, value);
@@ -110,25 +115,97 @@ function CMSAddProduct({ links = [] }: { links: linksType[] }) {
             }
         });
 
+        // Validate imageFiles separately
+        if (imageFiles.length === 0) {
+            newErrors.imageFiles = 'حداقل یک تصویر برای محصول الزامی است';
+            isValid = false;
+        }
+
         setErrors(newErrors);
         return isValid;
     };
 
     const handleSubmit = async () => {
         try {
-            if (!validateForm()) {
-                const errorMessages = Object.entries(errors)
-                    .filter(([_, message]) => message)
-                    .map(([field, message]) => `${field}: ${message}`)
-                    .join('\n');
+            console.log('Starting handleSubmit...');
+            console.log('Current imageFiles:', imageFiles);
 
-                alert('لطفاً خطاهای زیر را برطرف کنید:\n' + errorMessages);
+            if (!validateForm()) {
+                setShowErrorBox(true);
                 return;
             }
 
             setIsSaving(true);
 
-            const input: ProductInputType = {
+            // Initialize uploaded files object
+            const uploadedFiles = {
+                cover: '',
+                images: [] as string[]
+            };
+
+            // Handle file uploads
+            if (imageFiles && imageFiles.length > 0) {
+                console.log('Processing image files...');
+                const fileFormData = new FormData();
+
+                // Add cover image
+                if (imageFiles[0]) {
+                    console.log('Adding cover image:', imageFiles[0].name);
+                    fileFormData.append('cover', imageFiles[0]);
+                }
+
+                // Add additional images
+                if (imageFiles.length > 1) {
+                    console.log('Adding additional images...');
+                    for (let i = 1; i < imageFiles.length; i++) {
+                        if (imageFiles[i]) {
+                            console.log('Adding image:', imageFiles[i].name);
+                            fileFormData.append('images', imageFiles[i]);
+                        }
+                    }
+                }
+
+                // Get JWT token
+                const jwt = getCookie("jwt") as string;
+                if (!jwt) {
+                    throw new Error('No authentication token found');
+                }
+
+                console.log('Uploading files to server...');
+                const fileResponse = await fetch('http://localhost:4000/upload', {
+                    method: 'POST',
+                    headers: {
+                        'authorization': jwt,
+                        'Accept': 'application/json'
+                    },
+                    body: fileFormData
+                });
+
+                console.log('File upload response status:', fileResponse.status);
+                const responseText = await fileResponse.text();
+                console.log('File upload response text:', responseText);
+
+                if (!fileResponse.ok) {
+                    throw new Error(`Failed to upload files: ${responseText}`);
+                }
+
+                try {
+                    const fileResult = JSON.parse(responseText);
+                    console.log('Parsed file result:', fileResult);
+
+                    if (fileResult && typeof fileResult === 'object') {
+                        uploadedFiles.cover = fileResult.cover || '';
+                        uploadedFiles.images = Array.isArray(fileResult.images) ? fileResult.images : [];
+                    }
+                } catch (parseError) {
+                    console.error('Error parsing file upload response:', parseError);
+                    throw new Error('Invalid response from file upload server');
+                }
+            }
+
+            console.log('Preparing product data...');
+            // Create product data
+            const productData = {
                 title: formData.title,
                 desc: formData.desc,
                 price: {
@@ -143,25 +220,31 @@ function CMSAddProduct({ links = [] }: { links: linksType[] }) {
                 count: Number(formData.count),
                 discount: {
                     discount: Number(formData.discount),
-                    date: 30
+                    date: Number(formData.discountDuration) * 24 * 60 * 60 * 1000 + Date.now()
                 },
                 showCount: Number(formData.showCount),
+                totalSell: 0,
                 popularity: Number(formData.popularity),
-                authorId: formData.authorId,
-                publisher: formData.publisher,
-                publishDate: formData.publishDate,
-                brand: formData.brand,
-                status: formData.status,
-                state: formData.state,
-                size: formData.size,
-                weight: Number(formData.weight),
-                majorCat: formData.majorCat,
-                minorCat: formData.minorCat,
-                cover: formData.cover,
-                images: formData.images
+                authorId: formData.authorId || null,
+                publisher: formData.publisher || '',
+                publishDate: formData.publishDate || '',
+                brand: formData.brand || '',
+                status: formData.status || 'نو',
+                state: formData.state || 'active',
+                size: formData.size || '',
+                weight: Number(formData.weight) || 0,
+                majorCat: formData.majorCat || '',
+                minorCat: formData.minorCat || '',
+                cover: uploadedFiles.cover,
+                images: uploadedFiles.images
             };
 
+            console.log('Sending product data to GraphQL:', productData);
             const jwt = getCookie("jwt") as string;
+            if (!jwt) {
+                throw new Error('No authentication token found');
+            }
+
             const response = await fetch('http://localhost:4000/graphql', {
                 method: 'POST',
                 headers: {
@@ -170,27 +253,34 @@ function CMSAddProduct({ links = [] }: { links: linksType[] }) {
                 },
                 body: JSON.stringify({
                     query: ADD_PRODUCT,
-                    variables: { input }
+                    variables: {
+                        input: productData
+                    }
                 })
             });
 
+            console.log('GraphQL response status:', response.status);
             const result = await response.json();
+            console.log('GraphQL response:', result);
 
             if (result.errors) {
                 throw new Error(result.errors[0].message);
             }
 
             alert('محصول با موفقیت اضافه شد');
+
+            // Reset form
             setFormData({
                 title: '',
                 desc: '',
                 price: '',
                 cost: '',
-                costCount: 1,
-                count: 0,
-                discount: 0,
-                showCount: 0,
-                popularity: 0,
+                costCount: "",
+                count: "",
+                discount: "",
+                discountDuration: "30",
+                showCount: "",
+                popularity: 5,
                 authorId: '',
                 publisher: '',
                 publishDate: '',
@@ -204,10 +294,12 @@ function CMSAddProduct({ links = [] }: { links: linksType[] }) {
                 cover: '',
                 images: []
             });
+            setImageFiles([]);
+            setPreviewUrls([]);
             setErrors({});
 
-        } catch (error) {
-            console.error('Error adding product:', error);
+        } catch (error: any) {
+            console.error('Error in handleSubmit:', error);
             alert('خطا در افزودن محصول: ' + (error instanceof Error ? error.message : 'خطای ناشناخته'));
         } finally {
             setIsSaving(false);
@@ -216,13 +308,38 @@ function CMSAddProduct({ links = [] }: { links: linksType[] }) {
 
     return (
         <div className="bg-slate-200 relative rounded-xl p-4 lg:col-start-2 col-end-5 col-start-1 lg:row-start-1 row-start-2 pt-20">
+            {showErrorBox && Object.keys(errors).length > 0 && (
+                <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg z-50 max-w-md">
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <h3 className="font-bold mb-2">لطفاً خطاهای زیر را برطرف کنید:</h3>
+                            <ul className="list-disc list-inside">
+                                {Object.entries(errors)
+                                    .filter(([_, message]) => message)
+                                    .map(([field, message]) => (
+                                        <li key={field} className="mb-1">
+                                            {message}
+                                        </li>
+                                    ))}
+                            </ul>
+                        </div>
+                        <button
+                            onClick={() => setShowErrorBox(false)}
+                            className="text-red-700 hover:text-red-900 font-bold"
+                        >
+                            ×
+                        </button>
+                    </div>
+                </div>
+            )}
             <h3 className="absolute top-4 -right-6 text-lg rounded-r-lg rounded-l-xl pr-6 pl-4 py-2 bg-black text-white">
                 افزودن محصول جدید
             </h3>
 
             <div className="mt-5 py-4 px-8 rounded-xl">
-                <div className="grid grid-cols-2 justify-between items-start gap-x-8 gap-y-4 pb-4 w-full mx-auto **:transition-all">
+                <div className="grid md:grid-cols-2 grid-cols-1 justify-between items-start gap-x-8 gap-y-4 pb-4 w-full mx-auto **:transition-all duration-200">
                     <ProductInput
+                        form
                         label="عنوان"
                         value={formData.title}
                         onChange={(value) => handleFieldChange('title', value)}
@@ -231,6 +348,7 @@ function CMSAddProduct({ links = [] }: { links: linksType[] }) {
                     />
 
                     <ProductInput
+                        form
                         label="توضیحات"
                         value={formData.desc}
                         type="textarea"
@@ -240,6 +358,7 @@ function CMSAddProduct({ links = [] }: { links: linksType[] }) {
                     />
 
                     <ProductInput
+                        form
                         label="قیمت"
                         value={formData.price}
                         type="number"
@@ -249,6 +368,7 @@ function CMSAddProduct({ links = [] }: { links: linksType[] }) {
                     />
 
                     <ProductInput
+                        form
                         label="قیمت خرید"
                         value={formData.cost}
                         type="number"
@@ -258,6 +378,7 @@ function CMSAddProduct({ links = [] }: { links: linksType[] }) {
                     />
 
                     <ProductInput
+                        form
                         label="تعداد خرید"
                         value={formData.costCount}
                         type="number"
@@ -266,16 +387,19 @@ function CMSAddProduct({ links = [] }: { links: linksType[] }) {
                         error={errors.costCount}
                     />
 
-                    <ProductInput
-                        label="تخفیف"
-                        value={formData.discount}
-                        type="number"
-                        onChange={(value) => handleFieldChange('discount', value)}
-                        onFocus={() => handleFieldFocus('discount', formData.discount)}
-                        error={errors.discount}
+
+                    <DiscountInput
+                        discount={formData.discount}
+                        duration={formData.discountDuration}
+                        onDiscountChange={(value) => handleFieldChange('discount', value)}
+                        onDurationChange={(value) => handleFieldChange('discountDuration', value)}
+                        onFocus={handleFieldFocus}
+                        errors={errors}
+                        form
                     />
 
                     <ProductInput
+                        form
                         label="موجودی"
                         value={formData.count}
                         type="number"
@@ -285,6 +409,7 @@ function CMSAddProduct({ links = [] }: { links: linksType[] }) {
                     />
 
                     <ProductInput
+                        form
                         label="تعداد نمایشی"
                         value={formData.showCount}
                         type="number"
@@ -294,6 +419,7 @@ function CMSAddProduct({ links = [] }: { links: linksType[] }) {
                     />
 
                     <ProductInput
+                        form
                         label="محبوبیت"
                         value={formData.popularity}
                         type="number"
@@ -302,15 +428,17 @@ function CMSAddProduct({ links = [] }: { links: linksType[] }) {
                         error={errors.popularity}
                     />
 
-                    <ProductInput
-                        label="نویسنده"
+                    <SearchableAuthorSelect
                         value={formData.authorId}
                         onChange={(value) => handleFieldChange('authorId', value)}
                         onFocus={() => handleFieldFocus('authorId', formData.authorId)}
                         error={errors.authorId}
+                        authors={authors}
+                        form
                     />
 
                     <ProductInput
+                        form
                         label="ناشر"
                         value={formData.publisher}
                         onChange={(value) => handleFieldChange('publisher', value)}
@@ -319,6 +447,7 @@ function CMSAddProduct({ links = [] }: { links: linksType[] }) {
                     />
 
                     <ProductInput
+                        form
                         label="تاریخ انتشار"
                         value={formData.publishDate}
                         onChange={(value) => handleFieldChange('publishDate', value)}
@@ -327,30 +456,62 @@ function CMSAddProduct({ links = [] }: { links: linksType[] }) {
                     />
 
                     <ProductInput
+                        form
                         label="دسته‌بندی اصلی"
                         value={formData.majorCat}
                         onChange={(value) => handleFieldChange('majorCat', value)}
                         onFocus={() => handleFieldFocus('majorCat', formData.majorCat)}
                         error={errors.majorCat}
+                        type="select"
+                        options={[
+                            { value: "", label: "__ انتخاب کنید __" },
+                            ...links.map(l => (
+                                { value: l.txt, label: l.txt }
+                            ))]
+                        }
                     />
 
                     <ProductInput
+                        form
                         label="دسته‌بندی فرعی"
                         value={formData.minorCat}
                         onChange={(value) => handleFieldChange('minorCat', value)}
                         onFocus={() => handleFieldFocus('minorCat', formData.minorCat)}
                         error={errors.minorCat}
+                        type="select"
+                        disabled={!formData.majorCat}
+                        options={[
+                            { value: "", label: "دسته‌بندی اصلی را انتخاب کنید" },
+                            ...links.find(l => l.txt === formData.majorCat)?.subLinks?.map((l: any) => ({
+                                value: l.link,
+                                label: l.link
+                            })) || []]
+                        }
                     />
 
                     <ProductInput
+                        form
                         label="برند"
                         value={formData.brand}
                         onChange={(value) => handleFieldChange('brand', value)}
                         onFocus={() => handleFieldFocus('brand', formData.brand)}
                         error={errors.brand}
+                        type="select"
+                        disabled={!formData.majorCat || !formData.minorCat}
+                        options={[
+                            { value: "", label: "دسته‌بندی فرعی را انتخاب کنید" },
+                            ...links.find(l => l.txt === formData.majorCat)
+                                ?.subLinks.find(sl => sl.link === formData.minorCat)
+                                ?.brand?.filter(brand => brand !== "همه")
+                                .map((brand: string) => ({
+                                    value: brand,
+                                    label: brand
+                                })) || []]
+                        }
                     />
 
                     <ProductInput
+                        form
                         label="وضعیت"
                         value={formData.status}
                         type="select"
@@ -365,6 +526,7 @@ function CMSAddProduct({ links = [] }: { links: linksType[] }) {
                     />
 
                     <ProductInput
+                        form
                         label="وضعیت نمایش"
                         value={formData.state}
                         type="select"
@@ -380,6 +542,7 @@ function CMSAddProduct({ links = [] }: { links: linksType[] }) {
                     />
 
                     <ProductInput
+                        form
                         label="سایز"
                         value={formData.size}
                         onChange={(value) => handleFieldChange('size', value)}
@@ -388,6 +551,7 @@ function CMSAddProduct({ links = [] }: { links: linksType[] }) {
                     />
 
                     <ProductInput
+                        form
                         label="وزن"
                         value={formData.weight}
                         type="number"
@@ -395,6 +559,66 @@ function CMSAddProduct({ links = [] }: { links: linksType[] }) {
                         onFocus={() => handleFieldFocus('weight', formData.weight)}
                         error={errors.weight}
                     />
+
+                    <div className="">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            تصاویر محصول
+                        </label>
+                        <input
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            onChange={(e) => {
+                                const files = Array.from(e.target.files || []);
+                                setImageFiles(prev => [...prev, ...files]);
+
+                                // Create preview URLs
+                                const newPreviewUrls = files.map(file => URL.createObjectURL(file));
+                                setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
+                            }}
+                            className="block w-full text-sm text-gray-500
+                                file:mr-4 file:py-2 file:px-4
+                                file:rounded-full file:border-0
+                                file:text-sm file:font-semibold
+                                file:bg-black file:text-white
+                                hover:file:bg-gray-800"
+                        />
+                        {errors.imageFiles && (
+                            <p className="mt-1 text-sm text-red-600">{errors.imageFiles}</p>
+                        )}
+                        {previewUrls.length > 0 && (
+                            <div className="mt-4 grid grid-cols-4 gap-4">
+                                {previewUrls.map((image: string, index: number) => (
+                                    <div key={index} className="relative">
+                                        <img
+                                            src={image}
+                                            alt={`Product image ${index + 1}`}
+                                            className={`w-full h-24 object-cover rounded-lg ${index === 0 ? 'ring-2 ring-blue-500' : ''}`}
+                                        />
+                                        {index === 0 && (
+                                            <div className="absolute top-0 left-0 bg-blue-500 text-white text-xs px-2 py-1 rounded-tl-lg rounded-br-lg">
+                                                کاور
+                                            </div>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const newFiles = [...imageFiles];
+                                                const newPreviews = [...previewUrls];
+                                                newFiles.splice(index, 1);
+                                                newPreviews.splice(index, 1);
+                                                setImageFiles(newFiles);
+                                                setPreviewUrls(newPreviews);
+                                            }}
+                                            className="absolute cursor-pointer -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 w-6 h-6 flex justify-center items-center"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex justify-end mt-4">

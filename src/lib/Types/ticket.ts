@@ -10,3 +10,10 @@ export type ticketType = {
     title: string,
     txt: string
 }
+
+export type paginatedTicketsType = {
+    tickets: ticketType[],
+    totalPages: number,
+    currentPage: number,
+    total: number
+}

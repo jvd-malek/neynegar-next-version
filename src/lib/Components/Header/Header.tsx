@@ -5,7 +5,9 @@ import NavLinks from "./HeaderComponents/NavLinks";
 import { usePathname } from 'next/navigation';
 import useSWR, { mutate } from 'swr';
 import { getCookie, deleteCookie } from 'cookies-next';
-import { fetcher } from '@/lib/CustomeHook/fetcher';
+import SearchBox from './HeaderComponents/SearchBox';
+import { linksType } from '@/lib/Types/links';
+import { fetcher } from '@/lib/fetcher';
 
 function Header() {
   const [isOpen, setOpen] = useState(false);
@@ -28,19 +30,23 @@ function Header() {
         }
       }
     }`,
-    fetcher
+    (query) => fetcher(query, {}),
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 2000,
+      keepPreviousData: true
+    }
   );
 
-  const links = linksData?.links || [];
-
+  const links: linksType[] = linksData?.links || [];
+  
   // مدیریت وضعیت کاربر
   const { data: userData, error: userError } = useSWR(
-    jwt ? [`query {
+    `query {
       userByToken {
         _id
         name
         phone
-        email
         status
         bascket {
           productId {
@@ -49,8 +55,13 @@ function Header() {
           count
         }
       }
-    }`, jwt as string] : null,
-    ([query, jwt]) => fetcher(query, jwt)
+    }`,
+    (query) => fetcher(query, {}),
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 2000,
+      keepPreviousData: true
+    }
   );
 
   // ارسال سبد خرید به سرور با useSWRMutation
@@ -108,6 +119,7 @@ function Header() {
         links={links}
         user={userData?.userByToken}
       />
+      <SearchBox links={links} />
     </div>
   );
 }

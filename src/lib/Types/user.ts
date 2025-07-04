@@ -3,7 +3,7 @@ import { orderType } from "./order"
 import { productCoverSingleType, productSingleType } from "./product"
 import { ticketType } from "./ticket"
 
-export type userType = {
+export interface userType {
     _id: string,
     status: string,
     name: string,
@@ -21,6 +21,28 @@ export type userType = {
     updatedAt?: string,
     favorite: { productId: productSingleType }[],
     img: string,
+    readingList: {
+        articleId: {
+            _id: string;
+            title: string;
+            desc: string;
+            content: string;
+            subtitles: string[];
+            views: number;
+            cover: string;
+            images: string[];
+            popularity: number;
+            majorCat: string;
+            minorCat: string;
+            authorId: {
+                _id: string;
+                firstname: string;
+                lastname: string;
+                fullName: string;
+            };
+            createdAt: string;
+        };
+    }[],
 }
 
 export type accountType = {

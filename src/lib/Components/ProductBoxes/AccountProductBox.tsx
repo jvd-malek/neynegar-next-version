@@ -11,7 +11,7 @@ function AccountProductBox({ orders, demo = false, user }: { orders: orderType[]
     const [openDetail, setOpenDetail] = useState<boolean>(false)
     const [order, setOrder] = useState<orderType>()
     let a = [...orders]
-    let filteredOrders = demo ? [...a.splice(0, 3).reverse()] : [...a.reverse()]
+    let filteredOrders = demo ? [...a.splice(0, 3)] : [...a]
     const receiptHandler = (o: orderType) => {
         setReceipt(!receipt)
         setOrder(o)
@@ -63,7 +63,7 @@ function AccountProductBox({ orders, demo = false, user }: { orders: orderType[]
                             <div className="flex flex-wrap gap-4 justify-between">
                                 {o.products.map(p => (
                                     <div className="mt-10 shadow-cs rounded-2xl" key={p.productId._id}>
-                                        <BasketBox {...p.productId} count={p.count} account />
+                                        {/* <BasketBox {...p.productId} count={p.count} account /> */}
                                     </div>
                                 ))}
                             </div>

@@ -66,7 +66,7 @@ function CommentBox({
                     ) : (
                         <AccountCircleTwoToneIcon className="text-slate-500" sx={{ fontSize: '4rem' }} />
                     )}
-                    
+
                     <div>
                         {!account ? (
                             <>
@@ -81,7 +81,7 @@ function CommentBox({
                             </p>
                         )}
                         <p className="text-sm text-slate-500">
-                            {moment(Number(createdAt)).locale('fa').format('YYYY/MM/DD HH:mm')}
+                            {new Date(Number(createdAt)).toLocaleDateString('fa-IR')}
                         </p>
                         {ticket && (
                             <div className="sm:hidden">{status}</div>
@@ -105,7 +105,7 @@ function CommentBox({
             {/* Content section */}
             <div className="flex flex-col gap-4 w-full mt-4">
                 <p className="whitespace-pre-line">{txt}</p>
-                
+
                 {!ticket && (
                     <div className="w-fit" dir="ltr">
                         <Rating

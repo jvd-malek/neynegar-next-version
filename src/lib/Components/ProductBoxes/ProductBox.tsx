@@ -147,7 +147,7 @@ function ProductBox({
         }
     };
 
-    const finalPrice = (discount[discount.length - 1].discount > 0 &&
+    const finalPrice = (discount[discount.length - 1]?.discount > 0 &&
         discount[discount.length - 1].date > Date.now())
         ? (price[price.length - 1].price * (100 - discount[discount.length - 1].discount) / 100)
         : price[price.length - 1].price;
@@ -163,7 +163,7 @@ function ProductBox({
             <meta itemProp="priceCurrency" content="IRR" />
 
             <div className="relative group" dir='ltr'>
-                {discount[discount.length - 1].discount > 0 &&
+                {discount[discount.length - 1]?.discount > 0 &&
                     discount[discount.length - 1].date > Date.now() && discountTimer && (
                         <DiscountTimer endDate={discount[discount.length - 1].date} />
                     )}
@@ -175,6 +175,7 @@ function ProductBox({
                             className="rounded-2xl object-cover transition-transform duration-300 hover:scale-110 active:scale-110"
                             width={500}
                             height={500}
+                            loading="lazy"
                             loader={customLoader}
                             itemProp="image"
                         />
@@ -197,7 +198,7 @@ function ProductBox({
                 )}
             </div>
 
-            {discount[discount.length - 1].discount > 0 && showCount > 0 &&
+            {discount[discount.length - 1]?.discount > 0 && showCount > 0 &&
                 discount[discount.length - 1].date > Date.now() && (
                     <div className="absolute -top-[6px] right-1 z-20 text-red-600">
                         <BookmarkIcon sx={{ fontSize: 40 }} />
@@ -224,12 +225,12 @@ function ProductBox({
                 {showCount > 0 ? (
                     <div className="flex justify-center items-center md:gap-2 gap-1">
                         <div className="flex flex-col items-start">
-                            {discount[discount.length - 1].discount > 0 && discount[discount.length - 1].date > Date.now() && (
+                            {discount[discount.length - 1]?.discount > 0 && discount[discount.length - 1]?.date > Date.now() && (
                                 <span className="text-xs line-through text-slate-600">
                                     {price[price.length - 1].price.toLocaleString('fa-IR')}
                                 </span>
                             )}
-                            <span className={`${discount[discount.length - 1].discount > 0 && discount[discount.length - 1].date > Date.now() ? 'text-md leading-3' : 'text-lg space-x-1.5'}`}>
+                            <span className={`${discount[discount.length - 1]?.discount > 0 && discount[discount.length - 1].date > Date.now() ? 'text-md leading-3' : 'text-lg space-x-1.5'}`}>
                                 {finalPrice.toLocaleString('fa-IR')}
                             </span>
                         </div>

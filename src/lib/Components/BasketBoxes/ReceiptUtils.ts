@@ -36,7 +36,7 @@ export const generateReceiptText = (
 
     const productsText = products.map(p =>
         `${p.productId.title} (${p.count.toLocaleString('fa-IR')} عدد): ${p.price ? p.price.toLocaleString('fa-IR') :
-            p.productId.price[p.productId.price.length - 1].price.toLocaleString('fa-IR')
+            p.productId.price.toLocaleString('fa-IR')
         } تومان`
     ).join('\n');
 

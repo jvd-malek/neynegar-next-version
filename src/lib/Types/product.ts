@@ -1,5 +1,5 @@
 import { articleCoverProductType, articleType } from "./article"
-import { commentType } from "./comment"
+import { commentType, paginatedCommentsType } from "./comment"
 
 export type productCoverType = {
     _id: string,
@@ -127,5 +127,5 @@ export type productInputType = {
 
 export type productType = {
     product: productSingleType,
-    comments?: commentType[],
+    comments?: paginatedCommentsType,
 }

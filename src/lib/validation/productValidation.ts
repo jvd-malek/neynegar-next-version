@@ -4,82 +4,82 @@ const validationRules: Record<string, ValidationRule> = {
     title: {
         required: true,
         minLength: 3,
-        maxLength: 100,
-        message: 'عنوان باید بین 3 تا 100 کاراکتر باشد'
+        maxLength: 60,
+        message: 'عنوان محصول باید بین 3 تا 60 کاراکتر باشد'
     },
     desc: {
         required: true,
-        minLength: 10,
-        maxLength: 1000,
-        message: 'توضیحات باید بین 10 تا 1000 کاراکتر باشد'
+        minLength: 3,
+        maxLength: 600,
+        message: 'توضیحات محصول باید بین 3 تا 600 کاراکتر باشد'
     },
     price: {
         required: true,
         min: 0,
-        message: 'قیمت باید بزرگتر از صفر باشد'
+        message: 'قیمت نمی‌تواند منفی باشد'
     },
     cost: {
         required: true,
         min: 0,
-        message: 'قیمت خرید باید بزرگتر از صفر باشد'
-    },
-    costCount: {
-        required: true,
-        min: 1,
-        message: 'تعداد خرید باید حداقل 1 باشد'
+        message: 'هزینه نمی‌تواند منفی باشد'
     },
     count: {
         required: true,
         min: 0,
-        message: 'موجودی نمی‌تواند منفی باشد'
-    },
-    discount: {
-        min: 0,
-        max: 100,
-        message: 'تخفیف باید بین 0 تا 100 درصد باشد'
+        message: 'تعداد محصول نمی‌تواند منفی باشد'
     },
     showCount: {
         required: true,
         min: 0,
-        message: 'تعداد نمایشی نمی‌تواند منفی باشد'
+        message: 'تعداد نمایش نمی‌تواند منفی باشد'
+    },
+    totalSell: {
+        min: 0,
+        message: 'تعداد کل فروش نمی‌تواند منفی باشد'
     },
     popularity: {
+        required: true,
         min: 0,
-        max: 100,
-        message: 'محبوبیت باید بین 0 تا 100 باشد'
+        message: 'محبوبیت نمی‌تواند منفی باشد'
     },
-    authorId: {
-        required: true,
-        message: 'نویسنده الزامی است'
-    },
+    // authorId: {
+    //     required: true,
+    //     message: 'نویسنده الزامی است'
+    // },
     publisher: {
-        required: true,
-        message: 'ناشر الزامی است'
+        maxLength: 60,
+        message: 'نام ناشر نمی‌تواند بیشتر از 60 کاراکتر باشد'
     },
     publishDate: {
-        required: true,
-        message: 'تاریخ انتشار الزامی است'
+        maxLength: 60,
+        message: 'تاریخ انتشار نمی‌تواند بیشتر از 60 کاراکتر باشد'
     },
     brand: {
-        required: true,
-        message: 'برند الزامی است'
+        maxLength: 60,
+        message: 'نام برند نمی‌تواند بیشتر از 60 کاراکتر باشد'
     },
     status: {
         required: true,
-        message: 'وضعیت الزامی است'
+        maxLength: 60,
+        message: 'وضعیت کیفیت محصول الزامی است',
+        pattern: /^(نو|درحد‌نو|دسته‌دوم)$/,
+        patternMessage: 'وضعیت باید یکی از موارد نو، درحد‌نو یا دسته‌دوم باشد'
     },
     state: {
         required: true,
-        message: 'وضعیت نمایش الزامی است'
+        maxLength: 60,
+        message: 'وضعیت محصول الزامی است',
+        pattern: /^(active|inactive|outOfStock|comingSoon)$/,
+        patternMessage: 'وضعیت باید یکی از موارد active، inactive، outOfStock یا comingSoon باشد'
     },
     size: {
-        required: true,
-        message: 'سایز الزامی است'
+        maxLength: 60,
+        message: 'سایز نمی‌تواند بیشتر از 60 کاراکتر باشد'
     },
     weight: {
         required: true,
-        min: 0,
-        message: 'وزن باید بزرگتر از صفر باشد'
+        min: 50,
+        message: 'وزن محصول باید حداقل 50 گرم باشد'
     },
     majorCat: {
         required: true,
@@ -88,6 +88,10 @@ const validationRules: Record<string, ValidationRule> = {
     minorCat: {
         required: true,
         message: 'دسته‌بندی فرعی الزامی است'
+    },
+    imageFiles: {
+        required: true,
+        message: 'حداقل یک تصویر برای محصول الزامی است'
     }
 };
 
@@ -120,7 +124,7 @@ export const validateField = (field: string, value: any): string | null => {
     }
 
     if (rules.pattern && !rules.pattern.test(value)) {
-        return rules.message || 'فرمت نامعتبر است';
+        return rules.patternMessage || rules.message || 'فرمت نامعتبر است';
     }
 
     return null;

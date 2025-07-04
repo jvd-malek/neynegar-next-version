@@ -33,33 +33,13 @@ import DiscountTimer from '@/lib/Components/ProductBoxes/DiscountTimer';
 import { productCoverType, productSingleType, productType } from '@/lib/Types/product';
 import { cookies } from 'next/headers';
 
-async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 3): Promise<Response> {
-    try {
-        console.log("options ==> ", options);
-        const response = await fetch(url, options);
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response;
-    } catch (error) {
-        if (retries > 0) {
-            // اضافه کردن exponential backoff
-            const delay = Math.pow(2, 3 - retries) * 1000;
-            await new Promise(resolve => setTimeout(resolve, delay));
-            return fetchWithRetry(url, options, retries - 1);
-        }
-        throw error;
-    }
-}
-
 // جداسازی منطق محاسبه قیمت به یک تابع
 const calculatePrice = (product: productSingleType) => {
     const lastPrice = product.price[product.price.length - 1].price;
     const lastDiscount = product.discount[product.discount.length - 1];
     const now = Date.now();
 
-    if (lastDiscount.discount > 0 && lastDiscount.date > now) {
+    if (lastDiscount?.discount > 0 && lastDiscount?.date > now) {
         return lastPrice * ((100 - lastDiscount.discount) / 100);
     }
     return lastPrice;
@@ -69,7 +49,7 @@ export async function generateMetadata({ params }: any) {
     const { id } = await params;
 
     try {
-        const productGraphData = await fetchWithRetry(
+        const productGraphData = await fetch(
             `${process.env.NEXT_BACKEND_GRAPHQL_URL!}`,
             {
                 method: "POST",
@@ -206,9 +186,14 @@ export async function generateMetadata({ params }: any) {
 
 async function Product({ params, searchParams }: any) {
     const { id } = await params;
-    const { img } = await searchParams;
+    const { img, page: searchPage, count } = await searchParams;
     const cookieStore = await cookies();
     const jwt = cookieStore.get('jwt');
+
+    const page = {
+        page: parseInt(searchPage || '1'),
+        count: parseInt(count || '10')
+    };
 
     const getRatingText = (val: number) => {
         if (val <= 0.5) return 'ضعیف';
@@ -224,7 +209,7 @@ async function Product({ params, searchParams }: any) {
     };
 
 
-    const productGraphData = await fetchWithRetry(
+    const productGraphData = await fetch(
         `${process.env.NEXT_BACKEND_GRAPHQL_URL!}`,
         {
             method: "POST",
@@ -293,50 +278,57 @@ async function Product({ params, searchParams }: any) {
         }
     );
 
-    const commentsGraphData = await fetchWithRetry(
+    const commentsGraphData = await fetch(
         `${process.env.NEXT_BACKEND_GRAPHQL_URL!}`,
         {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 query: `
-                    query CommentsByProduct($id: ID!) {
-                        commentsByProduct(productId: $id) {
-                            _id
-                            txt
-                            star
-                            status
-                            like
-                            productId { _id }
-                            articleId { _id }
-                            userId {
+                    query CommentsByProduct($id: ID!, $page: Int, $limit: Int) {
+                        commentsByProduct(productId: $id, page: $page, limit: $limit) {
+                            comments {
                                 _id
-                                name
-                                email
-                                phone
-                            }
-                            createdAt
-                            updatedAt
-                            replies {
                                 txt
+                                star
+                                status
+                                like
+                                productId { _id }
+                                articleId { _id }
                                 userId {
                                     _id
                                     name
-                                    email
                                     phone
                                 }
-                                like
+                                createdAt
+                                updatedAt
+                                replies {
+                                    txt
+                                    userId {
+                                        _id
+                                        name
+                                        phone
+                                    }
+                                    like
+                                }
                             }
+                            totalPages
+                            currentPage
+                            total
                         }
                     }
-
                 `,
-                variables: { id }
+                variables: { 
+                    id,
+                    page: page.page,
+                    limit: page.count
+                }
             }),
             cache: "no-store"
         }
     );
 
+    
     const stateGraph = await productGraphData.json()
     const commentsGraph = await commentsGraphData.json()
     const state: productType = { product: stateGraph.data.product, comments: commentsGraph.data.commentsByProduct }
@@ -458,9 +450,9 @@ async function Product({ params, searchParams }: any) {
                     <div className="col-start-1 lg:col-end-2 col-end-3 row-start-2 lg:row-end-4 row-end-3 w-full bg-slate-200 rounded-xl pt-10 pb-4 px-4 flex flex-col justify-between">
                         <div className="lg:block md:flex block gap-8">
                             <div className="rounded-xl overflow-hidden py-6 pl-6 pr-12 shadow-cs bg-white relative w-fit mx-auto lg:mb-0 md:mb-4">
-                                {state.product.discount[state.product.discount.length - 1].discount > 0 &&
+                                {state.product.discount[state.product.discount.length - 1]?.discount > 0 &&
                                     state.product.discount[state.product.discount.length - 1].date > Date.now() && (
-                                        <DiscountTimer endDate={state.product.discount[state.product.discount.length - 1].date} page/>
+                                        <DiscountTimer endDate={state.product.discount[state.product.discount.length - 1].date} page />
                                     )}
                                 {state?.product?.cover ? (
                                     <Image
@@ -483,13 +475,11 @@ async function Product({ params, searchParams }: any) {
                                 <div className="flex justify-between gap-2 overflow-x-auto scrollbar-hidden mt-8 bg-white shadow-cs p-2 rounded-xl h-fit">
                                     {state?.product && (
                                         <Link href={`?img=${state.product.cover}`} scroll={false} aria-label="تصویر اصلی محصول">
-                                            <Image
+                                            <img
                                                 src={`https://api.neynegar1.ir/imgs/${state.product.cover}`}
                                                 alt={state.product.title}
                                                 className="w-20 h-22 bg-contain cursor-pointer rounded-lg transition-transform duration-300 hover:scale-110 active:scale-110"
                                                 loading='lazy'
-                                                width={80}
-                                                height={88}
                                             />
                                         </Link>
                                     )}
@@ -501,13 +491,11 @@ async function Product({ params, searchParams }: any) {
                                             aria-label="تصویر محصول"
                                             className={i.length <= 0 ? "hidden" : ""}
                                         >
-                                            <Image
+                                            <img
                                                 src={`https://api.neynegar1.ir/imgs/${i}`}
                                                 alt={state.product?.title || "تصویر محصول"}
                                                 className="w-20 h-22 bg-contain cursor-pointer rounded-lg transition-transform duration-300 hover:scale-110 active:scale-110"
                                                 loading='lazy'
-                                                width={80}
-                                                height={88}
                                             />
                                         </Link>
                                     ))}
@@ -609,7 +597,7 @@ async function Product({ params, searchParams }: any) {
                                 )}
                                 {state?.product ? (
                                     <div className="col-start-1 col-end-2 row-start-2">
-                                        <p className={`${state.product.discount[state.product.discount.length - 1].discount > 0 && state.product.discount[state.product.discount.length - 1].date > Date.now() ? 'block' : 'hidden'} line-through text-gray-500 text-sm leading-3`}>
+                                        <p className={`${state.product.discount[state.product.discount.length - 1]?.discount > 0 && state.product.discount[state.product.discount.length - 1]?.date > Date.now() ? 'block' : 'hidden'} line-through text-gray-500 text-sm leading-3`}>
                                             {state.product.price[state.product.price.length - 1].price.toLocaleString('fa-IR')}
                                         </p>
                                         <h2 className="text-xl leading-3">
@@ -798,7 +786,7 @@ async function Product({ params, searchParams }: any) {
 
                     <CommentComplex
                         ban={Boolean(userData?.data?.userByToken?.name && ban)}
-                        comments={state?.comments?.reverse() || []}
+                        commentsData={state?.comments || { comments: [], totalPages: 0, currentPage: 1, total: 0 }}
                         id={id}
                     />
                 </section>

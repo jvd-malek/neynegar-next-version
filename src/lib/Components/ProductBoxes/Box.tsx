@@ -13,9 +13,10 @@ type BoxType = {
     books?: productCoverType
     fav?: { productId: productSingleType; }[]
     discount?: boolean
+    tutorial?: boolean
 }
 
-function Box({ books = [], discount = false, fav = [] }: BoxType) {
+function Box({ books = [], discount = false, fav = [] , tutorial= false }: BoxType) {
 
     const bosRef = useRef<HTMLDivElement>(null);
     const parentWidth = useResizeObserver(bosRef);
@@ -46,7 +47,9 @@ function Box({ books = [], discount = false, fav = [] }: BoxType) {
                         {fav.length > 0 &&
                             fav.map(p => (
                                 <SwiperSlide key={p.productId._id}>
-                                    <ProductBox suggest={true} {...p.productId} />
+                                    <div className="pb-8">
+                                        <ProductBox {...p.productId} />
+                                    </div>
                                 </SwiperSlide>
                             ))
                         }
@@ -54,7 +57,7 @@ function Box({ books = [], discount = false, fav = [] }: BoxType) {
                             books.map((i) => (
                                 <SwiperSlide key={i._id}>
                                     <div className="pb-8">
-                                        <ProductBox {...i} discountTimer={discount} />
+                                        <ProductBox box={!tutorial} {...i} discountTimer={discount} />
                                     </div>
                                 </SwiperSlide>
                             ))}
