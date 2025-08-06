@@ -1,6 +1,5 @@
 import BoxHeader from "@/lib/Components/ProductBoxes/BoxHeader";
 import ProductBox from "@/lib/Components/ProductBoxes/ProductBox";
-import { productCoverType } from "@/lib/Types/product";
 import { articleAuthorCoverType } from "@/lib/Types/article";
 import Image from "next/image";
 import poem1 from "@/../../public/Img/poem1.webp";
@@ -62,14 +61,17 @@ const Category = async ({ params, searchParams }: any) => {
     const isArticle = decodeURIComponent(slug[0]) === "مقالات";
     const isSearch = decodeURIComponent(slug[0]) === "search";
     const isCourseCategory = decodeURIComponent(slug[0]) === "دوره";
+    const isSaleCategory = decodeURIComponent(slug[0]) === "حراجستون";
     const categoryName = isSearch ? "جستجو" : decodeURIComponent(slug[0]);
     const subCategory = slug[1] ? decodeURIComponent(slug[1]) : null;
     const initialLinks = await getLinks();
 
     // Fetch data with pagination
-    let productsData = { products: [], totalPages: 0, currentPage: 1, total: 0 };
+    let productsData: any = { products: [], totalPages: 0, currentPage: 1, total: 0 };
     let articlesData = { articles: [], totalPages: 0, currentPage: 1, total: 0 };
     let courseProducts: any[] = [];
+    let saleProducts: any[] = [];
+    
     if (isCourseCategory) {
         // کوئری دوره‌ها بر اساس دسته‌بندی و جمع‌آوری محصولات مرتبط
         const query = `
@@ -101,6 +103,52 @@ const Category = async ({ params, searchParams }: any) => {
         });
         const data = await res.json();
         courseProducts = (data.data.coursesByCategory || []).flatMap((c: any) => c.relatedProducts || []);
+    } else if (isSaleCategory) {
+        // کوئری محصولات حراج (تخفیف‌دار) با pagination
+        const query = `
+        query OfferProducts($page: Int, $limit: Int) {
+          offer(page: $page, limit: $limit) {
+            products {
+              _id
+              title
+              desc
+              price { price date }
+              discount { discount date }
+              popularity
+              cover
+              brand
+              showCount
+              majorCat
+              minorCat
+              state
+            }
+            totalPages
+            currentPage
+            total
+          }
+        }
+      `;
+
+        const variables = {
+            page: page.page,
+            limit: page.count
+        };
+
+        const res = await fetch(`${process.env.NEXT_BACKEND_GRAPHQL_URL!}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query, variables }),
+            next: { revalidate: 3600 }
+        });
+        const data = await res.json();
+        const offerData = data.data.offer;
+        saleProducts = offerData?.products || [];
+        productsData = {
+            products: saleProducts,
+            totalPages: offerData?.totalPages || 0,
+            currentPage: offerData?.currentPage || 1,
+            total: offerData?.total || 0
+        };
     } else {
         [productsData, articlesData] = await Promise.all([
             isArticle ? { products: [], totalPages: 0, currentPage: 1, total: 0 } : fetchProducts(slug, page),
@@ -114,7 +162,9 @@ const Category = async ({ params, searchParams }: any) => {
         searchArticlesData = await fetchArticles(slug, page);
     }
 
-    const filteredProducts = productsData.products.length > 0 ? productsData.products : courseProducts
+    const filteredProducts = productsData.products.length > 0 ? productsData.products : 
+                           courseProducts.length > 0 ? courseProducts : 
+                           saleProducts.length > 0 ? saleProducts : []
     const filteredArticles = filterAndSortArticles(articlesData.articles || articlesData, page, slug);
     const filteredSearchArticles = filterAndSortArticles(searchArticlesData.articles, page, slug);
 
@@ -154,14 +204,24 @@ const Category = async ({ params, searchParams }: any) => {
 
                     <ul className="flex flex-wrap justify-center sm:gap-[3.5rem] gap-4 w-[90vw] mx-auto mt-26">
                         {!isArticle
-                            ? filteredProducts.map((product: any) => (
-                                <li key={product._id} className="sm:w-52 w-40" itemScope itemType="https://schema.org/Product">
-                                    <ProductBox
-                                        box={false}
-                                        {...product}
-                                    />
-                                </li>
-                            ))
+                            ? (isSaleCategory 
+                                ? saleProducts.map((product: any) => (
+                                    <li key={product._id} className="sm:w-52 w-40" itemScope itemType="https://schema.org/Product">
+                                        <ProductBox
+                                            box={false}
+                                            {...product}
+                                        />
+                                    </li>
+                                ))
+                                : filteredProducts.map((product: any) => (
+                                    <li key={product._id} className="sm:w-52 w-40" itemScope itemType="https://schema.org/Product">
+                                        <ProductBox
+                                            box={false}
+                                            {...product}
+                                        />
+                                    </li>
+                                ))
+                            )
                             : filteredArticles
                                 .slice(page.page * page.count - page.count, page.page * page.count)
                                 .map(article => (
@@ -189,7 +249,13 @@ const Category = async ({ params, searchParams }: any) => {
                 </section>
 
                 {/* Pagination */}
-                {(!isArticle && productsData.totalPages > 1) && (
+                {(!isArticle && !isSaleCategory && productsData.totalPages > 1) && (
+                    <PaginationBox
+                        count={productsData.totalPages}
+                        currentPage={productsData.currentPage}
+                    />
+                )}
+                {(isSaleCategory && productsData.totalPages > 1) && (
                     <PaginationBox
                         count={productsData.totalPages}
                         currentPage={productsData.currentPage}
@@ -203,10 +269,17 @@ const Category = async ({ params, searchParams }: any) => {
                 )}
 
                 {/* Empty State */}
-                {(!isArticle && filteredProducts.length === 0) && (
+                {(!isArticle && !isSaleCategory && filteredProducts.length === 0) && (
                     <div className="container px-8 mx-auto" role="status" aria-live="polite">
                         <p className="text-2xl text-slate-700 text-center mt-6 mb-20">
                             موردی یافت نشد
+                        </p>
+                    </div>
+                )}
+                {(isSaleCategory && productsData.total === 0) && (
+                    <div className="container px-8 mx-auto" role="status" aria-live="polite">
+                        <p className="text-2xl text-slate-700 text-center mt-6 mb-20">
+                            محصول تخفیف‌داری یافت نشد
                         </p>
                     </div>
                 )}
