@@ -95,12 +95,23 @@ A content tool to generate, moderate, and publish calligraphy-related articles w
 
 ## 📬 Contact
 
+For feedback, suggestions or questions, feel free to contact me at:
+
+- 📧 Email: [jvd.malek0079@gmail.com](mailto:jvd.malek0079@gmail.com)
+- 🔗 [LinkedIn](https://www.linkedin.com/in/javad-malekian)  
+- 💻 [Back-end Repository](https://github.com/jvd-malek/neynegar-graphql-version)
+  
 Visit [neynegar1.ir](https://neynegar1.ir) for more information or to get in touch.
-**Email:** jvd.malek0079@gmail.com
+
+---
+
+## ⭐ Contributions
+
+If you’d like to contribute, feel free to fork the repo and submit a pull request.  
+All kinds of suggestions are welcome!
 
 ---
 
 ## 📄 License
 
-MIT — free to use and modify.
-
+MIT © 2025 | Developed by [Javad Malek](mailto:jvd.malek0079@gmail.com)
