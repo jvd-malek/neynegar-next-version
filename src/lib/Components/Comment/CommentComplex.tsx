@@ -4,7 +4,7 @@ import CommentBox from "./CommentBox";
 import CommentInput from "./CommentInput";
 import SentimentDissatisfiedTwoToneIcon from '@mui/icons-material/SentimentDissatisfiedTwoTone';
 import {  paginatedCommentsType } from "@/lib/Types/comment";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { getCookie } from 'cookies-next';
 import PaginationBox from "../Pagination/PaginationBox";
 
@@ -17,8 +17,6 @@ interface CommentComplexProps {
 
 function CommentComplex({ ban, commentsData, id, article = false }: CommentComplexProps) {
     const { comments, totalPages, currentPage } = commentsData;
-    const searchParams = useSearchParams();
-    const page = Number(searchParams.get('page')) || 1;
 
     const jwt = getCookie('jwt');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -90,7 +88,7 @@ function CommentComplex({ ban, commentsData, id, article = false }: CommentCompl
                         ))}
                         <PaginationBox 
                             count={totalPages} 
-                            currentPage={page} 
+                            currentPage={currentPage} 
                         />
                     </>
                 ) : (

@@ -60,7 +60,7 @@ export const GET_PRODUCTS = `
 `;
 
 export const UPDATE_PRODUCT = `
-    mutation UpdateProduct($id: ID!, $input: ProductInput!) {
+    mutation UpdateProduct($id: ID!, $input: UpdateProductInput!) {
         updateProduct(id: $id, input: $input) {
             _id
             title

@@ -5,7 +5,6 @@ import SearchBox from './SearchBox';
 import ProductInput from './ProductInput';
 import { useState, useEffect } from 'react';
 import useSWR from 'swr';
-import { getCookie } from 'cookies-next';
 import { userType } from '@/lib/Types/user';
 import { Modal } from '@mui/material';
 import { fetcher } from '@/lib/fetcher';
@@ -75,8 +74,8 @@ const UPDATE_USER = `
 `;
 
 const ADD_TO_BASKET = `
-    mutation AddToBasket($userId: ID!, $productId: ID!, $count: Int!) {
-        addToBasket(userId: $userId, productId: $productId, count: $count) {
+    mutation AddToBasket($productId: ID!, $count: Int!) {
+        addToBasket(productId: $productId, count: $count) {
             _id
             bascket {
                 productId {
@@ -89,8 +88,8 @@ const ADD_TO_BASKET = `
 `;
 
 const REMOVE_FROM_BASKET = `
-    mutation RemoveFromBasket($userId: ID!, $productId: ID!) {
-        removeFromBasket(userId: $userId, productId: $productId) {
+    mutation RemoveFromBasket($productId: ID!) {
+        removeFromBasket(productId: $productId) {
             _id
             bascket {
                 productId {
@@ -117,8 +116,8 @@ const UPDATE_BASKET_COUNT = `
 `;
 
 const ADD_TO_FAVORITE = `
-    mutation AddToFavorite($userId: ID!, $productId: ID!) {
-        addToFavorite(userId: $userId, productId: $productId) {
+    mutation AddToFavorite($productId: ID!) {
+        addToFavorite(productId: $productId) {
             _id
             favorite {
                 productId {
@@ -130,8 +129,8 @@ const ADD_TO_FAVORITE = `
 `;
 
 const REMOVE_FROM_FAVORITE = `
-    mutation RemoveFromFavorite($userId: ID!, $productId: ID!) {
-        removeFromFavorite(userId: $userId, productId: $productId) {
+    mutation RemoveFromFavorite($productId: ID!) {
+        removeFromFavorite(productId: $productId) {
             _id
             favorite {
                 productId {
@@ -353,7 +352,6 @@ function CMSUserBox({ type, page }: CMSUserBoxProps) {
                 return;
             }
             await fetcher(ADD_TO_BASKET, {
-                userId,
                 productId: newProductId,
                 count: 1
             });
@@ -393,7 +391,6 @@ function CMSUserBox({ type, page }: CMSUserBoxProps) {
     const handleRemoveFromBasket = async (userId: string, productId: string) => {
         try {
             await fetcher(REMOVE_FROM_BASKET, {
-                userId,
                 productId
             });
             await mutate();
@@ -410,7 +407,6 @@ function CMSUserBox({ type, page }: CMSUserBoxProps) {
                 return;
             }
             await fetcher(ADD_TO_FAVORITE, {
-                userId,
                 productId: newProductId
             });
             setNewProductId('');
@@ -424,7 +420,6 @@ function CMSUserBox({ type, page }: CMSUserBoxProps) {
     const handleRemoveFromFavorite = async (userId: string, productId: string) => {
         try {
             await fetcher(REMOVE_FROM_FAVORITE, {
-                userId,
                 productId
             });
             await mutate();
@@ -628,7 +623,7 @@ function CMSUserBox({ type, page }: CMSUserBoxProps) {
                                                     <tr key={index} className="border-t border-gray-400">
                                                         <td className="px-3 py-1.5">
                                                             <img
-                                                                src={`https://api.neynegar1.ir/imgs/${item.productId.cover}`}
+                                                                src={`https://api.neynegar1.ir/uploads/${item.productId.cover}`}
                                                                 alt={item.productId.title}
                                                                 className="w-16 h-16 object-cover rounded"
                                                             />
@@ -705,7 +700,7 @@ function CMSUserBox({ type, page }: CMSUserBoxProps) {
                                                     ×
                                                 </button>
                                                 <img
-                                                    src={`https://api.neynegar1.ir/imgs/${item.productId.cover}`}
+                                                    src={`https://api.neynegar1.ir/uploads/${item.productId.cover}`}
                                                     alt={item.productId.title}
                                                     className="w-full h-32 object-cover rounded mb-2"
                                                 />

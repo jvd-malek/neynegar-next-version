@@ -8,6 +8,7 @@ import { repliesType } from "@/lib/Types/replies";
 import { commentType } from "@/lib/Types/comment";
 import Image from 'next/image';
 import moment from 'jalali-moment';
+import Link from 'next/link';
 
 type CommentBoxProps = commentType & {
     account?: boolean;
@@ -57,7 +58,7 @@ function CommentBox({
                 <div className="flex items-center gap-4">
                     {userId.img ? (
                         <Image
-                            src={`https://api.neynegar1.ir/imgs/${userId.img}`}
+                            src={`https://api.neynegar1.ir/uploads/${userId.img}`}
                             alt={userId.name}
                             width={account ? 80 : 64}
                             height={account ? 80 : 64}
@@ -76,11 +77,17 @@ function CommentBox({
                                 <p className={ticket ? 'block' : 'hidden'}>پرسش شما</p>
                             </>
                         ) : (
-                            <p>
-                                دیدگاه شما در مورد {productId ? productId.title : articleId?.title}
+                            <p className='flex flex-col md:flex-row gap-1 md:items-center items-start'>
+                                {`دیدگاه شما در مورد: `}
+                                <Link
+                                    href={productId ? `/product/${productId._id}` : `/article/${articleId?._id}`}
+                                    className='text-blue-600 hover:text-blue-800 underline decoration-blue-300 hover:decoration-blue-500 transition-all duration-200 font-medium bg-blue-100 hover:bg-blue-200 px-1.5 py-0.5 my-0.5 rounded-md'
+                                >
+                                    {`${productId ? productId.title : articleId?.title}`}
+                                </Link>
                             </p>
                         )}
-                        <p className="text-sm text-slate-500">
+                        <p className="text-sm text-slate-500 leading-6">
                             {new Date(Number(createdAt)).toLocaleDateString('fa-IR')}
                         </p>
                         {ticket && (

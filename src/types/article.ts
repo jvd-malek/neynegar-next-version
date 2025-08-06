@@ -14,7 +14,7 @@ export interface Article {
     minorCat: string;
     majorCat: string;
     desc: string;
-    content: string;
+    content: string[];
     subtitles: string[];
     views: number;
     cover: string;

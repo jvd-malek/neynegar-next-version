@@ -10,6 +10,8 @@ import { getCookie, setCookie } from 'cookies-next';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import DiscountTimer from './DiscountTimer';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
+import { fetcher } from '@/lib/fetcher';
+import { mutate } from 'swr';
 
 type BasketBoxType = {
     _id: string
@@ -55,6 +57,9 @@ function BasketBox({ _id, account = false, showCount, cover, title, count, price
             router.push(`${pathname}?${params.toString()}`);
         } else {
             router.refresh();
+            if (jwt) {
+                mutate(["userByToken"])
+            }
         }
     }
 
@@ -125,30 +130,25 @@ function BasketBox({ _id, account = false, showCount, cover, title, count, price
     const pushHandler = async () => {
         if (showCount > Count) {
             if (jwt) {
-                await fetch(`https://api.neynegar1.ir/users/add-bascket`, {
-                    method: "PUT",
-                    headers: {
-                        'authorization': jwt as string,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        bas: [{
-                            productId: _id,
-                            count: 1
-                        }]
-                    })
-                })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (!data.state) {
-                            console.log(data.msg)
-                        } else {
-                            setCount(Count + 1);
-                            router.refresh();
-                        }
-                    })
-            }
-            else {
+                try {
+                    await fetcher(
+                        `mutation AddToBasket($productId: ID!, $count: Int!) {
+                            addToBasket(productId: $productId, count: $count) {
+                                _id
+                                bascket {
+                                    productId { _id }
+                                    count
+                                }
+                            }
+                        }`,
+                        { productId: _id, count: 1 }
+                    );
+                    setCount(Count + 1);
+                    mutate(["userByToken"])
+                } catch (error) {
+                    setAlert(true);
+                }
+            } else {
                 addLocalBascket({ productId: _id, count: 1 });
             }
         } else {
@@ -158,36 +158,31 @@ function BasketBox({ _id, account = false, showCount, cover, title, count, price
 
     const pullHandler = async () => {
         if (jwt) {
-            await fetch(`https://api.neynegar1.ir/users/pop-bascket`, {
-                method: "PUT",
-                headers: {
-                    'authorization': jwt as string,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    bas: [{
-                        productId: _id,
-                        count: 1
-                    }]
-                })
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (!data.state) {
-                        console.log(data.msg)
-                    } else {
-                        setCount(Count - 1);
-                        updatePage()
-                    }
-                })
-        }
-        else {
+            try {
+                await fetcher(
+                    `mutation RemoveFromBasket($productId: ID!) {
+                        removeFromBasket(productId: $productId) {
+                            _id
+                            bascket {
+                                productId { _id }
+                                count
+                            }
+                        }
+                    }`,
+                    { productId: _id }
+                );
+                setCount(Count - 1);
+                updatePage();
+            } catch (error) {
+                setAlert(true);
+            }
+        } else {
             removeLocalBascket({ productId: _id, count: 1 });
         }
     }
 
     const customLoader = ({ src }: { src: string }) => {
-        return `https://api.neynegar1.ir/imgs/${src}`;
+        return `https://api.neynegar1.ir/uploads/${src}`;
     };
 
     return (
@@ -212,8 +207,8 @@ function BasketBox({ _id, account = false, showCount, cover, title, count, price
                     </Link>
 
 
-                    <div className="flex sm:gap-10 gap-2 py-2 md:flex-row flex-col sm:items-start md:items-center items-center justify-between text-sm md:text-base w-full">
-                        <div className="flex gap-2 flex-col sm:items-start items-center justify-center sm:text-start text-center h-full">
+                    <div className="flex sm:gap-10 gap-2 py-2 lg:flex-col md:flex-row flex-col sm:items-start md:items-center items-center justify-between text-sm md:text-base w-full">
+                        <div className="flex w-full gap-2 flex-col sm:items-start items-center justify-center sm:text-start text-center h-full">
                             <h3 className="w-52">{title}</h3>
                             <h4 className="flex gap-2 items-center">
                                 قیمت واحد:
@@ -254,7 +249,7 @@ function BasketBox({ _id, account = false, showCount, cover, title, count, price
                                 </div>
                             </div>
                         </div>
-                        <div className="flex transition-all duration-700 justify-center items-center flex-col">
+                        <div className="flex w-full transition-all duration-700 justify-center items-center flex-col">
                             {!account &&
                                 <div className={`w-fit h-fit rounded-full bg-slate-100 border-2 text-blue-500 shadow border-solid flex items-center gap-2 text-lg sm:mb-0 mb-2 ${discount > 0 && "mt-4"}`}>
                                     <IconButton onClick={() => pushHandler()} color="primary">

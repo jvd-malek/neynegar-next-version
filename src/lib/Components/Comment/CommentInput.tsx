@@ -3,9 +3,10 @@ import { useState } from 'react';
 import { Rating, CircularProgress } from '@mui/material';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import StarBorderRoundedIcon from '@mui/icons-material/StarBorderRounded';
-import { toast, Bounce } from 'react-toastify';
 import { getCookie } from 'cookies-next';
 import { useRouter } from 'next/navigation';
+import { fetcher } from '@/lib/fetcher';
+import { notify } from '@/lib/utils/notify';
 
 const ratingLabels: Record<number, string> = {
     0.5: 'ضعیف',
@@ -56,17 +57,7 @@ export default function CommentInput({
     };
 
     const showError = (message: string) => {
-        toast.error(message, {
-            position: "bottom-left",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "dark",
-            transition: Bounce,
-        });
+        notify(message, 'error');
     };
 
     const handleSubmit = async () => {
@@ -85,30 +76,43 @@ export default function CommentInput({
                     return;
                 }
 
-                const response = await fetch(`https://api.neynegar1.ir/tickets/post`, {
-                    method: "POST",
-                    headers: {
-                        'authorization': jwt as string,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ title, text })
-                });
+                const response = await fetcher(`
+                          mutation CreateTicket($input: TicketInput!) {
+                            createTicket(input: $input) {
+                              _id
+                              title
+                              txt
+                              status
+                              response
+                              createdAt
+                              userId {
+                                _id
+                              }
+                            }
+                          }
+                        `,
+                    {
+                        input: {
+                            title,
+                            txt: text
+                        }
+                    }
+                );
 
-                const data = await response.json();
-                if (!data.state) {
-                    console.error(data.msg);
+                if (response.errors) {
+                    showError("خطا در ارسال تیکت: " + (response.errors.message || ""));
                     return;
                 }
 
                 resetForm();
-                router.refresh()
+                router.refresh();
             } else if (replyComment) {
                 if (!text.trim()) {
                     showError("لطفا متن پاسخ را وارد کنید.");
                     return;
                 }
-                
-                const response = await fetch('http://localhost:4000/graphql', {
+
+                const response = await fetch('https://api.neynegar1.ir/graphql', {
                     method: "POST",
                     headers: {
                         'authorization': jwt as string,
@@ -155,7 +159,7 @@ export default function CommentInput({
                 }
 
                 // ... existing code ...
-                const response = await fetch('http://localhost:4000/graphql', {
+                const response = await fetch('https://api.neynegar1.ir/graphql', {
                     method: "POST",
                     headers: {
                         'authorization': jwt as string,

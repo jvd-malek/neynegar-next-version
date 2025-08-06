@@ -1,7 +1,6 @@
 // گروه‌بندی imports بر اساس منبع
 import Image from 'next/image';
 import Link from 'next/link';
-import { Bounce, ToastContainer } from 'react-toastify';
 
 // Material-UI Icons
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
@@ -125,7 +124,7 @@ export async function generateMetadata({ params }: any) {
         const state: productType = stateGraph.data
 
         // بهبود ۳: ساخت URL کامل برای تصاویر
-        const imageUrl = `https://api.neynegar1.ir/imgs/${state.product.cover}`;
+        const imageUrl = `https://api.neynegar1.ir/uploads/${state.product.cover}`;
 
         const price = calculatePrice(state.product);
         // بهبود ۴: اضافه کردن metadataهای بیشتر
@@ -169,10 +168,18 @@ export async function generateMetadata({ params }: any) {
                 ...(state.product.publisher ? [state.product.publisher] : []),
             ].filter(Boolean),
             other: {
+                'product_id': state.product._id,
+                'product_name': state.product.title,
+                'product_price': price.toString(),
+                'product_old_price': state.product.price[state.product.price.length - 2]?.price.toString() || price.toString(),
+                'availability': state.product.showCount > 0 ? 'instock' : 'outofstock',
                 'product:price:amount': price.toString(),
                 'product:price:currency': 'IRR',
                 'product:availability': state.product.showCount > 0 ? 'in stock' : 'out of stock',
-            },
+                'og:image': imageUrl,
+                'twitter:image': imageUrl,
+            }
+
         };
     } catch (error) {
         // بهبود ۶: fallback metadata در صورت خطا
@@ -261,6 +268,7 @@ async function Product({ params, searchParams }: any) {
                   publishDate
                   brand
                   status
+                  state
                   size
                   weight
                   majorCat
@@ -318,7 +326,7 @@ async function Product({ params, searchParams }: any) {
                         }
                     }
                 `,
-                variables: { 
+                variables: {
                     id,
                     page: page.page,
                     limit: page.count
@@ -328,8 +336,10 @@ async function Product({ params, searchParams }: any) {
         }
     );
 
-    
+
     const stateGraph = await productGraphData.json()
+    console.log(stateGraph);
+
     const commentsGraph = await commentsGraphData.json()
     const state: productType = { product: stateGraph.data.product, comments: commentsGraph.data.commentsByProduct }
 
@@ -410,6 +420,7 @@ async function Product({ params, searchParams }: any) {
                         fix
                         cat={`${state.product.majorCat}/${state.product.minorCat}`}
                         price={price.toLocaleString('fa-IR')}
+                        state={state.product.state}
                     />
                 </div>
 
@@ -449,14 +460,14 @@ async function Product({ params, searchParams }: any) {
                     {/* Product images */}
                     <div className="col-start-1 lg:col-end-2 col-end-3 row-start-2 lg:row-end-4 row-end-3 w-full bg-slate-200 rounded-xl pt-10 pb-4 px-4 flex flex-col justify-between">
                         <div className="lg:block md:flex block gap-8">
-                            <div className="rounded-xl overflow-hidden py-6 pl-6 pr-12 shadow-cs bg-white relative w-fit mx-auto lg:mb-0 md:mb-4">
+                            <div className="rounded-xl overflow-hidden py-6 pl-6 pr-12 shadow-cs bg-white relative w-full mx-auto lg:mb-0 md:mb-4">
                                 {state.product.discount[state.product.discount.length - 1]?.discount > 0 &&
                                     state.product.discount[state.product.discount.length - 1].date > Date.now() && (
                                         <DiscountTimer endDate={state.product.discount[state.product.discount.length - 1].date} page />
                                     )}
                                 {state?.product?.cover ? (
                                     <Image
-                                        src={`https://api.neynegar1.ir/imgs/${img || state.product.cover}`}
+                                        src={`https://api.neynegar1.ir/uploads/${img || state.product.cover}`}
                                         alt={state.product.title}
                                         className="bg-contain rounded-xl transition-transform duration-300 hover:scale-135 active:scale-135"
                                         width={300}
@@ -476,7 +487,7 @@ async function Product({ params, searchParams }: any) {
                                     {state?.product && (
                                         <Link href={`?img=${state.product.cover}`} scroll={false} aria-label="تصویر اصلی محصول">
                                             <img
-                                                src={`https://api.neynegar1.ir/imgs/${state.product.cover}`}
+                                                src={`https://api.neynegar1.ir/uploads/${state.product.cover}`}
                                                 alt={state.product.title}
                                                 className="w-20 h-22 bg-contain cursor-pointer rounded-lg transition-transform duration-300 hover:scale-110 active:scale-110"
                                                 loading='lazy'
@@ -492,7 +503,7 @@ async function Product({ params, searchParams }: any) {
                                             className={i.length <= 0 ? "hidden" : ""}
                                         >
                                             <img
-                                                src={`https://api.neynegar1.ir/imgs/${i}`}
+                                                src={`https://api.neynegar1.ir/uploads/${i}`}
                                                 alt={state.product?.title || "تصویر محصول"}
                                                 className="w-20 h-22 bg-contain cursor-pointer rounded-lg transition-transform duration-300 hover:scale-110 active:scale-110"
                                                 loading='lazy'
@@ -530,30 +541,6 @@ async function Product({ params, searchParams }: any) {
                                     {state?.product?.desc || (
                                         <Skeleton variant="text" width={350} height={35} />
                                     )}
-                                </p>
-                                <p className="leading-8 mt-2">
-                                    {state?.product ? (
-                                        state.product.majorCat === "کتاب" ?
-                                            `انتشارات: ${state.product.publisher}` :
-                                            `مدل: ${state.product.brand}`
-                                    ) : (
-                                        <Skeleton variant="text" width={250} />
-                                    )}
-                                </p>
-                                <p className="leading-8">
-                                    {state?.product ? (
-                                        state.product.majorCat === "کتاب" ?
-                                            `نوبت چاپ: ${state.product.publishDate}` :
-                                            state.product.color && `رنگ: ${state.product.color}`
-                                    ) : (
-                                        <Skeleton variant="text" width={250} />
-                                    )}
-                                </p>
-                                <p className="leading-8">
-                                    {state?.product ?
-                                        `${state.product.majorCat === "کتاب" ? "قطع:" : "سایز:"} ${state.product.size}` :
-                                        <Skeleton variant="text" width={250} />
-                                    }
                                 </p>
                             </div>
                         </div>
@@ -597,19 +584,30 @@ async function Product({ params, searchParams }: any) {
                                 )}
                                 {state?.product ? (
                                     <div className="col-start-1 col-end-2 row-start-2">
-                                        <p className={`${state.product.discount[state.product.discount.length - 1]?.discount > 0 && state.product.discount[state.product.discount.length - 1]?.date > Date.now() ? 'block' : 'hidden'} line-through text-gray-500 text-sm leading-3`}>
-                                            {state.product.price[state.product.price.length - 1].price.toLocaleString('fa-IR')}
-                                        </p>
-                                        <h2 className="text-xl leading-3">
-                                            {price.toLocaleString('fa-IR')}
-                                            <span className="text-base"> تومان</span>
-                                        </h2>
+                                        {
+                                            state.product.state === "callForPrice" ?
+                                                (
+                                                    <p className="text-xs text-nowrap text-center">
+                                                        برای اطلاع از قیمت محصول <br />
+                                                        تماس بگیرید
+                                                    </p>
+                                                ) : (
+                                                    <>
+                                                        <p className={`${state.product.discount[state.product.discount.length - 1]?.discount > 0 && state.product.discount[state.product.discount.length - 1]?.date > Date.now() ? 'block' : 'hidden'} line-through text-gray-500 text-sm leading-3`}>
+                                                            {state.product.price[state.product.price.length - 1].price.toLocaleString('fa-IR')}
+                                                        </p>
+                                                        <h2 className="text-xl leading-3">
+                                                            {price.toLocaleString('fa-IR')}
+                                                            <span className="text-base"> تومان</span>
+                                                        </h2>
+                                                    </>
+                                                )}
                                     </div>
                                 ) : (
                                     <Skeleton variant="rectangular" className="rounded-md col-start-1 col-end-2 row-start-2" width={150} height={30} />
                                 )}
                             </div>
-                            <BuyBtn id={id} showCount={state.product.showCount} cat={state.product.majorCat} />
+                            <BuyBtn id={id} showCount={state.product.showCount} cat={state.product.majorCat} state={state.product.state} />
                         </div>
                     </div>
 
@@ -795,22 +793,6 @@ async function Product({ params, searchParams }: any) {
                 <div className="flex justify-center items-center flex-wrap sm:gap-8 gap-10 mt-20 text-center">
                     <DescProductBoxes />
                 </div>
-
-                {/* Toast notifications */}
-                <ToastContainer
-                    position="bottom-left"
-                    autoClose={5000}
-                    limit={2}
-                    hideProgressBar={false}
-                    newestOnTop
-                    closeOnClick={false}
-                    rtl={true}
-                    pauseOnFocusLoss
-                    draggable
-                    pauseOnHover
-                    theme="dark"
-                    transition={Bounce}
-                />
             </div>
         </>
     );

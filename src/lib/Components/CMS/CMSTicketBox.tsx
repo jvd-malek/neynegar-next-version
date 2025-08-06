@@ -2,7 +2,7 @@
 
 import PaginationBox from '@/lib/Components/Pagination/PaginationBox'
 import SearchBox from './SearchBox';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import useSWR from 'swr';
 import { Modal } from '@mui/material';
 import { fetcher } from '@/lib/fetcher';

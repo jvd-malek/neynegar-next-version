@@ -1,14 +1,11 @@
 import PersonOutlineRoundedIcon from '@mui/icons-material/PersonOutlineRounded';
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
-import ShareRoundedIcon from '@mui/icons-material/ShareRounded';
-import InsertLinkRoundedIcon from '@mui/icons-material/InsertLinkRounded';
 import RemoveRedEyeOutlinedIcon from '@mui/icons-material/RemoveRedEyeOutlined';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import { articleType } from '@/lib/Types/article';
 import { productCoverType } from '@/lib/Types/product';
 import Box from '@/lib/Components/ProductBoxes/Box';
 import CommentComplex from '@/lib/Components/Comment/CommentComplex';
-import { Bounce, ToastContainer } from 'react-toastify';
 import Link from 'next/link';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
@@ -17,6 +14,141 @@ import Image from 'next/image';
 
 import { cookies } from 'next/headers';
 import DescProductBoxes from '@/lib/Components/ProductBoxes/DescProductBoxes';
+import { ContentWithLinks } from '@/lib/utils/linkParser';
+import ReadingListButton from '../../../lib/Components/ArticleBoxes/ReadingListButton';
+import CopyArticleId from '../../../lib/Components/ArticleBoxes/CopyArticleId';
+
+// Component to extract and display all related links from article
+function AllRelatedLinks({ article }: { article: any }) {
+    if (!article) return null;
+
+    // Extract all internal links from description and content
+    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    const allLinks = new Map<string, { text: string; url: string; type: 'article' | 'product' }>();
+
+    // Extract from description
+    let match;
+    while ((match = linkRegex.exec(article.desc || '')) !== null) {
+        const [, text, url] = match;
+        if (url.startsWith('/article/')) {
+            allLinks.set(url, { text, url, type: 'article' });
+        } else if (url.startsWith('/product/')) {
+            allLinks.set(url, { text, url, type: 'product' });
+        }
+    }
+
+    // Extract from content sections
+    article.content?.forEach((content: string) => {
+        while ((match = linkRegex.exec(content)) !== null) {
+            const [, text, url] = match;
+            if (url.startsWith('/article/')) {
+                allLinks.set(url, { text, url, type: 'article' });
+            } else if (url.startsWith('/product/')) {
+                allLinks.set(url, { text, url, type: 'product' });
+            }
+        }
+    });
+
+    const links = Array.from(allLinks.values());
+
+    if (links.length === 0) return null;
+
+    return (
+        <div className="mt-8 bg-slate-200 rounded-xl py-3 px-4 relative">
+            <h3 className="absolute top-4 -right-2 text-xl rounded-r-lg rounded-l-xl pr-6 pl-4 py-2 bg-black text-white">لینک‌های مرتبط</h3>
+            <div className="grid gap-3 md:grid-cols-2 mt-18">
+                {links.map((link, index) => (
+                    <Link
+                        key={index}
+                        href={link.url}
+                        className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors duration-200"
+                    >
+                        <div className={`w-3 h-3 rounded-full ${link.type === 'article' ? 'bg-green-500' : 'bg-blue-500'
+                            }`} />
+                        <div className="flex-1">
+                            <div className="font-medium text-slate-900">{link.text}</div>
+                            <div className="text-xs text-slate-500">
+                                {link.type === 'article' ? 'مقاله' : 'محصول'}
+                            </div>
+                        </div>
+                        <div className="text-slate-400">
+                            <svg className="w-4 h-4 transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </div>
+                    </Link>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+// Component to show link statistics
+function LinkStats({ article }: { article: any }) {
+    if (!article) return null;
+
+    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    let articleLinks = 0;
+    let productLinks = 0;
+    let externalLinks = 0;
+
+    // Count links in description
+    let match;
+    while ((match = linkRegex.exec(article.desc || '')) !== null) {
+        const [, , url] = match;
+        if (url.startsWith('/article/')) {
+            articleLinks++;
+        } else if (url.startsWith('/product/')) {
+            productLinks++;
+        } else {
+            externalLinks++;
+        }
+    }
+
+    // Count links in content
+    article.content?.forEach((content: string) => {
+        while ((match = linkRegex.exec(content)) !== null) {
+            const [, , url] = match;
+            if (url.startsWith('/article/')) {
+                articleLinks++;
+            } else if (url.startsWith('/product/')) {
+                productLinks++;
+            } else {
+                externalLinks++;
+            }
+        }
+    });
+
+    const totalLinks = articleLinks + productLinks + externalLinks;
+
+    if (totalLinks === 0) return null;
+
+    return (
+        <div className="mt-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
+            <h4 className="text-sm font-medium text-slate-700 mb-2">آمار لینک‌ها</h4>
+            <div className="flex flex-wrap gap-4 text-xs">
+                {articleLinks > 0 && (
+                    <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span className="text-slate-600">{articleLinks} لینک مقاله</span>
+                    </div>
+                )}
+                {productLinks > 0 && (
+                    <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span className="text-slate-600">{productLinks} لینک محصول</span>
+                    </div>
+                )}
+                {externalLinks > 0 && (
+                    <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+                        <span className="text-slate-600">{externalLinks} لینک خارجی</span>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
 
 async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 3): Promise<Response> {
     try {
@@ -79,11 +211,11 @@ export async function generateMetadata({ params }: any) {
         const stateGraph = await articleGraphData.json()
         const state: articleType = stateGraph.data
 
-        const imageUrl = `https://api.neynegar1.ir/imgs/${state?.article?.cover}`;
+        const imageUrl = `https://api.neynegar1.ir/uploads/${state?.article?.cover}`;
 
         return {
             title: `${state.article.title} | نی نگار`,
-            description: state.article.desc?.substring(0, 160) || "مقاله از نی نگار",
+            description: state.article.desc?.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').substring(0, 160) || "مقاله از نی نگار",
             alternates: {
                 canonical: `https://neynegar1.ir/article/${id}`,
                 languages: {
@@ -92,7 +224,7 @@ export async function generateMetadata({ params }: any) {
             },
             openGraph: {
                 title: `${state.article.title} | نی نگار`,
-                description: state.article.desc?.substring(0, 160) || "توضیحات مقاله",
+                description: state.article.desc?.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').substring(0, 160) || "توضیحات مقاله",
                 url: `https://neynegar1.ir/article/${id}`,
                 type: 'article',
                 images: [
@@ -108,7 +240,7 @@ export async function generateMetadata({ params }: any) {
             twitter: {
                 card: 'summary_large_image',
                 title: `${state.article.title} | نی نگار`,
-                description: state.article.desc?.substring(0, 160) || "توضیحات مقاله",
+                description: state.article.desc?.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').substring(0, 160) || "توضیحات مقاله",
                 images: [imageUrl],
             },
             keywords: [
@@ -133,15 +265,15 @@ type CombinedContentItem = {
     image: string | null;
 };
 
-async function Article({ params , searchParams}: any) {
+async function Article({ params, searchParams }: any) {
     const { id } = await params;
     const cookieStore = await cookies();
     const jwt = cookieStore.get('jwt');
     const { page: searchPage, count } = await searchParams;
     const page = {
-            page: parseInt(searchPage || '1'),
-            count: parseInt(count || '10')
-        };
+        page: parseInt(searchPage || '1'),
+        count: parseInt(count || '10')
+    };
     // Increment article views
     await fetch(`${process.env.NEXT_BACKEND_GRAPHQL_URL!}`, {
         method: "POST",
@@ -189,7 +321,7 @@ async function Article({ params , searchParams}: any) {
                 `,
                 variables: { id }
             }),
-            next: { revalidate: 1 }
+            next: { revalidate: 3600 }
         }
     );
 
@@ -232,7 +364,7 @@ async function Article({ params , searchParams}: any) {
                         }
                     }
                 `,
-                variables: { 
+                variables: {
                     id,
                     page: page.page,
                     limit: page.count
@@ -253,7 +385,7 @@ async function Article({ params , searchParams}: any) {
         image: state.article.images?.[index] || null
     }));
 
-    // Fetch user verification status
+    // Fetch user verification status and reading list
     const userData = jwt?.value ? await fetch(`${process.env.NEXT_BACKEND_GRAPHQL_URL!}`, {
         method: "POST",
         headers: {
@@ -264,8 +396,14 @@ async function Article({ params , searchParams}: any) {
             query: `
                 query {
                     userByToken {
+                        _id
                         name
                         status
+                        readingList {
+                            articleId {
+                                _id
+                            }
+                        }
                     }
                 }
             `
@@ -273,7 +411,8 @@ async function Article({ params , searchParams}: any) {
         next: { revalidate: 3600 }
     }).then(data => data.json()) : undefined
 
-    const ban: boolean = jwt ? userData.data.userByToken.status == "banUser" : false
+    const ban: boolean = jwt ? userData?.data?.userByToken?.status == "banUser" : false
+    const isInReadingList = userData?.data?.userByToken?.readingList?.some((item: any) => item.articleId._id === id) || false
 
     // Fetch suggested products
     const sugData = await fetch(`${process.env.NEXT_BACKEND_GRAPHQL_URL!}`, {
@@ -327,7 +466,7 @@ async function Article({ params , searchParams}: any) {
                                     <ArrowBackIosNewRoundedIcon fontSize="inherit" />
                                 </span>
                             </Link>
-                            <Link href="/articles" className="relative pl-6">
+                            <Link href="/category/مقالات" className="relative pl-6">
                                 <p className="line-clamp-1">
                                     مقالات
                                 </p>
@@ -341,9 +480,9 @@ async function Article({ params , searchParams}: any) {
                 </nav>
 
                 {/* Article section */}
-                <section className="grid gap-10 my-10 lg:grid-cols-9 grid-cols-1">
+                <section className="grid gap-10 my-20 lg:grid-cols-9 grid-cols-1">
                     {/* Article content */}
-                    <div className="col-start-1 lg:col-end-7 lg:row-start-1 row-start-2 lg:row-end-4 w-full relative bg-slate-200 rounded-xl pt-9 pb-4 px-6 text-slate-700">
+                    <div className="col-start-1 lg:col-end-7 lg:row-start-1 row-start-2 lg:row-end-4 w-full relative bg-slate-100 rounded-xl pt-9 pb-4 px-6 text-black">
                         <h1 className="border-b border-white border-solid pb-10 text-xl text-slate-900">
                             {state?.article?.title}
                         </h1>
@@ -379,32 +518,48 @@ async function Article({ params , searchParams}: any) {
                             }
                         </div>
 
+                        {/* Reading List Button - Prominent placement */}
+                        {jwt && (
+                            <div className="mt-6 flex justify-center">
+                                <ReadingListButton
+                                    articleId={id}
+                                    isInReadingList={isInReadingList}
+                                    userId={userData?.data?.userByToken?._id}
+                                />
+                            </div>
+                        )}
+
+
                         {/* Cover Image */}
-                        <div className="mt-8">
+                        <div className="mt-8 rounded-xl overflow-hidden p-4 shadow bg-white relative w-fit mx-auto lg:mb-0 md:mb-4">
                             <Image
-                                src={`https://api.neynegar1.ir/imgs/${state?.article?.cover}`}
+                                src={`https://api.neynegar1.ir/uploads/${state?.article?.cover}`}
                                 alt={state?.article?.title}
                                 width={800}
                                 height={400}
-                                className="rounded-lg w-full"
+                                className="rounded-lg w-full transition-transform duration-300 hover:scale-110 active:scale-110"
                             />
                         </div>
 
                         {/* Table of Contents */}
                         {state?.article?.subtitles && state.article.subtitles.length > 0 && (
-                            <div className="mt-8 bg-white rounded-xl p-6 shadow-cs">
+                            <div className="mt-8 bg-white rounded-xl p-6 shadow">
                                 <h2 className="text-lg font-bold mb-4">فهرست مطالب</h2>
                                 <ul className="space-y-2">
                                     {state.article.subtitles.map((subtitle, index) => (
-                                        <li key={index}>
-                                            <a
-                                                href={`#section-${index}`}
+                                        <Link href={`#section-${index}`} key={index} className='flex justify-between items-center gap-3 p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors duration-200'>
+                                            <p
                                                 className="text-slate-700 hover:text-slate-900 transition-colors duration-200 flex items-center gap-2"
                                             >
                                                 <span className="text-slate-400">{index + 1}.</span>
                                                 {subtitle}
-                                            </a>
-                                        </li>
+                                            </p>
+                                            <div className="text-slate-400">
+                                                <svg className="w-4 h-4 transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                </svg>
+                                            </div>
+                                        </Link>
                                     ))}
                                 </ul>
                             </div>
@@ -412,7 +567,9 @@ async function Article({ params , searchParams}: any) {
 
                         {/* Description */}
                         <div className="mt-8 text-slate-700">
-                            <p className="text-lg leading-relaxed">{state?.article?.desc}</p>
+                            <p className="text-lg leading-relaxed">
+                                <ContentWithLinks content={state?.article?.desc || ''} />
+                            </p>
                         </div>
 
                         <div className="mt-8 prose prose-lg max-w-none">
@@ -424,7 +581,7 @@ async function Article({ params , searchParams}: any) {
                                     {item.image && (
                                         <div className="my-4">
                                             <Image
-                                                src={`https://api.neynegar1.ir/imgs/${item.image}`}
+                                                src={`https://api.neynegar1.ir/uploads/${item.image}`}
                                                 alt={item.subtitle || `تصویر ${index + 1}`}
                                                 width={800}
                                                 height={400}
@@ -432,29 +589,14 @@ async function Article({ params , searchParams}: any) {
                                             />
                                         </div>
                                     )}
-                                    <div className="whitespace-pre-line">{item.content}</div>
+                                    <ContentWithLinks content={item.content} />
                                 </div>
                             ))}
                         </div>
                     </div>
 
                     {/* Share section */}
-                    <div className="lg:col-start-7 lg:col-end-10 lg:row-start-1 col-start-1 h-fit w-full relative bg-slate-200 rounded-xl pt-9 pb-4 px-6">
-                        <div className="flex items-center border-white border-b border-solid pb-6 text-lg text-slate-900 gap-3">
-                            <div className="">
-                                <ShareRoundedIcon />
-                            </div>
-                            <p className="">
-                                اشتراک‌گذاری مطلب
-                            </p>
-                        </div>
-                        <div className="flex items-center justify-between cursor-pointer mt-6 mb-2 py-1 px-2 rounded-lg text-lg relative gap-3 text-slate-800 bg-slate-400">
-                            <div className="">
-                                <InsertLinkRoundedIcon />
-                            </div>
-                            <p className="line-clamp-1 overflow-y-scroll text-xs" dir='ltr'>{`https://neynegar1.ir/article/${id}`}</p>
-                        </div>
-                    </div>
+                    <CopyArticleId id={id} />
 
                     {/* Suggested products */}
                     <div className="lg:col-start-7 lg:col-end-10 col-start-1 lg:row-start-2 row-start-3 h-fit w-full relative bg-slate-200 rounded-xl pt-14 pb-4 px-6">
@@ -474,6 +616,12 @@ async function Article({ params , searchParams}: any) {
                     </div>
                 </section>
 
+                {/* Related Links Section */}
+                <section className="mb-10">
+                    <AllRelatedLinks article={state.article} />
+                    <LinkStats article={state.article} />
+                </section>
+
                 {/* Comments section */}
                 <section className="grid gap-10 mb-10 grid-cols-2">
                     <CommentComplex
@@ -488,21 +636,6 @@ async function Article({ params , searchParams}: any) {
                 <div className="flex justify-center items-center flex-wrap sm:gap-8 gap-10 mt-24 text-center">
                     <DescProductBoxes />
                 </div>
-                {/* Toast notifications */}
-                <ToastContainer
-                    position="bottom-left"
-                    autoClose={5000}
-                    limit={2}
-                    hideProgressBar={false}
-                    newestOnTop
-                    closeOnClick={false}
-                    rtl={true}
-                    pauseOnFocusLoss
-                    draggable
-                    pauseOnHover
-                    theme="dark"
-                    transition={Bounce}
-                />
             </div>
         </>
     );

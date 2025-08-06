@@ -50,4 +50,4 @@ export default function SearchBox({ search }: SearchBoxProps) {
             </button>
         </>
     );
-} 
+}

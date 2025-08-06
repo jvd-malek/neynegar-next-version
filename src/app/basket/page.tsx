@@ -1,8 +1,7 @@
 import Box from '@/lib/Components/ProductBoxes/Box';
 import BoxHeader from '@/lib/Components/ProductBoxes/BoxHeader';
 import Link from 'next/link';
-import { Bounce, ToastContainer } from "react-toastify";
-import TxtInputs from '../account/TxtInputs';
+import TxtInputs from '../../lib/Components/Account/TxtInputs';
 import CostBox from '../../lib/Components/BasketBoxes/CostBox';
 import ProductBasBox from '../../lib/Components/BasketBoxes/ProductBasBox';
 import { cookies } from 'next/headers';
@@ -92,7 +91,10 @@ async function Basket({ searchParams }: any) {
     };
 
 
-    let localBasket: { count: number, productId: string }[] | [] = bas ? JSON.parse(bas?.value as string) : []
+    let localBasket: { count: number, productId: string }[] | [] = bas ? JSON.parse(bas?.value as string).map((item: any) => ({
+        productId: item.productId,
+        count: item.count
+    })) : []
 
     const offer = await fetch(
         `${process.env.NEXT_BACKEND_GRAPHQL_URL!}`,
@@ -206,21 +208,64 @@ async function Basket({ searchParams }: any) {
         .catch(error => {
             console.error("Error fetching user data:", error);
         }) : undefined
-        
-    const LocalBasket = localBasket.length > 0 ? await fetch(`${process.env.NEXT_PUBLIC_BASE_URL!}/api/products/localBasket`,
+    
+    const LocalBasket = localBasket.length > 0 ? await fetch(
+        `${process.env.NEXT_BACKEND_GRAPHQL_URL!}`,
         {
-            cache: "no-store",
             method: "POST",
+            cache: "no-store",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                basket: localBasket
+                query: `
+                    query GetLocalBasket($basket: [BasketInput!]!) {
+                        localBasket(basket: $basket) {
+                            basket {
+                                count
+                                productId {
+                                    _id
+                                    title
+                                    desc
+                                    weight
+                                    cover
+                                    brand
+                                    status
+                                    majorCat
+                                    minorCat
+                                    popularity
+                                    price
+                                    discount
+                                    discountRaw {
+                                        discount
+                                        date
+                                    }
+                                    showCount
+                                }
+                                currentPrice
+                                currentDiscount
+                                itemTotal
+                                itemDiscount
+                                itemWeight
+                            }
+                            subtotal
+                            totalDiscount
+                            total
+                            totalWeight
+                            shippingCost
+                            grandTotal
+                            state
+                        }
+                    }
+                `,
+                variables: {
+                    basket: localBasket
+                }
             })
         }
     )
         .then(res => res.json())
-        .then(res => res.basket ? res : null) : null
+        .then(res => res.data?.localBasket ? res.data.localBasket : null) : null
 
     const products: UserBasket[] = data?.state ?
         [...data.basket] :
@@ -281,21 +326,6 @@ async function Basket({ searchParams }: any) {
                     bascket
                 />
             </div>
-
-            <ToastContainer
-                position="bottom-left"
-                autoClose={5000}
-                limit={2}
-                hideProgressBar={false}
-                newestOnTop
-                closeOnClick={false}
-                rtl={true}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="dark"
-                transition={Bounce}
-            />
 
             <div className="lg:w-[85vw] md:w-[90vw] w-[98vw] mx-auto relative mt-16 px-2 md:px-0">
 

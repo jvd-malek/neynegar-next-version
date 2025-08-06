@@ -1,17 +1,16 @@
 "use client";
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import useSWR from 'swr';
-import { fetcher } from '@/lib/CustomeHook/fetcher';
 import KeyboardBackspaceRoundedIcon from '@mui/icons-material/KeyboardBackspaceRounded';
 import Link from 'next/link';
 import { Typewriter } from 'nextjs-simple-typewriter';
 import { IconButton } from "@mui/material";
-import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import { useEffect, useState } from 'react';
 import FilterListRoundedIcon from '@mui/icons-material/FilterListRounded';
 import FilterAltRoundedIcon from '@mui/icons-material/FilterAltRounded';
-import { Bounce, toast } from 'react-toastify';
 import LocalMallIcon from '@mui/icons-material/LocalMall';
+import { notify } from '@/lib/utils/notify';
+import { fetcher } from '@/lib/fetcher';
+import useSWR from 'swr';
 
 type BoxHeaderType = {
     title: string;
@@ -42,7 +41,6 @@ export default function BoxHeader({
     searchCat = false,
     initialLinks = []
 }: BoxHeaderType) {
-
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -52,10 +50,12 @@ export default function BoxHeader({
     const [selectionFilter, setSelectionFilter] = useState(false);
 
     // دریافت لینک‌ها با SWR با fallback از داده‌های اولیه
-    const { data: links } = useSWR('/api/link', fetcher, {
-        fallbackData: initialLinks,
+    const LINKS_QUERY = `query { links { _id txt path sort subLinks { link path brand } } }`;
+    const { data: linksData } = useSWR(LINKS_QUERY, (query) => fetcher(query), {
+        fallbackData: { links: initialLinks },
         revalidateOnFocus: false,
     });
+    const links = linksData?.links || initialLinks;
 
     // تعریف انواع مرتب‌سازی
     const allSort: SortType[] = [
@@ -102,34 +102,16 @@ export default function BoxHeader({
 
     // به‌روزرسانی پارامترهای جستجو
     const updateSearchParams = (params: Record<string, string>) => {
-        if (catTitle == "جستجو") {
-            router.push(`/category/search/${params.search}`)
-        } else {
-            const newParams = new URLSearchParams(searchParams.toString());
-            Object.entries(params).forEach(([key, value]) => {
-                newParams.set(key, value);
-            });
-            router.push(`${pathname}?${newParams.toString()}`);
-        }
-    };
-
-    const notify = () => {
-        toast.success('فیلتر اعمال شد!', {
-            position: "bottom-left",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: false,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "dark",
-            transition: Bounce,
+        const newParams = new URLSearchParams(searchParams.toString());
+        Object.entries(params).forEach(([key, value]) => {
+            newParams.set(key, value);
         });
+        router.push(`${pathname}?${newParams.toString()}`);
     };
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        notify();
+        notify('فیلتر اعمال شد!', 'success');
     };
 
     return (
@@ -196,6 +178,8 @@ export default function BoxHeader({
 
             {searchBar && (
                 <form onSubmit={handleSearch} className="flex md:flex-wrap lg:flex-row flex-col gap-4 justify-between sm:items-center w-full mx-auto mt-10">
+
+                    {/* فیلترها و سوئیچ - وسط */}
                     <div className="sm:flex-row flex-col flex gap-4 sm:items-center">
                         <div className="flex gap-4 text-white">
                             {/* فیلتر مرتب‌سازی */}
@@ -213,7 +197,7 @@ export default function BoxHeader({
                                         value={currentSort}
                                         onChange={(e) => {
                                             updateSearchParams({ sort: e.target.value, page: '1' });
-                                            notify();
+                                            notify('فیلتر اعمال شد!', 'success');
                                         }}
                                         className="bg-black transition-all outline-none w-full"
                                         aria-label="مرتب‌سازی نتایج"
@@ -241,7 +225,7 @@ export default function BoxHeader({
                                             value={currentCat}
                                             onChange={(e) => {
                                                 updateSearchParams({ cat: e.target.value, page: '1' });
-                                                notify();
+                                                notify('فیلتر اعمال شد!', 'success');
                                             }}
                                             className="bg-black transition-all outline-none w-full"
                                             aria-label="فیلتر بر اساس دسته‌بندی"
@@ -254,70 +238,26 @@ export default function BoxHeader({
                                 </div>
                             )}
                         </div>
-
-                        {/* تعداد در صفحه */}
-                        <div className="p-2 text-white bg-black transition-all rounded-lg flex items-center w-fit shadow-md whitespace-nowrap">
-                            <label htmlFor="count-per-page" className="mr-2">تعداد در صفحه:</label>
-                            <select
-                                id="count-per-page"
-                                value={currentCount}
-                                onChange={(e) => {
-                                    updateSearchParams({ count: e.target.value, page: '1' });
-                                    notify();
-                                }}
-                                className="bg-black transition-all outline-none"
-                                aria-label="تعداد موارد نمایش داده شده در هر صفحه"
-                            >
-                                {count.map(i => (
-                                    <option value={i} key={i}>{i}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* سوئیچ محصولات/مقالات */}
-                        {searchCat && setArticle && (
-                            <div className="text-lg shadow-md rounded-lg w-fit overflow-hidden flex justify-center">
-                                <button
-                                    type="button"
-                                    className={`p-[0.4rem] hover:bg-blue-300 hover:text-blue-950 dark:hover:bg-[#3F6CD8] dark:hover:text-white w-24 transition-colors border-l-2 border-solid border-white dark:border-slate-800 ${!article ? "dark:bg-[#3F6CD8] bg-blue-300 text-blue-950" : "bg-black"}`}
-                                    onClick={() => { setArticle(false); updateSearchParams({ page: '1' }); notify(); }}
-                                    aria-label="نمایش محصولات"
-                                >
-                                    محصولات
-                                </button>
-                                <button
-                                    type="button"
-                                    className={`p-[0.4rem] hover:bg-blue-300 hover:text-blue-950 dark:hover:bg-[#3F6CD8] dark:hover:text-white w-24 transition-colors ${article ? "bg-blue-300 text-blue-950 dark:bg-[#3F6CD8]" : "bg-black"}`}
-                                    onClick={() => { setArticle(true); updateSearchParams({ page: '1' }); notify(); }}
-                                    aria-label="نمایش مقالات"
-                                >
-                                    مقالات
-                                </button>
-                            </div>
-                        )}
                     </div>
 
-                    {/* جستجو */}
-                    {/* <div className="flex justify-center items-center gap-2 bg-black text-white transition-all rounded-lg shadow-md h-fit w-fit">
-                        <div className="">
-                            <input
-                                type="text"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                onKeyUp={(e) => e.code == "ENTER" && updateSearchParams({ search })}
-                                className="py-1 px-4 outline-none rounded-full transition-all placeholder:text-slate-100 bg-black sm:w-full line-clamp-1"
-                                placeholder={`جستجو در ${title}`}
-                                aria-label="جستجو"
-                            />
-                        </div>
-                        <IconButton type="submit" aria-label="اعمال جستجو"
-                            onClick={() => updateSearchParams({ search })}
+                    {/* تعداد در صفحه - سمت چپ */}
+                    <div className="p-2 text-white bg-black transition-all rounded-lg flex items-center w-fit shadow-md whitespace-nowrap">
+                        <label htmlFor="count-per-page" className="mr-2">تعداد در صفحه:</label>
+                        <select
+                            id="count-per-page"
+                            value={currentCount}
+                            onChange={(e) => {
+                                updateSearchParams({ count: e.target.value, page: '1' });
+                                notify('فیلتر اعمال شد!', 'success');
+                            }}
+                            className="bg-black transition-all outline-none"
+                            aria-label="تعداد موارد نمایش داده شده در هر صفحه"
                         >
-                            <div className="h-6 -translate-y-1 text-white">
-                                <SearchRoundedIcon />
-                            </div>
-                        </IconButton>
-                    </div> */}
+                            {count.map(i => (
+                                <option value={i} key={i}>{i}</option>
+                            ))}
+                        </select>
+                    </div>
                 </form>
             )}
         </div>

@@ -56,8 +56,8 @@ ${productsText}
 
 جمع کل: ${data.subtotal.toLocaleString('fa-IR')} تومان
 تخفیف: ${data.totalDiscount.toLocaleString('fa-IR')} تومان
-هزینه ارسال: ${basketForm?.shipment === "post" ? `${data.shippingCost.toLocaleString('fa-IR')} تومان` : "دریافت هزینه در مقصد"}
-مبلغ نهایی: ${(basketForm?.shipment === "post" ? data.grandTotal : data.total).toLocaleString('fa-IR')} تومان
+هزینه ارسال: ${basketForm?.shipment === "پست" ? `${data.shippingCost.toLocaleString('fa-IR')} تومان` : "دریافت هزینه در مقصد"}
+مبلغ نهایی: ${(basketForm?.shipment === "پست" ? data.grandTotal : data.total).toLocaleString('fa-IR')} تومان
 
 از سفارش شما سپاس‌گذاریم. ❤️`;
 };

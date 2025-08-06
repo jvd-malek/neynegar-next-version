@@ -9,18 +9,6 @@ import ArticleBox from "@/lib/Components/ArticleBoxes/ArticleBox";
 import PaginationBox from "@/lib/Components/Pagination/PaginationBox";
 import { getLinks } from "@/lib/actions/link.actions";
 import { Metadata } from "next";
-import { Bounce, ToastContainer } from "react-toastify";
-
-interface CategoryProps {
-    params: { slug: string[] };
-    searchParams: {
-        page?: string;
-        sort?: string;
-        cat?: string;
-        count?: string;
-        search?: string;
-    };
-}
 
 export async function generateMetadata({ params }: any): Promise<Metadata> {
     const param = await params; // Await the params first
@@ -59,8 +47,8 @@ export async function generateMetadata({ params }: any): Promise<Metadata> {
 
 const Category = async ({ params, searchParams }: any) => {
     const [slug, search] = await Promise.all([
-        params.slug,
-        searchParams
+        await params.slug,
+        await searchParams
     ]);
 
     const page = {
@@ -72,35 +60,66 @@ const Category = async ({ params, searchParams }: any) => {
     };
 
     const isArticle = decodeURIComponent(slug[0]) === "مقالات";
-    const categoryName = decodeURIComponent(slug[0]) == "search" ? "جستجو" : decodeURIComponent(slug[0]);
+    const isSearch = decodeURIComponent(slug[0]) === "search";
+    const isCourseCategory = decodeURIComponent(slug[0]) === "دوره";
+    const categoryName = isSearch ? "جستجو" : decodeURIComponent(slug[0]);
     const subCategory = slug[1] ? decodeURIComponent(slug[1]) : null;
     const initialLinks = await getLinks();
 
     // Fetch data with pagination
-    const [productsData, articles] = await Promise.all([
-        isArticle ? { products: [], totalPages: 0, currentPage: 1, total: 0 } : fetchProducts(slug, page),
-        isArticle ? fetchArticles(slug) : [],
-    ]);
+    let productsData = { products: [], totalPages: 0, currentPage: 1, total: 0 };
+    let articlesData = { articles: [], totalPages: 0, currentPage: 1, total: 0 };
+    let courseProducts: any[] = [];
+    if (isCourseCategory) {
+        // کوئری دوره‌ها بر اساس دسته‌بندی و جمع‌آوری محصولات مرتبط
+        const query = `
+        query CoursesByCategory($category: String!) {
+          coursesByCategory(category: $category) {
+            relatedProducts {
+              _id
+              title
+              desc
+              price { price date }
+              discount { discount date }
+              popularity
+              cover
+              brand
+              showCount
+              majorCat
+              minorCat
+            }
+          }
+        }
+      `;
+        const variables = { category: decodeURIComponent(slug[1]) };
 
-    const filteredProducts = filterAndSortProducts(productsData.products, page, slug);
-    const filteredArticles = filterAndSortArticles(articles, page, slug);
+        const res = await fetch(`${process.env.NEXT_BACKEND_GRAPHQL_URL!}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query, variables }),
+            next: { revalidate: 3600 }
+        });
+        const data = await res.json();
+        courseProducts = (data.data.coursesByCategory || []).flatMap((c: any) => c.relatedProducts || []);
+    } else {
+        [productsData, articlesData] = await Promise.all([
+            isArticle ? { products: [], totalPages: 0, currentPage: 1, total: 0 } : fetchProducts(slug, page),
+            isArticle ? fetchArticles(slug, page) : { articles: [], totalPages: 0, currentPage: 1, total: 0 },
+        ]);
+    }
+
+    // If it's a search, also fetch articles for products
+    let searchArticlesData = { articles: [], totalPages: 0, currentPage: 1, total: 0 };
+    if (isSearch && !isArticle) {
+        searchArticlesData = await fetchArticles(slug, page);
+    }
+
+    const filteredProducts = productsData.products.length > 0 ? productsData.products : courseProducts
+    const filteredArticles = filterAndSortArticles(articlesData.articles || articlesData, page, slug);
+    const filteredSearchArticles = filterAndSortArticles(searchArticlesData.articles, page, slug);
 
     return (
         <div className="font-[Baloo]">
-            <ToastContainer
-                position="bottom-left"
-                autoClose={5000}
-                limit={2}
-                hideProgressBar={false}
-                newestOnTop
-                closeOnClick={false}
-                rtl={true}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="dark"
-                transition={Bounce}
-            />
 
             {/* Hero Section */}
             <section aria-labelledby="category-heading" className="relative bg-[url(../../public/Img/blue-low.webp)] bg-repeat bg-contain w-full pt-10 lg:h-[75vh] sm:h-[100vh] h-[70vh] text-white flex justify-center items-center">
@@ -119,7 +138,7 @@ const Category = async ({ params, searchParams }: any) => {
                     all={false}
                     searchBar={true}
                     article={isArticle}
-                    searchCat={categoryName === "search"}
+                    searchCat={isSearch}
                     catTitle={subCategory ? categoryName : undefined}
                 />
             </section>
@@ -151,6 +170,22 @@ const Category = async ({ params, searchParams }: any) => {
                                     </li>
                                 ))}
                     </ul>
+
+                    {/* Show articles in search results for products */}
+                    {isSearch && !isArticle && filteredSearchArticles.length > 0 && (
+                        <>
+                            <h3 className="text-2xl font-bold text-center mt-16 mb-8 text-slate-700">مقالات مرتبط</h3>
+                            <ul className="flex flex-wrap justify-center sm:gap-[3.5rem] gap-4 w-[90vw] mx-auto">
+                                {filteredSearchArticles
+                                    .slice(0, 6) // Show only first 6 articles
+                                    .map(article => (
+                                        <li key={article._id} itemScope itemType="https://schema.org/Article">
+                                            <ArticleBox {...article} />
+                                        </li>
+                                    ))}
+                            </ul>
+                        </>
+                    )}
                 </section>
 
                 {/* Pagination */}
@@ -160,10 +195,10 @@ const Category = async ({ params, searchParams }: any) => {
                         currentPage={productsData.currentPage}
                     />
                 )}
-                {(isArticle && filteredArticles.length > page.count) && (
+                {(isArticle && (articlesData.totalPages > 1 || (articlesData.totalPages === 0 && filteredArticles.length > page.count))) && (
                     <PaginationBox
-                        count={Math.ceil(filteredArticles.length / page.count)}
-                        currentPage={page.page}
+                        count={articlesData.totalPages || Math.ceil(filteredArticles.length / page.count)}
+                        currentPage={articlesData.currentPage || page.page}
                     />
                 )}
 
@@ -212,6 +247,7 @@ async function fetchProducts(loc: string[], page: any) {
                         showCount
                         majorCat
                         minorCat
+                        state
                     }
                     totalPages
                     currentPage
@@ -266,6 +302,7 @@ async function fetchProducts(loc: string[], page: any) {
                     showCount
                     majorCat
                     minorCat
+                    state
                 }
                 totalPages
                 currentPage
@@ -300,61 +337,188 @@ async function fetchProducts(loc: string[], page: any) {
     return data.data.productsByCategory;
 }
 
-async function fetchArticles(loc: string[]) {
-    const url = loc[1]
-        ? `${process.env.NEXT_PUBLIC_BASE_URL!}/api/articles/${decodeURIComponent(loc[0])}/${decodeURIComponent(loc[1])}`
-        : `${process.env.NEXT_PUBLIC_BASE_URL!}/api/articles/${decodeURIComponent(loc[0])}`;
+async function fetchArticles(loc: string[], page: any) {
+    // اگر جستجو باشد
+    if (decodeURIComponent(loc[0]) === "search") {
+        const query = `
+            query SearchArticles($query: String!, $page: Int, $limit: Int) {
+                searchArticles(query: $query, page: $page, limit: $limit) {
+                    articles {
+                        _id
+                        title
+                        desc
+                        content
+                        subtitles
+                        views
+                        cover
+                        images
+                        popularity
+                        authorId {
+                            _id
+                            firstname
+                            lastname
+                            fullName
+                        }
+                        majorCat
+                        minorCat
+                        createdAt
+                        updatedAt
+                    }
+                    totalPages
+                    currentPage
+                    total
+                }
+            }
+        `;
 
-    const res = await fetch(url, { next: { revalidate: 3600 } }); // Revalidate every hour
-    return await res.json();
+        const variables = {
+            query: decodeURIComponent(loc[1]),
+            page: page.page,
+            limit: page.count
+        };
+
+        const res = await fetch(`${process.env.NEXT_BACKEND_GRAPHQL_URL!}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                query,
+                variables
+            }),
+            next: { revalidate: 3600 }
+        });
+
+        const data = await res.json();
+        return data.data.searchArticles;
+    }
+
+    // اگر دسته‌بندی باشد
+    const query = `
+        query ArticlesByCategory($majorCat: String!, $minorCat: String, $page: Int, $limit: Int, $search: String, $sort: String, $cat: String) {
+            articlesByCategory(
+                majorCat: $majorCat, 
+                minorCat: $minorCat, 
+                page: $page, 
+                limit: $limit,
+                search: $search,
+                sort: $sort,
+                cat: $cat
+            ) {
+                articles {
+                    _id
+                    title
+                    desc
+                    content
+                    subtitles
+                    views
+                    cover
+                    images
+                    popularity
+                    authorId {
+                        _id
+                        firstname
+                        lastname
+                        fullName
+                    }
+                    majorCat
+                    minorCat
+                    createdAt
+                    updatedAt
+                }
+                totalPages
+                currentPage
+                total
+            }
+        }
+    `;
+
+    const variables = {
+        majorCat: decodeURIComponent(loc[0]),
+        minorCat: loc[1] ? decodeURIComponent(loc[1]) : null,
+        page: page.page,
+        limit: page.count,
+        search: page.search,
+        sort: page.sort,
+        cat: page.cat
+    };
+
+    const res = await fetch(`${process.env.NEXT_BACKEND_GRAPHQL_URL!}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            query,
+            variables
+        }),
+        next: { revalidate: 3600 }
+    });
+
+    const data = await res.json();    
+    return data.data.articlesByCategory;
 }
 
-function filterAndSortProducts(products: productCoverType, page: any, loc: string[]) {
-    return [...products]
-        .sort((a, b) => {
-            // اول بر اساس موجودی مرتب می‌کنیم
-            if (a.showCount > 0 && b.showCount <= 0) return -1;
-            if (a.showCount <= 0 && b.showCount > 0) return 1;
+// function filterAndSortProducts(products: productCoverType, page: any, loc: string[]) {
+//     return [...products]
+//         .sort((a, b) => {
+//             // اول بر اساس موجودی مرتب می‌کنیم
+//             if (a.showCount > 0 && b.showCount <= 0) return -1;
+//             if (a.showCount <= 0 && b.showCount > 0) return 1;
 
-            // سپس بر اساس نوع مرتب‌سازی انتخاب شده
+//             // سپس بر اساس نوع مرتب‌سازی انتخاب شده
+//             switch (page.sort) {
+//                 case 'expensive':
+//                     return calculateFinalPrice(b) - calculateFinalPrice(a);
+//                 case 'cheap':
+//                     return calculateFinalPrice(a) - calculateFinalPrice(b);
+//                 case 'popular':
+//                     return b.popularity - a.popularity;
+//                 case 'offers':
+//                     const aLastDiscount = a.discount[a.discount.length - 1];
+//                     const bLastDiscount = b.discount[b.discount.length - 1];
+//                     const now = Date.now();
+
+//                     // اگر تخفیف معتبر باشد (تاریخ آن نگذشته باشد)
+//                     const aValidDiscount = aLastDiscount && aLastDiscount.date > now ? aLastDiscount.discount : 0;
+//                     const bValidDiscount = bLastDiscount && bLastDiscount.date > now ? bLastDiscount.discount : 0;
+
+//                     return bValidDiscount - aValidDiscount;
+//                 default:
+//                     return 0;
+//             }
+//         });
+// }
+
+function filterAndSortArticles(articles: articleAuthorCoverType, page: any, loc: string[]) {
+    return [...articles]
+        .filter(a => {
+            if (page.cat === 'همه') return true;
+            return !loc[1] ? a.minorCat == page.cat : a.minorCat === page.cat;
+        })
+        .filter(a => a.title.includes(page.search.trim()))
+        .sort((a, b) => {
+            // اول بر اساس نوع مرتب‌سازی انتخاب شده
             switch (page.sort) {
-                case 'expensive':
-                    return calculateFinalPrice(b) - calculateFinalPrice(a);
-                case 'cheap':
-                    return calculateFinalPrice(a) - calculateFinalPrice(b);
                 case 'popular':
                     return b.popularity - a.popularity;
-                case 'offers':
-                    const aLastDiscount = a.discount[a.discount.length - 1];
-                    const bLastDiscount = b.discount[b.discount.length - 1];
-                    const now = Date.now();
-                    
-                    // اگر تخفیف معتبر باشد (تاریخ آن نگذشته باشد)
-                    const aValidDiscount = aLastDiscount && aLastDiscount.date > now ? aLastDiscount.discount : 0;
-                    const bValidDiscount = bLastDiscount && bLastDiscount.date > now ? bLastDiscount.discount : 0;
-                    
-                    return bValidDiscount - aValidDiscount;
+                case 'views':
+                    return b.views - a.views;
+                case 'latest':
+                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                case 'oldest':
+                    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
                 default:
                     return 0;
             }
         });
 }
 
-function filterAndSortArticles(articles: articleAuthorCoverType, page: any, loc: string[]) {
-    return [...articles]
-        .filter(a => {
-            if (page.cat === 'همه') return true;
-            return !loc[1] ? a.minorCat == page.cat : a.subCat === page.cat;
-        })
-        .filter(a => a.title.includes(page.search.trim()))
-        .sort((a, b) => page.sort === 'popular' ? b.popularity - a.popularity : 0);
-}
-
 function calculateFinalPrice(product: any) {
     const lastDiscount = product.discount[product.discount.length - 1];
     const lastPrice = product.price[product.price.length - 1].price;
     const now = Date.now();
-    
+
     // اگر تخفیف معتبر باشد (تاریخ آن نگذشته باشد)
     const validDiscount = lastDiscount && lastDiscount.date > now ? lastDiscount.discount : 0;
     return validDiscount > 0 ? (lastPrice * (100 - validDiscount) / 100) : lastPrice;

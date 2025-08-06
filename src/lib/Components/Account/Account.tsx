@@ -1,20 +1,20 @@
 import KeyboardBackspaceRoundedIcon from '@mui/icons-material/KeyboardBackspaceRounded';
 import CircleNotificationsRoundedIcon from '@mui/icons-material/CircleNotificationsRounded';
-import CommentBox from "@/lib/Components/Comment/CommentBox";
 import CommentInput from '@/lib/Components/Comment/CommentInput';
 import { userType } from '@/lib/Types/user';
 import SentimentDissatisfiedTwoToneIcon from '@mui/icons-material/SentimentDissatisfiedTwoTone';
 import { paginatedTicketsType, ticketType } from '@/lib/Types/ticket';
 import moment from "jalali-moment"
 import Box from '@/lib/Components/ProductBoxes/Box';
-import AccountProductBox from '@/lib/Components/ProductBoxes/AccountProductBox';
 import Link from 'next/link';
 import { paginatedCommentsType } from '@/lib/Types/comment';
 import { paginatedOrdersType } from '@/lib/Types/order';
-import { Bounce, ToastContainer } from 'react-toastify';
-import ProductInput from '@/lib/Components/CMS/ProductInput';
 import OrderListBox from '@/lib/Components/OrderListBox';
 import ReadingListBox from '@/lib/Components/ReadingListBox';
+import TxtInputs from './TxtInputs';
+import CommentListBox from '@/lib/Components/Account/CommentListBox';
+import TicketListBox from '@/lib/Components/Account/TicketListBox';
+import CourseListBox from '@/lib/Components/Account/CourseListBox';
 
 type AccountChildType = {
     type: string,
@@ -30,20 +30,6 @@ function AccountChild({ type, user, orders, comments, tickets }: AccountChildTyp
 
     return (
         <>
-            <ToastContainer
-                position="bottom-left"
-                autoClose={5000}
-                limit={2}
-                hideProgressBar={false}
-                newestOnTop
-                closeOnClick={false}
-                rtl={true}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="dark"
-                transition={Bounce}
-            />
 
             {
                 type !== "خانه" &&
@@ -93,6 +79,26 @@ function AccountChild({ type, user, orders, comments, tickets }: AccountChildTyp
                         <section>
                             <div className="flex justify-between items-center border-solid border-b border-slate-400 pb-3">
                                 <p className=" text-lg">
+                                    دوره‌های من
+                                </p>
+                                <Link
+                                    href='?activeLink=دوره‌های من'
+                                    className="flex items-center gap-x-1.5 cursor-pointer">
+                                    مشاهده همه
+                                    <span className="text-slate-700">
+                                        <KeyboardBackspaceRoundedIcon />
+                                    </span>
+                                </Link>
+                            </div>
+
+                            <div className="mt-10 w-full">
+                                <CourseListBox courseProgress={user.courseProgress} demo />
+                            </div>
+                        </section>
+
+                        <section>
+                            <div className="flex justify-between items-center border-solid border-b border-slate-400 pb-3">
+                                <p className=" text-lg">
                                     تخفیف‌های فعال من
                                 </p>
                             </div>
@@ -132,7 +138,7 @@ function AccountChild({ type, user, orders, comments, tickets }: AccountChildTyp
                                 </Link>
                             </div>
                             <div className="mt-10 w-full">
-                                <OrderListBox orders={orders.orders.splice(0, 3)} user={user} />
+                                <OrderListBox orders={orders} user={user} demo />
                             </div>
                         </section>
 
@@ -150,15 +156,9 @@ function AccountChild({ type, user, orders, comments, tickets }: AccountChildTyp
                                     </span>
                                 </Link>
                             </div>
-                            {
-                                comments?.comments.length > 0 ?
-                                    comments.comments.slice(0, 2).map((c: any) => (
-                                        <div className="" key={c._id}>
-                                            <CommentBox account={true} {...c} />
-                                        </div>
-                                    )) :
-                                    <p className="bg-white mt-7 shadow-cs py-4 px-6 rounded-xl w-full flex justify-between items-center sm:flex-row flex-col">هنوز نظری به اشتراک نگذاشته‌اید.</p>
-                            }
+                            <div className="mt-10 w-full">
+                                <CommentListBox comments={comments} user={user} demo />
+                            </div>
                         </section>
 
                         <section>
@@ -175,16 +175,11 @@ function AccountChild({ type, user, orders, comments, tickets }: AccountChildTyp
                                     </span>
                                 </Link>
                             </div>
-                            {
-                                tickets && tickets.tickets.length > 0 ?
-                                    tickets.tickets.slice(0, 2).map((c: ticketType) => (
-                                        <div className="" key={c._id}>
-                                            <CommentBox ticket={true} {...c} />
-                                        </div>
-                                    )) :
-                                    <p className="bg-white mt-7 shadow-cs py-4 px-6 rounded-xl w-full flex justify-between items-center sm:flex-row flex-col">هنوز سوالی ثبت نکرده‌اید.</p>
-                            }
+                            <div className="mt-10 w-full">
+                                <TicketListBox tickets={tickets} user={user} demo />
+                            </div>
                         </section>
+
                     </div>
 
                 </div>
@@ -192,82 +187,38 @@ function AccountChild({ type, user, orders, comments, tickets }: AccountChildTyp
 
             {
                 type === 'سفارشات' &&
-                <></>
-                // <div className="mt-24 pb-8">
-                //     <AccountProductBox orders={orders} user={user} />
-                // </div>
+                <div className="mt-24 w-full">
+                    <OrderListBox orders={orders} user={user} />
+                </div>
             }
 
             {
                 type === 'جزییات حساب' &&
-                <></>
+                <div className='mt-24 w-full'>
+                    <TxtInputs data={{ user }} account />
+                </div>
+            }
 
-                // <div className='mt-24 w-full'>
-                //     <div className="space-y-6">
-                //         <ProductInput
-                //             label="نام"
-                //             value={user?.name}
-                //             onChange={() => { }}
-                //             disabled
-                //         />
-                //         <ProductInput
-                //             label="شماره تلفن"
-                //             value={user?.phone}
-                //             onChange={() => { }}
-                //             disabled
-                //         />
-                //         <ProductInput
-                //             label="آدرس"
-                //             value={user?.address || ''}
-                //             onChange={() => { }}
-                //             type="textarea"
-                //         />
-                //         <ProductInput
-                //             label="کد پستی"
-                //             value={user?.postCode || ''}
-                //             type="number"
-                //             onChange={() => { }}
-                //         />
-                //     </div>
-                // </div>
+            {
+                type === "دوره‌های من" &&
+                <div className="mt-24 w-full">
+                    <CourseListBox courseProgress={user.courseProgress} />
+                </div>
             }
 
             {
                 type === 'نظرات' &&
-                <></>
-
-                // <div className="mt-24">
-                //     {
-                //         comments?.length > 0 ?
-                //             comments.reverse().map((c: any) => (
-                //                 <div className="" key={c._id}>
-                //                     <CommentBox account={true} {...c} />
-                //                 </div>
-                //             )) :
-                //             <p className="mt-7 bg-white shadow-cs py-4 px-6 rounded-xl w-full">هنوز نظری به اشتراک نگذاشته‌اید.</p>
-                //     }
-                // </div>
+                <div className="mt-24 w-full">
+                    <CommentListBox comments={comments} user={user} />
+                </div>
             }
 
             {
                 type === 'پرسش و پاسخ' &&
-                <></>
-
-                // <div className="mt-24">
-                //     <CommentInput ticket={true} />
-                //     <p className=" text-lg border-solid border-b border-slate-400 my-10 pb-3">
-                //         سوالات شما
-                //     </p>
-                //     {
-                //         tickets && tickets.length > 0 ?
-                //             tickets.reverse().map((c: ticketType) => (
-                //                 <div className="" key={c._id}>
-                //                     <CommentBox ticket={true} {...c} />
-                //                 </div>
-                //             )) :
-                //             <p className="mt-7 bg-white shadow-cs py-4 px-6 rounded-xl w-full">هنوز سوالی ثبت نکرده‌اید.</p>
-                //     }
-                // </div>
+                <div className="mt-24 w-full">
+                    <CommentInput ticket={true} />
+                    <TicketListBox tickets={tickets} user={user} />
+                </div>
             }
         </>
     );

@@ -5,6 +5,8 @@ import { getCookie } from 'cookies-next';
 import SearchableAuthorSelect from './SearchableAuthorSelect';
 import ProductInput from './ProductInput';
 import { linksType } from '@/lib/Types/links';
+import InternalLinkSelector from './InternalLinkSelector';
+import LinkPreview from './LinkPreview';
 
 const ADD_ARTICLE = `
     mutation CreateArticle($input: ArticleInput!) {
@@ -164,7 +166,7 @@ function CMSAddArticle({ links = [], authors = [] }: { links: linksType[], autho
                     throw new Error('No authentication token found');
                 }
 
-                const fileResponse = await fetch('http://localhost:4000/upload', {
+                const fileResponse = await fetch('https://api.neynegar1.ir/upload', {
                     method: 'POST',
                     headers: {
                         'authorization': jwt,
@@ -200,7 +202,7 @@ function CMSAddArticle({ links = [], authors = [] }: { links: linksType[], autho
                 throw new Error('No authentication token found');
             }
 
-            const response = await fetch('http://localhost:4000/graphql', {
+            const response = await fetch('https://api.neynegar1.ir/graphql', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -291,6 +293,41 @@ function CMSAddArticle({ links = [], authors = [] }: { links: linksType[], autho
                         onChange={(value) => handleFieldChange('desc', value)}
                         error={errors.desc}
                     />
+
+                    {/* Internal Link Selectors for Description */}
+                    <div className="col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            افزودن لینک داخلی به توضیحات
+                        </label>
+                        <div className="flex gap-2">
+                            <div className="flex-1">
+                                <InternalLinkSelector
+                                    type="article"
+                                    placeholder="جستجوی مقاله..."
+                                    onSelect={(link) => {
+                                        handleFieldChange('desc', formData.desc + ' ' + link);
+                                    }}
+                                />
+                            </div>
+                            <div className="flex-1">
+                                <InternalLinkSelector
+                                    type="product"
+                                    placeholder="جستجوی محصول..."
+                                    onSelect={(link) => {
+                                        handleFieldChange('desc', formData.desc + ' ' + link);
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Link Preview for Description */}
+                    <div className="col-span-2">
+                        <LinkPreview 
+                            content={formData.desc || ''} 
+                            title="پیش‌نمایش لینک‌های توضیحات"
+                        />
+                    </div>
 
                     <ProductInput
                         form
@@ -419,6 +456,46 @@ function CMSAddArticle({ links = [], authors = [] }: { links: linksType[], autho
                                     type="textarea"
                                     onChange={(value) => handleContentSectionChange(index, 'content', String(value))}
                                     error={errors[`content_${index}`]}
+                                />
+                                
+                                {/* Internal Link Selectors for Content */}
+                                <div className="mt-2">
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                                        افزودن لینک داخلی
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <div className="flex-1">
+                                            <InternalLinkSelector
+                                                type="article"
+                                                placeholder="جستجوی مقاله..."
+                                                onSelect={(link) => {
+                                                    const newContent = section.content + ' ' + link;
+                                                    handleContentSectionChange(index, 'content', newContent);
+                                                }}
+                                            />
+                                        </div>
+                                        <div className="flex-1">
+                                            <InternalLinkSelector
+                                                type="product"
+                                                placeholder="جستجوی محصول..."
+                                                onSelect={(link) => {
+                                                    const newContent = section.content + ' ' + link;
+                                                    handleContentSectionChange(index, 'content', newContent);
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="text-xs text-blue-600 mb-2 -mt-2">
+                                    💡 برای لینک خارجی: [متن نمایشی](https://example.com)<br/>
+                                    💡 برای لینک داخلی: [متن نمایشی](/article/ARTICLE_ID) یا [متن نمایشی](/product/PRODUCT_ID)
+                                </div>
+                                
+                                {/* Link Preview for Content */}
+                                <LinkPreview 
+                                    content={section.content || ''} 
+                                    title={`پیش‌نمایش لینک‌های بخش ${index + 1}`}
                                 />
                             </div>
                         </div>

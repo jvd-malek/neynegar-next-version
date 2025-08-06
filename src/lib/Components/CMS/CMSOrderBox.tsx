@@ -1,12 +1,15 @@
-'use client';
+'use client'
 
 import PaginationBox from '@/lib/Components/Pagination/PaginationBox'
 import SearchBox from './SearchBox';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import useSWR from 'swr';
 import { orderType } from '@/lib/Types/order';
 import { Modal } from '@mui/material';
 import { fetcher } from '@/lib/fetcher';
+import ReceiptRoundedIcon from '@mui/icons-material/ReceiptRounded';
+import { generateReceiptText } from '../BasketBoxes/ReceiptUtils';
+import ReceiptCopyButton from '../BasketBoxes/ReceiptCopyButton';
 
 interface CMSOrderBoxProps {
     type: string;
@@ -91,6 +94,7 @@ function CMSOrderBox({ type, page }: CMSOrderBoxProps) {
     const [orderVisibility, setOrderVisibility] = useState<Record<string, boolean>>({});
     const [trackingCode, setTrackingCode] = useState('');
     const [editingTrackingCode, setEditingTrackingCode] = useState<string | null>(null);
+    const [receipt, setReceipt] = useState(false);
 
     const toggleOrderDetails = (orderId: string) => {
         setOrderVisibility(prev => ({
@@ -98,6 +102,20 @@ function CMSOrderBox({ type, page }: CMSOrderBoxProps) {
             [orderId]: !prev[orderId]
         }));
     };
+
+    const receiptHandler = (order: orderType) => {
+        setReceipt(!receipt);
+        setSelectedOrder(order);
+    };
+
+    function getReceiptDataFromOrder(order: orderType) {
+        const totalDiscount = order.discount || 0;
+        const subtotal = order.totalPrice / 10 + totalDiscount || 0;
+        const shippingCost = (order as any).shippingCost || 0;
+        const total = order.totalPrice / 10;
+        const grandTotal = total + shippingCost;
+        return { subtotal, totalDiscount, total, shippingCost, grandTotal };
+    }
 
     const variables = {
         page: page.page,
@@ -224,6 +242,13 @@ function CMSOrderBox({ type, page }: CMSOrderBoxProps) {
                                 >
                                     {orderVisibility[order._id] ? 'بستن جزئیات' : 'نمایش جزئیات'}
                                 </button>
+
+                                <button
+                                    onClick={() => receiptHandler(order)}
+                                    className="px-3 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 text-xs sm:text-sm"
+                                >
+                                    فاکتور
+                                </button>
                             </div>
                         </div>
 
@@ -279,7 +304,7 @@ function CMSOrderBox({ type, page }: CMSOrderBoxProps) {
                                                         <tr key={index} className="border-t">
                                                             <td className="px-3 py-1.5">
                                                                 <img
-                                                                    src={`https://api.neynegar1.ir/imgs/${product.productId.cover}`}
+                                                                    src={`https://api.neynegar1.ir/uploads/${product.productId.cover}`}
                                                                     alt={product.productId.title}
                                                                     className="w-20 h-20 object-cover rounded"
                                                                 />
@@ -301,47 +326,50 @@ function CMSOrderBox({ type, page }: CMSOrderBoxProps) {
 
 
                         <div className="flex md:justify-end justify-center gap-2 mt-4">
-                            {(order.status === "ارسال شد" || order.status === "تحویل داده‌شد") && (
-                                editingTrackingCode === order._id ? (
-                                    <div className="flex md:flex-row w-full flex-col gap-2">
-                                        <input
-                                            type="text"
-                                            value={trackingCode}
-                                            onChange={(e) => setTrackingCode(e.target.value)}
-                                            placeholder="کد رهگیری"
-                                            className="px-3 py-1.5 border rounded-lg text-sm"
-                                            disabled={isSaving}
-                                        />
-                                        <button
-                                            onClick={() => handleUpdateTrackingCode(order._id)}
-                                            className="px-3 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600"
-                                            disabled={isSaving}
-                                        >
-                                            {isSaving ? 'در حال ذخیره...' : 'ذخیره'}
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                setEditingTrackingCode(null);
-                                                setTrackingCode('');
-                                            }}
-                                            className="px-3 py-1.5 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
-                                            disabled={isSaving}
-                                        >
-                                            انصراف
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <button
-                                        onClick={() => {
-                                            setEditingTrackingCode(order._id);
-                                            setTrackingCode(order.postVerify || '');
-                                        }}
-                                        className="px-3 py-1.5 bg-blue-500 text-white rounded-lg w-full hover:bg-blue-600"
-                                    >
-                                        {order.postVerify ? 'ویرایش کد رهگیری' : 'افزودن کد رهگیری'}
-                                    </button>
-                                )
-                            )}
+                            {
+                                (order.status === "ارسال شد" || order.status === "تحویل داده‌شد") && (
+                                    editingTrackingCode === order._id ?
+                                        (
+                                            <div className="flex md:flex-row w-full flex-col gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={trackingCode}
+                                                    onChange={(e) => setTrackingCode(e.target.value)}
+                                                    placeholder="کد رهگیری"
+                                                    className="px-3 py-1.5 border rounded-lg text-sm"
+                                                    disabled={isSaving}
+                                                />
+                                                <button
+                                                    onClick={() => handleUpdateTrackingCode(order._id)}
+                                                    className="px-3 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                                                    disabled={isSaving}
+                                                >
+                                                    {isSaving ? 'در حال ذخیره...' : 'ذخیره'}
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setEditingTrackingCode(null);
+                                                        setTrackingCode('');
+                                                    }}
+                                                    className="px-3 py-1.5 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+                                                    disabled={isSaving}
+                                                >
+                                                    انصراف
+                                                </button>
+                                            </div>
+                                        ) :
+                                        (
+                                            <button
+                                                onClick={() => {
+                                                    setEditingTrackingCode(order._id);
+                                                    setTrackingCode(order.postVerify || '');
+                                                }}
+                                                className="px-3 py-1.5 bg-blue-500 text-white rounded-lg w-full hover:bg-blue-600"
+                                            >
+                                                {order.postVerify ? 'ویرایش کد رهگیری' : 'افزودن کد رهگیری'}
+                                            </button>
+                                        )
+                                )}
                             <button
                                 className="bg-red-500 cursor-pointer w-full text-white px-3 py-1.5 rounded-lg hover:bg-red-600"
                                 onClick={() => {
@@ -400,6 +428,91 @@ function CMSOrderBox({ type, page }: CMSOrderBoxProps) {
                                 انصراف
                             </button>
                         </div>
+                    </div>
+                </Modal>
+
+                {/* Receipt Modal */}
+                <Modal
+                    open={receipt}
+                    onClose={() => setReceipt(false)}
+                >
+                    <div className="bg-white text-slate-800 border rounded-lg shadow-lg px-6 py-8 max-w-md mx-auto absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 w-[95vw] h-[80vh] overflow-y-scroll scroll-smooth scrollbar-hidden flex flex-col justify-between" dir="rtl">
+                        <div className="">
+                            <div className="flex justify-between items-center">
+                                <h1 className="font-bold text-2xl my-3 text-center text-slate-700">
+                                    فروشگاه نی‌نگار
+                                </h1>
+                                <div className="text-slate-800">
+                                    <ReceiptRoundedIcon />
+                                </div>
+                            </div>
+                            <hr className="mb-4" />
+                            <div className="flex justify-between mb-4">
+                                <div className="text-gray-700 leading-7">
+                                    <div>{`تاریخ: ${new Date(Number(selectedOrder?.createdAt)).toLocaleDateString('fa-IR')}`}</div>
+                                    <div>{`سفارش: ${selectedOrder?._id}`}</div>
+                                    {selectedOrder?.paymentId &&
+                                        <div>{`کد رهگیری پرداخت: ${selectedOrder?.paymentId ?? "نامشخص"}`}</div>
+                                    }
+                                    {selectedOrder?.submition !== "پیک" && selectedOrder?.postVerify && (
+                                        <div>{`کد رهگیری پست: ${selectedOrder?.postVerify}`}</div>
+                                    )}
+                                </div>
+                                <div className="">
+                                    <ReceiptCopyButton receiptText={selectedOrder
+                                        ? generateReceiptText(
+                                            selectedOrder.products,
+                                            getReceiptDataFromOrder(selectedOrder),
+                                            {
+                                                name: selectedOrder.userId?.name || "",
+                                                address: selectedOrder.userId?.address?.split("%%")[2] || "",
+                                                state: selectedOrder.userId?.address?.split("%%")[0] || "",
+                                                city: selectedOrder.userId?.address?.split("%%")[1] || "",
+                                                shipment: selectedOrder.submition || "",
+                                            }
+                                        )
+                                        : ""} />
+                                </div>
+                            </div>
+                            <div className="mb-8">
+                                <div className="text-gray-700 mb-2">{selectedOrder?.userId?.name}</div>
+                                <div className="text-gray-700 mb-2">{selectedOrder?.userId?.address?.split("%%").join("-")}</div>
+                                <div className="text-gray-700 bg-slate-200 border-slate-300 border-solid border-2 rounded-md w-fit px-2 py-1">{selectedOrder?.submition}</div>
+                            </div>
+                            <table className="w-full mb-8 px-8">
+                                <thead>
+                                    <tr>
+                                        <th className="text-right font-bold text-gray-700">محصول</th>
+                                        <th className="text-left font-bold text-gray-700">قیمت</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {selectedOrder?.products.map((p, index) => (
+                                        <tr key={index}>
+                                            <td className="text-right text-gray-700">{`${p.productId.title}(${p.count.toLocaleString('fa-IR')})`}</td>
+                                            <td className="text-left text-gray-700">{p.price ? p.price.toLocaleString('fa-IR') : p.productId.price[p.productId.price.length - 1].price.toLocaleString('fa-IR')}
+                                                <span className="text-xs font-mono"> تومان</span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td className="text-right font-bold text-gray-700">تخفیف</td>
+                                        <td className="text-left font-bold text-gray-700">{selectedOrder?.discount.toLocaleString('fa-IR')}
+                                            <span className="text-xs font-mono"> تومان</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td className="text-right font-bold text-gray-700">جمع کل</td>
+                                        <td className="text-left font-bold text-gray-700">{`${selectedOrder?.totalPrice && ((selectedOrder.totalPrice / 10).toLocaleString('fa-IR'))} `}
+                                            <span className="text-xs font-mono">تومان</span>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <div className="text-gray-700">از سفارش شما سپاس‌گذاریم. ❤️</div>
                     </div>
                 </Modal>
             </div>

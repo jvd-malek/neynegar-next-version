@@ -48,6 +48,7 @@ export type productSingleType = {
     publishDate: string,
     brand: string,
     status: string,
+    state: string,
     size: string,
     weight: number,
     majorCat: string,

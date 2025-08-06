@@ -7,10 +7,11 @@ export type articleCoverType = {
     desc: string,
     majorCat: string,
     minorCat: string,
-    subCat: string
     popularity: number,
     authorId: string,
     cover: string,
+    views: number,
+    createdAt: string,
 }[]
 
 export type articleAuthorCoverType = {
@@ -19,10 +20,11 @@ export type articleAuthorCoverType = {
     desc: string,
     majorCat: string,
     minorCat: string,
-    subCat: string
     popularity: number,
     authorId: Author,
     cover: string,
+    views: number,
+    createdAt: string,
 }[]
 
 export type articleCoverProductType = {
@@ -36,7 +38,6 @@ export type articleSingleType = {
     desc: string,
     majorCat: string,
     minorCat: string,
-    subCat: string
     popularity: number,
     authorId: { _id: string, fullName: string , firstname: string, lastname: string },
     cover: string,
@@ -45,6 +46,7 @@ export type articleSingleType = {
     images: string[],
     views: number,
     createdAt: string,
+    updatedAt: string,
 }
 
 export type articleType = {

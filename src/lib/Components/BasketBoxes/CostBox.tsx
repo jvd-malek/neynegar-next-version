@@ -2,9 +2,10 @@
 import { getCookie } from "cookies-next";
 import { redirect } from "next/navigation";
 import { animateScroll } from "react-scroll";
-import { Bounce, toast } from "react-toastify"
 import DiscountInput from "./DiscountInput";
 import { useEffect, useState } from "react";
+import { fetcher } from "@/lib/fetcher";
+import { notify } from '@/lib/utils/notify';
 
 interface CostBoxProps {
     data: {
@@ -68,42 +69,39 @@ function CostBox({ data, page }: CostBoxProps) {
                     })
                     redirect(`?activeLink=shipment`)
                 } else {
-                    notify("لطفا تمامی اطلاعات مورد نیاز را به درستی پر کنید.")
+                    notify("لطفا تمامی اطلاعات مورد نیاز را به درستی پر کنید.", "warn")
                 }
             } else {
-                notify("لطفا تمامی اطلاعات مورد نیاز را به درستی پر کنید.")
+                notify("لطفا تمامی اطلاعات مورد نیاز را به درستی پر کنید.", "warn")
             }
         } else if (page.activeLink == "shipment") {
             if (jwt) {
-                await fetch(`${process.env.NEXT_PUBLIC_BASE_URL!}/api/checkout`, {
-                    method: "POST",
-                    headers: {
-                        'authorization': jwt as string,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ shipment, discount: DiscountCode })
-                })
-                    .then(res => res.json())
-                    .then(data => window.location.href = data.paymentURL)
+                const res = await fetcher(`
+                            mutation CreateCheckoutPayment($shipment: String!, $discount: Float!) {
+                                createCheckoutPayment(shipment: $shipment, discount: $discount) {
+                                    authority
+                                    paymentURL
+                                    success
+                                    message
+                                }
+                            }
+                        `,
+                    {
+                        shipment,
+                        discount: DiscountCode
+                    }
+                )
+
+                if (res.createCheckoutPayment?.paymentURL) {
+                    window.location.href = res.createCheckoutPayment.paymentURL;
+                } else {
+                    notify("خطا در ایجاد پرداخت", "error")
+                }
 
             } else {
-                notify("لطفا نحوه ارسال را انتخاب کنید.")
+                notify("لطفا نحوه ارسال را انتخاب کنید.", "warn")
             }
         }
-    }
-
-    const notify = (txt: string) => {
-        toast.warn(txt, {
-            position: "bottom-left",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: false,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "dark",
-            transition: Bounce,
-        });
     }
 
     return (
@@ -138,7 +136,7 @@ function CostBox({ data, page }: CostBoxProps) {
                 <div className="flex justify-around w-full items-center gap-6">
                     <h3 className="">بسته‌بندی و ارسال:</h3>
                     {
-                        shipment == "bike" &&
+                        shipment == "پیک" &&
                         <span className=' text-sm'>دریافت هزینه ارسال در مقصد</span>
                     }
                     {
@@ -146,7 +144,7 @@ function CostBox({ data, page }: CostBoxProps) {
                         <span className=' text-sm'>وابسته به نوع ارسال</span>
                     }
                     {
-                        shipment == "post" &&
+                        shipment == "پست" &&
                         <h3>
                             <strong>{data?.shippingCost.toLocaleString('fa-IR')} </strong><span className='text-sm'>تومان</span>
                         </h3>
@@ -165,11 +163,17 @@ function CostBox({ data, page }: CostBoxProps) {
                 <div className="flex justify-around w-full items-center gap-6 font-bold text-slate-800">
                     <h3 className="">قیمت قابل پرداخت:</h3>
                     <h2>
-                        <strong>{
-                            data?.grandTotal ?
-                                ((shipment == "post" ? data?.grandTotal - (data?.grandTotal * (100 - DiscountCode) / 100) : data?.total - (data?.total * (100 - DiscountCode) / 100))).toLocaleString('fa-IR') :
-                                0
-                                    .toLocaleString('fa-IR')} </strong><span className='text-sm'>تومان</span>
+                        <strong>
+                            {
+                                data?.grandTotal ?
+                                    ((shipment == "پست" ?
+                                        data?.grandTotal * (100 - DiscountCode) / 100 :
+                                        data?.total * (100 - DiscountCode) / 100))
+                                        .toLocaleString('fa-IR') :
+                                    0
+                                        .toLocaleString('fa-IR')
+                            }
+                        </strong><span className='text-sm'> تومان</span>
                     </h2>
                 </div>
 

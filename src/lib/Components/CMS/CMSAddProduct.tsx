@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import ProductInput, { DiscountInput } from './ProductInput';
 import SearchableAuthorSelect from './SearchableAuthorSelect';
-import { ProductInput as ProductInputType } from '@/types/product';
 import { validateField } from '@/lib/validation/productValidation';
 import { getCookie } from 'cookies-next';
 import { linksType } from '@/lib/Types/links';
@@ -172,7 +171,7 @@ function CMSAddProduct({ links = [], authors = [] }: { links: linksType[], autho
                 }
 
                 console.log('Uploading files to server...');
-                const fileResponse = await fetch('http://localhost:4000/upload', {
+                const fileResponse = await fetch('https://api.neynegar1.ir/upload', {
                     method: 'POST',
                     headers: {
                         'authorization': jwt,
@@ -203,7 +202,6 @@ function CMSAddProduct({ links = [], authors = [] }: { links: linksType[], autho
                 }
             }
 
-            console.log('Preparing product data...');
             // Create product data
             const productData = {
                 title: formData.title,
@@ -245,7 +243,7 @@ function CMSAddProduct({ links = [], authors = [] }: { links: linksType[], autho
                 throw new Error('No authentication token found');
             }
 
-            const response = await fetch('http://localhost:4000/graphql', {
+            const response = await fetch('https://api.neynegar1.ir/graphql', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -534,7 +532,8 @@ function CMSAddProduct({ links = [], authors = [] }: { links: linksType[], autho
                             { value: 'active', label: 'فعال' },
                             { value: 'inactive', label: 'غیرفعال' },
                             { value: 'outOfStock', label: 'ناموجود' },
-                            { value: 'comingSoon', label: 'به زودی' }
+                            { value: 'comingSoon', label: 'به زودی' },
+                            { value: 'callForPrice', label: 'تماس بگیرید' }
                         ]}
                         onChange={(value) => handleFieldChange('state', value)}
                         onFocus={() => handleFieldFocus('state', formData.state)}

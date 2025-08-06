@@ -1,4 +1,4 @@
-import AccountChild from "./Account";
+import AccountChild from "../../lib/Components/Account/Account";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -111,6 +111,33 @@ async function Account({ searchParams }: any) {
                                 createdAt
                             }
                         }
+                        courseProgress {
+                            courseId {
+                                _id
+                                title
+                                desc
+                                cover
+                                views
+                                popularity
+                                sections {
+                                    title
+                                    txt
+                                    images
+                                }
+                                images
+                                prerequisites {
+                                    _id
+                                    title
+                                }
+                                articleId {
+                                    _id
+                                    title
+                                }
+                                createdAt
+                                updatedAt
+                            }
+                            progress
+                        }
                         address
                         postCode
                         totalBuy
@@ -160,6 +187,7 @@ async function Account({ searchParams }: any) {
                             authority
                             postVerify
                             createdAt
+                            submition
                         }
                         totalPages
                         currentPage
@@ -193,6 +221,9 @@ async function Account({ searchParams }: any) {
                             status
                             star
                             like
+                            userId {
+                                _id
+                            }
                             productId {
                                 _id
                                 title
@@ -240,6 +271,12 @@ async function Account({ searchParams }: any) {
                             status
                             title
                             txt
+                            userId {
+                                _id
+                                name
+                                status
+                                phone    
+                            }
                             createdAt
                             updatedAt
                         }
@@ -267,8 +304,9 @@ async function Account({ searchParams }: any) {
         { id: 1, txt: 'خانه', icon: '🏠' },
         { id: 2, txt: 'سفارشات', icon: '📦' },
         { id: 3, txt: 'جزییات حساب', icon: '👤' },
-        { id: 4, txt: 'نظرات', icon: '💬' },
-        { id: 5, txt: 'پرسش و پاسخ', icon: '❓' },
+        { id: 4, txt: "دوره‌های من", icon: '📚' },
+        { id: 5, txt: 'نظرات', icon: '💬' },
+        { id: 6, txt: 'پرسش و پاسخ', icon: '❓' }
     ];
 
     return (

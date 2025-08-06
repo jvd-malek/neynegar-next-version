@@ -45,17 +45,19 @@ const Navbar = ({ isOpen, setOpen, links, user }: NavbarProps) => {
                         </div>
                         <ul className="lg:flex gap-8 items-center hidden">
                             {links?.map(item => (
-                                <li key={item._id} className="cursor-pointer group relative">
+                                <li key={item._id} className="text-shadow cursor-pointer group relative">
                                     <Link href={`/${item.path}`} prefetch>{item.txt}</Link>
-                                    <div className={`hidden group-hover:block absolute z-50`}>
-                                        <div className={`bg-white/90 p-2 text-black rounded-xl flex gap-4 mt-8`}>
-                                            {item.subLinks.map((l, i) => (
-                                                <Link href={`/${l.path}`} key={i} className="whitespace-nowrap" prefetch>
-                                                    {l.link}
-                                                </Link>
-                                            ))}
+                                    {item.subLinks?.length > 0 &&
+                                        <div className={`hidden group-hover:block absolute z-[9999]`}>
+                                            <div className={`bg-white/90 p-2 text-black flex flex-col scrollable-section gap-1 mt-8 max-h-60 overflow-y-auto border border-gray-300 rounded-md shadow-lg`}>
+                                                {item.subLinks.map((l, i) => (
+                                                    <Link href={`/${l.path}`} className="text-shadow whitespace-nowrap px-2 py-1 hover:bg-gray-200/90 cursor-pointer rounded-md" key={i} prefetch>
+                                                        {l.link}
+                                                    </Link>
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
+                                    }
                                 </li>
                             ))}
                         </ul>

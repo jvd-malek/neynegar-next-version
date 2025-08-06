@@ -1,9 +1,11 @@
 "use client"
-import { Bounce, toast } from 'react-toastify';
 import { getCookie, setCookie } from 'cookies-next';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Link from 'next/link';
+import { notify } from '@/lib/utils/notify';
+import { fetcher } from '@/lib/fetcher';
+import { mutate } from 'swr';
+import ContactModal from './ContactModal';
 
 type BasketItem = {
     productId: string;
@@ -11,83 +13,47 @@ type BasketItem = {
     showCount: number;
 };
 
-type UserUpdateBody = {
-    status?: string;
-    favorite?: Array<{ productId: string }>;
-    basket?: BasketItem[];
-};
-
-function BuyBtn({ showCount, id, fix = false, cat, price }: { showCount: number; fix?: boolean; id: string, cat: string, price?: string }) {
+function BuyBtn({ showCount, id, fix = false, cat, price, state }: { showCount: number; fix?: boolean; id: string, cat: string, price?: string, state: string }) {
     const jwt = getCookie('jwt');
-    const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
-
-    const showNotification = (text: string, isSuccess: boolean) => {
-        toast[isSuccess ? 'success' : 'error'](text, {
-            position: "bottom-left",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "dark",
-            transition: Bounce,
-        });
-    };
 
     const handleNotificationAndFavorite = async () => {
         if (isLoading) return;
         setIsLoading(true);
 
         if (!jwt) {
-            showNotification("لطفا ابتدا وارد حساب کاربری خود شوید.", false);
+            notify("لطفا ابتدا وارد حساب کاربری خود شوید.", 'error');
             setIsLoading(false);
             return;
         }
 
         try {
-            await updateUser({
-                status: "notifUser",
-                favorite: [{ productId: id }]
-            });
-            showNotification("اعلان محصولات برای شما فعال شد.", true);
+            // 1. تغییر وضعیت کاربر به notifUser
+            await fetcher(`
+                mutation UpdateUserStatus($status: String!) {
+                    updateUserStatus(status: $status) {
+                        _id
+                        status
+                    }
+                }
+            `, { status: "notifUser" });
+
+            // 2. افزودن محصول به علاقه‌مندی‌ها
+            await fetcher(`
+                mutation AddToFavorite($productId: ID!) {
+                    addToFavorite(productId: $productId) {
+                        _id
+                        favorite { productId { _id title } }
+                    }
+                }
+            `, { productId: id });
+
+            notify("اعلان محصولات برای شما فعال شد.", 'success');
         } catch (error) {
             console.error("Error in notification handler:", error);
-            showNotification("خطا در فعال سازی اعلان محصول", false);
+            notify("خطا در فعال سازی اعلان محصول", 'error');
         } finally {
             setIsLoading(false);
-        }
-    };
-
-    const updateUser = async (body: UserUpdateBody): Promise<void> => {
-        if (!jwt) return;
-
-        try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL!}/api/user`, {
-                method: "PUT",
-                headers: {
-                    'authorization': jwt as string,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(body)
-            });
-
-            const data = await response.json();
-
-            if (!data.success) {
-                console.error("Update error:", data.msg);
-                showNotification(data.msg, false);
-
-                if (data.msg.includes("token")) {
-                    router.push('/login');
-                }
-                throw new Error(data.msg);
-            }
-            
-        } catch (error) {
-            console.error("Update user error:", error);
-            throw error;
         }
     };
 
@@ -110,19 +76,28 @@ function BuyBtn({ showCount, id, fix = false, cat, price }: { showCount: number;
 
     const updateServerBasket = async (basketItem: BasketItem): Promise<void> => {
         try {
-            await updateUser({
-                basket: [basketItem],
-            });
+            const res = await fetcher(`
+                mutation AddToBasket($productId: ID!, $count: Int!) {
+                    addToBasket(productId: $productId, count: $count) {
+                        _id
+                        bascket {
+                            productId { _id title showCount }
+                            count
+                        }
+                    }
+                }
+            `, { productId: basketItem.productId, count: basketItem.count });
 
-            showNotification("این محصول به سبد خرید شما اضافه شد", true);
+            if (!res || !res.addToBasket) {
+                notify("خطا در افزودن به سبد خرید", 'error');
+            } else {
+                notify("این محصول به سبد خرید شما اضافه شد", 'success');
+                mutate(["userByToken"])
+            }
         } catch (error) {
             console.error("Server basket error:", error);
             const message = error instanceof Error ? error.message : "خطا در اضافه کردن به سبد خرید";
-            showNotification(message, false);
-
-            if (message.includes("token")) {
-                router.push('/login');
-            }
+            notify(message, 'error');
         }
     };
 
@@ -134,14 +109,14 @@ function BuyBtn({ showCount, id, fix = false, cat, price }: { showCount: number;
             if (currentBasket[existingItemIndex].count < showCount) {
                 currentBasket[existingItemIndex].count += 1;
             } else {
-                showNotification("این محصول در حال حاضر موجود نیست", false);
+                notify("این محصول در حال حاضر موجود نیست", 'error');
             }
         } else {
             currentBasket.push(basketItem);
         }
 
         updateBasketCookie(currentBasket);
-        showNotification("این محصول به سبد خرید شما اضافه شد", true);
+        notify("این محصول به سبد خرید شما اضافه شد", 'success');
     };
 
     const handleAddToBasket = async (): Promise<void> => {
@@ -149,7 +124,7 @@ function BuyBtn({ showCount, id, fix = false, cat, price }: { showCount: number;
         setIsLoading(true);
 
         if (showCount <= 0) {
-            showNotification("این محصول در حال حاضر موجود نیست", false);
+            notify("این محصول در حال حاضر موجود نیست", 'error');
             setIsLoading(false);
             return;
         }
@@ -177,15 +152,15 @@ function BuyBtn({ showCount, id, fix = false, cat, price }: { showCount: number;
   `;
 
     return (
-        <div className="relative group">
+        <div className={`relative group`}>
 
             {showCount > 0 && fix && (
                 <div className="my-2 flex gap-2">
                     <p
                         className="w-full bg-black hover:bg-slate-900 text-white py-2 rounded-lg text-sm"
                     >
-                        {price}
-                        <span className="text-base"> تومان</span>
+                        {state === "callForPrice" ? "تماس بگیرید" : price}
+                        {state === "callForPrice" ? "" : <span className="text-base"> تومان</span>} 
                     </p>
                     <Link
                         href={`/category/${cat}`}
@@ -196,6 +171,12 @@ function BuyBtn({ showCount, id, fix = false, cat, price }: { showCount: number;
                 </div>
             )}
 
+            {state === "callForPrice" ? 
+            !fix && (
+                <ContactModal/>
+            )
+            :
+            (
             <button
                 className={buttonClass}
                 onClick={() => showCount > 0 && handleAddToBasket()}
@@ -216,7 +197,7 @@ function BuyBtn({ showCount, id, fix = false, cat, price }: { showCount: number;
                     buttonText
                 )}
             </button>
-
+            )}
             <span className="
         absolute -top-8 left-1/2 -translate-x-1/2
         bg-gray-800 text-white text-xs py-1 px-2 rounded

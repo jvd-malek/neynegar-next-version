@@ -12,9 +12,10 @@ interface ProductInputProps {
     error?: string;
     disabled?: boolean;
     form?: boolean
+    login?: boolean
 }
 
-export default function ProductInput({ label, value, type = 'text', options, onChange, onFocus, error, disabled, form = false }: ProductInputProps) {
+export default function ProductInput({ label, value, type = 'text', options, onChange, onFocus, error, disabled, form = false, login = false }: ProductInputProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState(value);
 
@@ -47,7 +48,7 @@ export default function ProductInput({ label, value, type = 'text', options, onC
                     onFocus?.();
                 }}
             >
-                <label className="text-xs sm:text-sm font-medium text-gray-700 text-shadow">{label}</label>
+                <label className={`text-xs sm:text-sm font-medium text-gray-700 text-shadow ${login && "text-white"}`}>{label}</label>
                 <div className="rounded-lg p-1.5 sm:p-2 border border-gray-300 text-xs sm:text-sm bg-slate-50 text-nowrap line-clamp-1 h-8.5 sm:h-10">
                     {value}
                 </div>
@@ -57,7 +58,7 @@ export default function ProductInput({ label, value, type = 'text', options, onC
 
     return (
         <div className={`flex flex-col gap-2 ${form ? "w-full" : " w-20 sm:w-48"}`}>
-            <label className="text-xs sm:text-sm text-gray-700 text-shadow">{label}</label>
+            <label className={`text-xs sm:text-sm text-gray-700 text-shadow ${login && "text-white"}`}>{label}</label>
             {type === 'textarea' ? (
                 <textarea
                     value={editValue}
@@ -77,7 +78,7 @@ export default function ProductInput({ label, value, type = 'text', options, onC
                     onBlur={handleSave}
                     onFocus={onFocus}
                     disabled={disabled}
-                    className={`rounded-lg p-1.5 sm:p-2 border bg-slate-50 text-xs sm:text-sm focus:outline-none w-full h-8.5 sm:h-10 ${error ? 'border-red-500' : 'border-gray-300'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`rounded-lg p-1.5 sm:p-2 border bg-slate-50 text-xs sm:text-sm focus:outline-none w-full h-8.5 sm:h-10 ${error ? 'border-red-500' : 'border-gray-300'} ${disabled && 'opacity-50 cursor-not-allowed'}`}
                     autoFocus
                 >
                     {options?.map((option) => (
@@ -94,8 +95,9 @@ export default function ProductInput({ label, value, type = 'text', options, onC
                     onKeyDown={handleKeyDown}
                     onBlur={handleSave}
                     onFocus={onFocus}
-                    className={`rounded-lg p-1.5 sm:p-2 border bg-slate-50 text-xs sm:text-sm focus:outline-none w-full h-8.5 sm:h-10 ${error ? 'border-red-500' : 'border-gray-300'}`}
+                    className={`rounded-lg p-1.5 sm:p-2 border bg-slate-50 text-xs sm:text-sm focus:outline-none w-full h-8.5 sm:h-10 ${error ? 'border-red-500' : 'border-gray-300'} ${disabled && 'opacity-50 cursor-not-allowed'}`}
                     autoFocus
+                    disabled={disabled}
                 />
             )}
             {error && <span className="text-red-500 text-xs sm:text-sm transition-all">{error}</span>}

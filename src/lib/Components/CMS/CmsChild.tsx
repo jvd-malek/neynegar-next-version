@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { linksType } from '@/lib/Types/links';
 import CMSProductBox from '@/lib/Components/CMS/CMSProductBox';
 import CMSAddProduct from '@/lib/Components/CMS/CMSAddProduct';
@@ -7,6 +8,11 @@ import CMSOrderBox from '@/lib/Components/CMS/CMSOrderBox';
 import CMSTicketBox from '@/lib/Components/CMS/CMSTicketBox';
 import CMSArticleBox from '@/lib/Components/CMS/CMSArticleBox';
 import CMSAddArticle from '@/lib/Components/CMS/CMSAddArticle';
+import CMSAddDiscount from '@/lib/Components/CMS/CMSAddDiscount';
+import CMSDiscountBox from '@/lib/Components/CMS/CMSDiscountBox';
+import ShippingCost from '@/lib/Components/CMS/ShippingCost';
+import CMSAddCourse from '@/lib/Components/CMS/CMSAddCourse';
+import CMSOutOfStackProducts from '@/lib/Components/CMS/CMSOutOfStackProducts';
 
 async function CMS({ activeLink, searchParams }: any) {
     const search = await searchParams;
@@ -99,7 +105,9 @@ async function CMS({ activeLink, searchParams }: any) {
     return (
         <>
             {activeLink === 'محصولات' &&
-                <CMSProductBox type={activeLink} page={page} links={links} authors={authors} />
+                <Suspense fallback={<div className="p-4 text-center">در حال بارگذاری...</div>}>
+                    <CMSProductBox type={activeLink} page={page} links={links} authors={authors} />
+                </Suspense>
             }
 
             {activeLink === 'ثبت محصول' &&
@@ -107,22 +115,30 @@ async function CMS({ activeLink, searchParams }: any) {
             }
 
             {activeLink === 'مقالات' &&
-                <CMSArticleBox type={activeLink} page={page} links={links} authors={authors} />
+                <Suspense fallback={<div className="p-4 text-center">در حال بارگذاری...</div>}>
+                    <CMSArticleBox type={activeLink} page={page} links={links} authors={authors} />
+                </Suspense>
             }
             {activeLink === 'ثبت مقاله' &&
                 <CMSAddArticle links={links} authors={authors} />
             }
 
             {activeLink === 'تیکت‌ها' &&
-                <CMSTicketBox type={activeLink} page={page} />
+                <Suspense fallback={<div className="p-4 text-center">در حال بارگذاری...</div>}>
+                    <CMSTicketBox type={activeLink} page={page} />
+                </Suspense>
             }
 
             {activeLink === 'سفارشات' &&
-                <CMSOrderBox type={activeLink} page={page} />
+                <Suspense fallback={<div className="p-4 text-center">در حال بارگذاری...</div>}>
+                    <CMSOrderBox type={activeLink} page={page} />
+                </Suspense>
             }
 
             {activeLink === 'کاربران' &&
-                <CMSUserBox type={activeLink} page={page} />
+                <Suspense fallback={<div className="p-4 text-center">در حال بارگذاری...</div>}>
+                    <CMSUserBox type={activeLink} page={page} />
+                </Suspense>
             }
 
             {activeLink === 'ثبت نویسنده' &&
@@ -135,7 +151,27 @@ async function CMS({ activeLink, searchParams }: any) {
                 </>
             }
 
-            {/* {activeLink === 'تخفیف‌ها' && 'discounts'} */}
+            {activeLink === 'تخفیف‌ها' &&
+                <>
+                    {/* برای افزودن تخفیف جدید */}
+                    <CMSAddDiscount links={links} />
+
+                    {/* برای نمایش لیست تخفیف ها و ویرایش آنها */}
+                    <CMSDiscountBox />
+                </>
+            }
+
+            {activeLink === 'هزینه ارسال' &&
+                <ShippingCost />
+            }
+
+            {activeLink === 'دوره‌ها' &&
+                <CMSAddCourse />
+            }
+
+            {activeLink === 'کسری' &&
+                <CMSOutOfStackProducts />
+            }
         </>
     );
 }

@@ -18,7 +18,7 @@ function ReplyBox({ txt, userId, createdAt }: repliesType) {
             <div className="flex items-center gap-4 pb-4 border-b border-slate-400">
                 {userId.img ? (
                     <Image
-                        src={`https://api.neynegar1.ir/imgs/${userId.img}`}
+                        src={`https://api.neynegar1.ir/uploads/${userId.img}`}
                         alt={userId.name}
                         width={64}
                         height={64}

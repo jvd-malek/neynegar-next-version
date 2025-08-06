@@ -7,7 +7,7 @@ export const fetcher = async (query: string, jwt?: string) => {
     headers['authorization'] = jwt;
   }
 
-  const response = await fetch(`http://localhost:4000/graphql`, {
+  const response = await fetch(`https://api.neynegar1.ir/graphql`, {
     method: 'POST',
     headers,
     body: JSON.stringify({

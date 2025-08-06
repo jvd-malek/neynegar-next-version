@@ -43,6 +43,33 @@ export interface userType {
             createdAt: string;
         };
     }[],
+    courseProgress: {
+        courseId: {
+            _id: string;
+            title: string;
+            desc: string;
+            cover: string;
+            views: number;
+            popularity: number;
+            sections: {
+                title: string;
+                txt: string[];
+                images?: number[];
+            }[];
+            images: string[];
+            prerequisites: {
+                _id: string;
+                title: string;
+            }[];
+            articleId?: {
+                _id: string;
+                title: string;
+            };
+            createdAt: string;
+            updatedAt: string;
+        };
+        progress: number;
+    }[];
 }
 
 export type accountType = {

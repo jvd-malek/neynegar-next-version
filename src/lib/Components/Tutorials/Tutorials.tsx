@@ -39,7 +39,7 @@ function Tutorials(tutorial: tutorial) {
         {
             id: 3,
             title: `محصولات ${tutorial.title}`,
-            link: `category/کتاب/${tutorial.productsLink}`
+            link: `category/دوره/${tutorial.productsLink}`
         }
     ]
 

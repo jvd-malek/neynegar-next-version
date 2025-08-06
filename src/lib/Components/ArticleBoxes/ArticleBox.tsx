@@ -12,13 +12,14 @@ type ArticleBoxType = {
     desc: string,
     _id: string,
     cover: string,
-    authorId: Author
+    authorId: Author,
+    views: number
 }
 
-function ArticleBox({ title, majorCat, desc, _id, cover, minorCat, authorId }: ArticleBoxType) {
+function ArticleBox({ title, majorCat, desc, _id, cover, minorCat, authorId, views }: ArticleBoxType) {
 
     const customLoader = ({ src }: { src: string }) => {
-        return `https://api.neynegar1.ir/imgs/${src}`;
+        return `https://api.neynegar1.ir/uploads/${src}`;
     };
 
     return (
@@ -26,14 +27,20 @@ function ArticleBox({ title, majorCat, desc, _id, cover, minorCat, authorId }: A
         <div className={`flex relative flex-col min-w-40 mx-auto overflow-hidden rounded-2xl text-black bg-white p-1.5 shadow-cs max-w-72`}>
 
             {cover ? (
-                <Image
-                    src={cover}
-                    alt={`تصویر مقاله ${title}`}
-                    className={`transition-transform duration-300 hover:scale-110 active:scale-110 rounded-2xl object-cover`}
-                    width={500}
-                    height={500}
-                    loading="lazy"
-                    loader={customLoader} />) : (
+                <div className="relative">
+                    <Image
+                        src={cover}
+                        alt={`تصویر مقاله ${title}`}
+                        className={`transition-transform duration-300 hover:scale-107 active:scale-107 rounded-2xl object-cover`}
+                        width={500}
+                        height={500}
+                        loading="lazy"
+                        loader={customLoader} />
+                    <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
+                        {views} بازدید
+                    </div>
+                </div>
+            ) : (
                 <Skeleton variant="rectangular" className='rounded-lg' height={200} />
             )}
             <div className="px-4 pt-2.5 pb-4 flex-grow border-b border-b-slate-100">

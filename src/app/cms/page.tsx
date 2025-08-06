@@ -1,4 +1,4 @@
-import CmsChild from "./CmsChild";
+import CmsChild from "../../lib/Components/CMS/CmsChild";
 import { ticketType } from "@/lib/Types/ticket";
 import { orderType } from "@/lib/Types/order";
 import { cookies } from "next/headers";
@@ -16,7 +16,10 @@ async function CmsPage({ searchParams }: any) {
         { id: 6, txt: 'سفارشات' },
         { id: 7, txt: 'کاربران' },
         { id: 8, txt: 'ثبت نویسنده' },
-        // { id: 7, txt: 'تخفیف‌ها' },
+        { id: 9, txt: 'تخفیف‌ها' },
+        { id: 10, txt: 'هزینه ارسال' },
+        { id: 11, txt: "دوره‌ها" },
+        { id: 12, txt: "کسری" }
     ]
 
     const cookieStore = await cookies();
@@ -29,6 +32,7 @@ async function CmsPage({ searchParams }: any) {
 
     const { activeLink = "محصولات" } = await searchParams;
 
+
     const tickets = await fetch(process.env.NEXT_BACKEND_GRAPHQL_URL!, {
         method: "POST",
         headers: {
@@ -38,15 +42,8 @@ async function CmsPage({ searchParams }: any) {
         body: JSON.stringify({
             query: `
                 query {
-                    tickets {
+                    ticketsByStatus(status: ["در انتظار بررسی", "در حال بررسی", "در انتظار پاسخ شما"]) {
                         _id
-                        userId{_id}
-                        response
-                        status
-                        title
-                        txt
-                        createdAt
-                        updatedAt
                     }
                 }
             ` }),
@@ -54,7 +51,7 @@ async function CmsPage({ searchParams }: any) {
     })
         .then(res => res.json())
 
-    const ticketState: ticketType[] = tickets.data
+    const ticketState: ticketType[] = tickets.data.ticketsByStatus
 
     const res = await fetch(process.env.NEXT_BACKEND_GRAPHQL_URL!, {
         method: 'POST',
@@ -95,10 +92,10 @@ async function CmsPage({ searchParams }: any) {
                             <p className={`mt-5 shadow-cs py-2 px-4 transition-all rounded-xl relative ${activeLink == link.txt ? "bg-black text-white" : "bg-white text-black"}`}>
                                 {link.txt}
                                 {link.txt == "تیکت‌ها" && ticketState?.length > 0 &&
-                                    <p className=" absolute left-0 bg-red-600 rounded-full w-4 h-4 -top-1 flex justify-center items-center">{ticketState.length}</p>
+                                    <span className="absolute left-0 bg-red-600 text-xs rounded-full w-4 h-4 -top-1 flex justify-center items-center text-white">{ticketState.length}</span>
                                 }
                                 {link.txt == "سفارشات" && orderState?.length > 0 &&
-                                    <p className="absolute left-0 bg-red-600 text-xs rounded-full w-4 h-4 -top-1 flex justify-center items-center">{orderState.length}</p>
+                                    <span className="absolute left-0 bg-red-600 text-xs rounded-full w-4 h-4 -top-1 flex justify-center items-center text-white">{orderState.length}</span>
                                 }
                             </p>
                         </Link>

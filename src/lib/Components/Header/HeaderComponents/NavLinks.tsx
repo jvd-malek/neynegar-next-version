@@ -1,14 +1,16 @@
+"use client"
 import { memo, useCallback, useEffect } from "react";
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import IconButton from '@mui/material/IconButton';
 import LocalMallRoundedIcon from '@mui/icons-material/LocalMallRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
+import LocalLibraryRoundedIcon from '@mui/icons-material/LocalLibraryRounded';
 import Link from "next/link";
 import { useState } from "react";
 import SwipeableDrawer from '@mui/material/SwipeableDrawer';
 import { linksType } from "../../../Types/links";
 import { userType } from '../../../Types/user';
-import { redirect, useSearchParams } from 'next/navigation'
+import { redirect } from 'next/navigation'
 import { animateScroll } from "react-scroll";
 import useSWR from "swr";
 type NavLinksProps = {
@@ -20,7 +22,6 @@ type NavLinksProps = {
 
 const NavLinks = memo(({ isOpen, setOpen, links, user }: NavLinksProps) => {
     const [search, setSearch] = useState('');
-    const searchParams = useSearchParams();
 
     const scrollTop = useCallback(() => {
         animateScroll.scrollToTop({
@@ -39,11 +40,31 @@ const NavLinks = memo(({ isOpen, setOpen, links, user }: NavLinksProps) => {
     }, [redirect, scrollTop, search]);
 
     const query = `
-        query SearchProducts($query: String!, $page: Int, $limit: Int) {
+        query SearchProductsAndArticles($query: String!, $page: Int, $limit: Int) {
             searchProducts(query: $query, page: $page, limit: $limit) {
                 products {
                     _id
                     title
+                    desc
+                    cover
+                    majorCat
+                    minorCat
+                }
+                totalPages
+                currentPage
+                total
+            }
+            searchArticles(query: $query, page: $page, limit: $limit) {
+                articles {
+                    _id
+                    title
+                    desc
+                    cover
+                    majorCat
+                    minorCat
+                    authorId {
+                        fullName
+                    }
                 }
                 totalPages
                 currentPage
@@ -62,8 +83,8 @@ const NavLinks = memo(({ isOpen, setOpen, links, user }: NavLinksProps) => {
                 query,
                 variables: {
                     query: search,
-                    page: Number(searchParams.get('page')) || 1,
-                    limit: 10
+                    page: 1,
+                    limit: 20
                 }
             }),
         });
@@ -71,7 +92,7 @@ const NavLinks = memo(({ isOpen, setOpen, links, user }: NavLinksProps) => {
     };
 
     const { data, error, isLoading, mutate } = useSWR(
-        search ? "http://localhost:4000/graphql" : null,
+        search ? "https://api.neynegar1.ir/graphql" : null,
         fetcher
     );
 
@@ -91,7 +112,7 @@ const NavLinks = memo(({ isOpen, setOpen, links, user }: NavLinksProps) => {
             disableSwipeToOpen={false}
             className="block lg:hidden"
         >
-            <div className="h-[65vh] w-full bg-gray-200 text-center font-[Baloo]">
+            <div className="h-[80vh] w-full bg-gray-200 text-center font-[Baloo]">
                 <div className="relative z-10 bg-gray-200 text-white">
                     <ul className="flex gap-4 text-center flex-col lg:hidden w-full p-6 transition-all duration-200 h-full">
                         <div className="flex gap-4">
@@ -103,7 +124,11 @@ const NavLinks = memo(({ isOpen, setOpen, links, user }: NavLinksProps) => {
                                 </div>
                             </li>
                             <li className="w-full p-[0.08rem] rounded-xl ">
-                                <input type="text" value={search} onChange={e => setSearch(e.target.value)} className="w-full bg-black rounded-xl outline-none px-4 py-[0.55rem] placeholder:text-slate-300" placeholder="جستجو محصولات" />
+                                <input type="text" value={search} onChange={e => setSearch(e.target.value)} 
+                                    onKeyDown={e => { if (e.key === 'Enter') searchHandler(); }}
+                                    className="w-full bg-black rounded-xl outline-none px-4 py-[0.55rem] placeholder:text-slate-300" 
+                                    placeholder="جستجو محصولات" 
+                                />
                             </li>
                         </div>
 
@@ -126,6 +151,13 @@ const NavLinks = memo(({ isOpen, setOpen, links, user }: NavLinksProps) => {
                                     </IconButton>
                                 </Link>
                             </li>
+                            <li className="p-[0.08rem] rounded-xl bg-black">
+                                <Link href={user ?  "/account?activeLink=دوره‌های من" : "/#section-courses"} onClick={scrollTop} className="w-full rounded-xl flex items-center">
+                                    <IconButton sx={{ color: 'white' }}>
+                                        <LocalLibraryRoundedIcon />
+                                    </IconButton>
+                                </Link>
+                            </li>
                         </div>
 
                         <div className="mt-4 transition-all">
@@ -139,22 +171,75 @@ const NavLinks = memo(({ isOpen, setOpen, links, user }: NavLinksProps) => {
                                 </div>
                             )}
 
-                            {data?.data?.searchProducts?.products?.length > 0 ? (
-                                <div className="space-y-2">
-                                    {data.data.searchProducts.products.map((product: any) => (
-                                        <Link
-                                            key={product._id}
-                                            href={`/product/${product._id}`}
-                                            className="block p-3 bg-black focus:bg-slate-800 text-white rounded-lg transition-colors"
-                                            onClick={() => scrollTop()}
-                                        >
-                                            {product.title}
-                                        </Link>
-                                    ))}
+                            {((data?.data?.searchProducts?.products?.length > 0) || (data?.data?.searchArticles?.articles?.length > 0)) ? (
+                                <div className="space-y-4">
+                                    {/* Products Section */}
+                                    {data?.data?.searchProducts?.products?.length > 0 && (
+                                        <div>
+                                            <h3 className="text-sm font-semibold text-black mb-2 border-b border-black pb-1">محصولات</h3>
+                                            <div className="space-y-2">
+                                                {data.data.searchProducts.products.map((product: any) => (
+                                                    <Link
+                                                        key={`product-${product._id}`}
+                                                        href={`/product/${product._id}`}
+                                                        className="block p-3 bg-black focus:bg-slate-800 text-white rounded-lg transition-colors"
+                                                        onClick={() => scrollTop()}
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            {product.cover && (
+                                                                <img 
+                                                                    src={`https://api.neynegar1.ir/uploads/${product.cover}`}
+                                                                    alt={product.title}
+                                                                    className="w-8 h-8 object-cover rounded"
+                                                                />
+                                                            )}
+                                                            <div className="flex-1">
+                                                                <div className="font-medium text-sm">{product.title}</div>
+                                                                <div className="text-xs text-gray-300">{product.desc?.substring(0, 40)}...</div>
+                                                            </div>
+                                                        </div>
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Articles Section */}
+                                    {data?.data?.searchArticles?.articles?.length > 0 && (
+                                        <div>
+                                            <h3 className="text-sm font-semibold text-black mb-2 border-b border-black pb-1">مقالات</h3>
+                                            <div className="space-y-2">
+                                                {data.data.searchArticles.articles.map((article: any) => (
+                                                    <Link
+                                                        key={`article-${article._id}`}
+                                                        href={`/article/${article._id}`}
+                                                        className="block p-3 bg-black focus:bg-slate-800 text-white rounded-lg transition-colors"
+                                                        onClick={() => scrollTop()}
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            {article.cover && (
+                                                                <img 
+                                                                    src={`https://api.neynegar1.ir/uploads/${article.cover}`}
+                                                                    alt={article.title}
+                                                                    className="w-8 h-8 object-cover rounded"
+                                                                />
+                                                            )}
+                                                            <div className="flex-1">
+                                                                <div className="font-medium text-sm">{article.title}</div>
+                                                                <div className="text-xs text-gray-300">
+                                                                    {article.authorId?.fullName && `نویسنده: ${article.authorId.fullName}`}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             ) : search && !isLoading && (
-                                <div className="text-center pt-4 pb-2 text-gray-700">
-                                    محصولی یافت نشد
+                                <div className="text-center pt-4 pb-2 text-black">
+                                    محصول یا مقاله‌ای یافت نشد
                                 </div>
                             )}
                         </div>

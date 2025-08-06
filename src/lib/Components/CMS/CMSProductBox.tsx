@@ -1,12 +1,11 @@
-'use client';
-
+'use client'
 import PaginationBox from '@/lib/Components/Pagination/PaginationBox'
 import SearchBox from './SearchBox';
 import ProductInput, { DiscountInput } from './ProductInput';
 import { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import { getCookie } from 'cookies-next';
-import { Product, ProductInput as ProductInputType, ProductsResponse } from '@/types/product';
+import { Product, ProductInput as ProductInputType } from '@/types/product';
 import { validateField } from '@/lib/validation/productValidation';
 import { GET_PRODUCTS, UPDATE_PRODUCT } from '@/lib/graphql/productQueries';
 import { linksType } from '@/lib/Types/links';
@@ -144,31 +143,6 @@ function CMSProductBox({ type, page, links, authors }: CMSProductBoxProps) {
         return newErrors;
     };
 
-    const validateProduct = (productId: string): boolean => {
-        const product = editingProducts[productId];
-        const initialProductValues = initialValues[productId];
-        if (!product || !initialProductValues) return false;
-
-        const newErrors: Record<string, string> = {};
-        let isValid = true;
-
-        Object.keys(initialProductValues).forEach(field => {
-            const value = product[field] ?? initialProductValues[field];
-            const error = validateField(field, value);
-            if (error) {
-                newErrors[field] = error;
-                isValid = false;
-            }
-        });
-
-        setErrors(prev => ({
-            ...prev,
-            [productId]: newErrors
-        }));
-
-        return isValid;
-    };
-
     const handleSaveChanges = async (productId: string) => {
         try {
             setIsSaving(true);
@@ -180,17 +154,74 @@ function CMSProductBox({ type, page, links, authors }: CMSProductBoxProps) {
                 return;
             }
 
+            // Get current date for price/cost history
+            const currentDate = new Date().toISOString();
+
+            // Get current values from product history
+            const lastPrice = currentProduct.price[currentProduct.price.length - 1];
+            const lastCost = currentProduct.cost[currentProduct.cost.length - 1];
+            const lastDiscount = currentProduct.discount[currentProduct.discount.length - 1];
+
+            // Get authorId safely
+            const getAuthorId = () => {
+                if (currentProduct.authorId) {
+                    // If authorId is an object with _id
+                    if (typeof currentProduct.authorId === 'object' && currentProduct.authorId._id) {
+                        return currentProduct.authorId._id;
+                    }
+                    // If authorId is a string (direct ID)
+                    if (typeof currentProduct.authorId === 'string') {
+                        return currentProduct.authorId;
+                    }
+                }
+                return null;
+            };
+            // Check if values have changed
+            const priceChanged = editedProduct.price !== undefined && editedProduct.price !== lastPrice?.price;
+            const costChanged = editedProduct.cost !== undefined && editedProduct.cost !== lastCost?.cost;
+            const costCountChanged = editedProduct.costCount !== undefined && editedProduct.costCount !== lastCost?.count;
+            const discountChanged = editedProduct.discount !== undefined && editedProduct.discount !== lastDiscount?.discount;
+
             const input = {
                 title: editedProduct.title ?? currentProduct.title,
                 desc: editedProduct.desc ?? currentProduct.desc,
-                content: editedProduct.content ?? currentProduct.content,
-                subtitles: editedProduct.subtitles ?? currentProduct.subtitles,
+                count: Number(editedProduct.count ?? currentProduct.count),
+                showCount: Number(editedProduct.showCount ?? currentProduct.showCount),
                 popularity: Number(editedProduct.popularity ?? currentProduct.popularity),
-                authorId: currentProduct.authorId._id,
+                authorId: getAuthorId(),
+                publisher: editedProduct.publisher ?? currentProduct.publisher,
+                publishDate: editedProduct.publishDate ?? currentProduct.publishDate,
+                brand: editedProduct.brand ?? currentProduct.brand,
+                status: editedProduct.status ?? currentProduct.status,
+                state: editedProduct.state ?? currentProduct.state ?? 'active',
+                size: editedProduct.size ?? currentProduct.size,
+                weight: Number(editedProduct.weight ?? currentProduct.weight),
                 majorCat: editedProduct.majorCat ?? currentProduct.majorCat,
                 minorCat: editedProduct.minorCat ?? currentProduct.minorCat,
                 cover: currentProduct.cover,
-                images: currentProduct.images
+                images: currentProduct.images,
+                // Only send price if it changed
+                ...(priceChanged && {
+                    price: {
+                        price: Number(editedProduct.price),
+                        date: currentDate
+                    }
+                }),
+                // Only send cost if it changed
+                ...(costChanged && {
+                    cost: {
+                        cost: Number(editedProduct.cost),
+                        count: Number(editedProduct.costCount ?? lastCost?.count ?? 1),
+                        date: currentDate
+                    }
+                }),
+                // Only send discount if it changed
+                ...(discountChanged && {
+                    discount: {
+                        discount: Number(editedProduct.discount),
+                        date: Number(editedProduct.discountDuration ?? 30)
+                    }
+                })
             };
 
             await fetcher(UPDATE_PRODUCT, {
@@ -265,7 +296,7 @@ function CMSProductBox({ type, page, links, authors }: CMSProductBoxProps) {
             }
 
             // Upload files first
-            const fileResponse = await fetch('http://localhost:4000/upload', {
+            const fileResponse = await fetch('https://api.neynegar1.ir/upload', {
                 method: 'POST',
                 headers: {
                     'authorization': jwt,
@@ -281,7 +312,7 @@ function CMSProductBox({ type, page, links, authors }: CMSProductBoxProps) {
             const fileResult = await fileResponse.json();
 
             // Update product with new images using GraphQL mutation
-            const response = await fetch('http://localhost:4000/graphql', {
+            const response = await fetch('https://api.neynegar1.ir/graphql', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -387,7 +418,7 @@ function CMSProductBox({ type, page, links, authors }: CMSProductBoxProps) {
                         <div className="mt-5 bg-white shadow-cs py-2 px-4 rounded-xl flex flex-col gap-3" key={product._id}>
                             <div className="flex justify-between items-center gap-2">
                                 <img
-                                    src={`https://api.neynegar1.ir/imgs/${product.cover}`}
+                                    src={`https://api.neynegar1.ir/uploads/${product.cover}`}
                                     alt=""
                                     className='w-20 rounded-lg h-20 object-cover cursor-pointer hover:opacity-80 transition-opacity'
                                     onClick={() => handleImageClick(product)}

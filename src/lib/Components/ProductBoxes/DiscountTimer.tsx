@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 type DiscountTimerProps = {
     endDate: number;
     page?: boolean;
+    discount?: boolean;
 }
-function DiscountTimer({ endDate, page = false }: DiscountTimerProps) {
+function DiscountTimer({ endDate, page = false, discount = false }: DiscountTimerProps) {
     const [timeLeft, setTimeLeft] = useState({
         days: 0,
         hours: 0,
@@ -38,7 +39,7 @@ function DiscountTimer({ endDate, page = false }: DiscountTimerProps) {
     }, [endDate]);
 
     return (
-        <div className={`absolute ${page ? " top-2 left-2" : " top-0 left-0"} transform z-10 bg-red-600/40 backdrop-blur-sm text-white px-2 py-0.5 rounded-lg text-xs font-medium`}>
+        <div className={`${!discount && "absolute"} ${page ? " top-2 left-2" : " top-0 left-0"} transform z-10 bg-red-600/40 backdrop-blur-sm text-white px-2 py-0.5 rounded-lg text-xs font-medium`}>
             <table className="border-collapse">
                 <tbody>
                     <tr>

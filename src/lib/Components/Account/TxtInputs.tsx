@@ -1,16 +1,17 @@
 "use client"
-import TxtBox from "@/lib/Components/InputBoxes/TxtBox";
-import { userType } from "@/lib/Types/user";
 import { deleteCookie, getCookie, setCookie } from "cookies-next";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { animateScroll } from "react-scroll";
-import { Bounce, toast } from "react-toastify";
+import ProductInput from "@/lib/Components/CMS/ProductInput";
+import { fetcher } from "@/lib/fetcher";
+import { notify } from '@/lib/utils/notify';
+import { mutate } from "swr";
 
 type ErrorType = {
     type: string;
     state: boolean;
-    message?: string;
+    message: string;
 };
 
 function TxtInputs({ data, account }: { data: any, account?: boolean }) {
@@ -26,7 +27,6 @@ function TxtInputs({ data, account }: { data: any, account?: boolean }) {
         { type: "shipment", state: false, message: "انتخاب روش ارسال الزامی است" },
     ]);
 
-
     // حالت‌های فرم
     const [formData, setFormData] = useState({
         phone: '',
@@ -37,13 +37,27 @@ function TxtInputs({ data, account }: { data: any, account?: boolean }) {
         postCode: '',
         shipment: '',
     });
+    
+    const [provinces, setProvinces] = useState<{ province: string, cities: string[] }[]>([]);
+    const [cities, setCities] = useState<string[]>([]);
 
     // تغییر مقادیر فرم
     const handleChange = (field: keyof typeof formData, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+
+        if (value == "") {
+            setErrors(prev => prev.map(err =>
+                err.type === field ? { ...err, state: true } : err
+            ));
+        }
         setErrors(prev => prev.map(err =>
             err.type === field ? { ...err, state: false } : err
         ));
+        if (field === "state") {
+            const selectedProvince = provinces.find(p => p.province === value);
+            setCities(selectedProvince ? selectedProvince.cities : []);
+            setFormData(prev => ({ ...prev, city: "" }));
+        }
     };
 
     // اعتبارسنجی فرم
@@ -101,7 +115,7 @@ function TxtInputs({ data, account }: { data: any, account?: boolean }) {
 
     useEffect(() => {
         if (data.user) {
-            let Address = data.user.address.split("%%")
+            let Address = data.user.address?.split("%%")
 
             setFormData({
                 phone: String(data.user.phone) ?? "",
@@ -109,7 +123,7 @@ function TxtInputs({ data, account }: { data: any, account?: boolean }) {
                 state: data.user.address ? Address[0] : '',
                 city: data.user.address ? Address[1] : '',
                 address: data.user.address ? Address[2] : '',
-                postCode: String(data.user.postCode) ?? '',
+                postCode: data.user.postCode ? String(data.user.postCode) : '',
                 shipment: '',
             })
         }
@@ -122,32 +136,41 @@ function TxtInputs({ data, account }: { data: any, account?: boolean }) {
         }
     }, [formData])
 
-    const infoHandler = () => {
-        if (!validateForm()) return;
+    useEffect(() => {
+        fetcher(`
+            query {
+                provinces {
+                    province
+                    cities
+                }
+            }
+        `)
+            .then(data => setProvinces(data.provinces))
+            .catch(err => console.error(err));
+    }, []);
 
-        updateInfoHandler()
-        animateScroll.scrollTo(300, {
-            duration: 300,
-            smooth: 'easeInOutQuart'
-        })
+    const infoHandler = () => {
+        const valid = validateForm();
+        if (!valid) {
+            errors.map(e => e.state && notify(e.message, 'error'));
+        } else {
+            updateInfoHandler();
+            animateScroll.scrollTo(300, {
+                duration: 300,
+                smooth: 'easeInOutQuart'
+            });
+        }
     }
 
     const updateInfoHandler = async () => {
-
         if (jwt) {
-            await updateInfoUser({ name: formData.name.trim(), postCode: +formData.postCode.trim(), address: `${formData.state.trim()}%%${formData.city.trim()}%%${formData.address.trim()}` })
-            toast.success("اطلاعات شما با موفقیت ذخیره شد.", {
-                position: "bottom-left",
-                autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: false,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-                theme: "dark",
-                transition: Bounce,
-            });
-
+            try {
+                await updateInfoUser({ name: formData.name.trim(), postCode: +formData.postCode.trim(), address: `${formData.state.trim()}%%${formData.city.trim()}%%${formData.address.trim()}` });
+                notify("اطلاعات شما با موفقیت ذخیره شد.", 'success');
+                if (!account) router.push("?activeLink=shipment")
+            } catch (error) {
+                notify("عدم برقراری ارتباط با سرور", 'error');
+            }
             if (data.basket) {
                 setCookie("basketForm", formData)
             }
@@ -157,33 +180,46 @@ function TxtInputs({ data, account }: { data: any, account?: boolean }) {
     }
 
     const updateInfoUser = async (body: object) => {
-        if (jwt) {
-            await fetch(`https://api.neynegar1.ir/users/update-user`, {
-                method: "PUT",
-                headers: {
-                    'authorization': jwt as string,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(body)
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (!data.state) {
-                        console.log(data.msg)
+        try {
+            if (jwt && data.user && data.user._id) {
+                const mutation = `
+                    mutation UpdateUser($id: ID!, $input: UserInput!) {
+                        updateUser(id: $id, input: $input) {
+                            _id
+                            name
+                            phone
+                            address
+                            postCode
+                            status
+                        }
                     }
-                })
+                `;
+                const variables = {
+                    id: data.user._id,
+                    input: { ...body, status: data.user.status, phone: data.user.phone }
+                };
+                const res = await fetcher(mutation, variables);
+                if (!res || !res.updateUser) {
+                    throw new Error("خطا در ثبت اطلاعات");
+                }
+            }
+            router.refresh();
+        } catch (error) {
+            notify("خطا در ثبت اطلاعات: " + (error instanceof Error ? error.message : 'خطای ناشناخته'), 'error');
+            throw error;
         }
-        router.refresh()
     }
 
     const logoutHandler = async () => {
-        deleteCookie("jwt")
-        router.refresh()
+        await deleteCookie("jwt")
+        notify("خروج از حساب با موفقیت انجام شد.", 'success');
+        await mutate(["userByToken"])
+        router.push("/")
     }
 
     return (
         <form
-            className="grid md:grid-cols-2 grid-cols-1 gap-16 justify-between"
+            className="grid md:grid-cols-2 grid-cols-1 md:gap-16 gap-4 justify-between"
             onSubmit={(e) => {
                 e.preventDefault();
                 infoHandler()
@@ -196,37 +232,30 @@ function TxtInputs({ data, account }: { data: any, account?: boolean }) {
 
                 <div className="flex flex-col h-full justify-between">
                     <div className="flex flex-col gap-2 mt-4 w-full transition-all rounded-xl  pt-6 pb-6 h-full">
-                        <TxtBox
-                            id="name"
-                            type="text"
+                        <ProductInput
+                            form
                             label="نام"
-                            error={errors.find(e => e.type === "name")?.state}
-                            errorMessage={errors.find(e => e.type === "name")?.message}
                             value={formData.name}
-                            onChange={(value) => handleChange('name', value)}
-                            autoComplete='name'
+                            type="text"
+                            onChange={value => handleChange('name', value as string)}
+                            error={errors.find(e => e.type === "name")?.state ? errors.find(e => e.type === "name")?.message : undefined}
                         />
-                        <TxtBox
-                            id="phone"
-                            type="tel"
-                            value={formData.phone}
-                            onChange={(value) => handleChange('phone', value)}
+                        <ProductInput
+                            form
                             label="شماره همراه"
-                            error={errors.find(e => e.type === "phone")?.state}
-                            errorMessage={errors.find(e => e.type === "phone")?.message}
-                            inputMode="numeric"
-                            autoComplete="tel"
-                            readOnly
+                            value={formData.phone}
+                            type="text"
+                            onChange={value => handleChange('phone', value as string)}
+                            error={errors.find(e => e.type === "phone")?.state ? errors.find(e => e.type === "phone")?.message : undefined}
+                            disabled
                         />
-                        <TxtBox
-                            id="postCode"
-                            type="number"
-                            value={formData.postCode}
-                            onChange={(value) => handleChange('postCode', value)}
+                        <ProductInput
+                            form
                             label="کد پستی"
-                            error={errors.find(e => e.type === "postCode")?.state}
-                            errorMessage={errors.find(e => e.type === "postCode")?.message}
-                            inputMode="numeric"
+                            value={formData.postCode}
+                            type="number"
+                            onChange={value => handleChange('postCode', value as string)}
+                            error={errors.find(e => e.type === "postCode")?.state ? errors.find(e => e.type === "postCode")?.message : undefined}
                         />
                     </div>
                 </div>
@@ -239,32 +268,32 @@ function TxtInputs({ data, account }: { data: any, account?: boolean }) {
 
                 <div className="flex flex-col h-full justify-between">
                     <div className="flex flex-col gap-2 mt-4 w-full transition-all rounded-xl pt-6 pb-6 h-full">
-                        <TxtBox
-                            id="state"
-                            type="text"
+                        <ProductInput
+                            form
                             label="استان"
-                            error={errors.find(e => e.type === "state")?.state}
-                            errorMessage={errors.find(e => e.type === "state")?.message}
                             value={formData.state}
-                            onChange={(value) => handleChange('state', value)}
+                            type="select"
+                            options={provinces.map(p => ({ value: p.province, label: p.province }))}
+                            onChange={value => handleChange('state', value as string)}
+                            error={errors.find(e => e.type === "state")?.state ? errors.find(e => e.type === "state")?.message : undefined}
                         />
-                        <TxtBox
-                            id="city"
-                            type="text"
+                        <ProductInput
+                            form
                             label="شهر"
-                            error={errors.find(e => e.type === "city")?.state}
-                            errorMessage={errors.find(e => e.type === "city")?.message}
                             value={formData.city}
-                            onChange={(value) => handleChange('city', value)}
+                            type="select"
+                            options={cities.map(c => ({ value: c, label: c }))}
+                            onChange={value => handleChange('city', value as string)}
+                            error={errors.find(e => e.type === "city")?.state ? errors.find(e => e.type === "city")?.message : undefined}
+                            disabled={!formData.state}
                         />
-                        <TxtBox
-                            id="address"
-                            type="text"
+                        <ProductInput
+                            form
                             label="آدرس"
-                            error={errors.find(e => e.type === "address")?.state}
-                            errorMessage={errors.find(e => e.type === "address")?.message}
                             value={formData.address}
-                            onChange={(value) => handleChange('address', value)}
+                            type="text"
+                            onChange={value => handleChange('address', value as string)}
+                            error={errors.find(e => e.type === "address")?.state ? errors.find(e => e.type === "address")?.message : undefined}
                         />
                     </div>
                 </div>
@@ -283,7 +312,7 @@ function TxtInputs({ data, account }: { data: any, account?: boolean }) {
                                 id="post"
                                 name="delivery"
                                 className="cursor-pointer"
-                                onChange={() => handleChange('shipment', "post")}
+                                onChange={() => handleChange('shipment', "پست")}
                             />
                             <label htmlFor="post" className="cursor-pointer">ارسال با پست</label>
                         </div>
@@ -298,7 +327,7 @@ function TxtInputs({ data, account }: { data: any, account?: boolean }) {
                                 name="delivery"
                                 className="cursor-pointer"
                                 disabled={formData.city != "تهران"}
-                                onChange={() => handleChange('shipment', "bike")}
+                                onChange={() => handleChange('shipment', "پیک")}
                             />
                             <label htmlFor="courier" className="cursor-pointer">ارسال با پیک</label>
                         </div>

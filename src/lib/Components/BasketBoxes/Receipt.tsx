@@ -106,8 +106,8 @@ function Receipt({ activeLink, products, data }: {
                                 </tr>
                             </thead>
                             <tbody>
-                                {products.map((p: any) => (
-                                    <tr key={p._id}>
+                                {products.map((p: any, i: any) => (
+                                    <tr key={p._id + i}>
                                         <td className="text-right text-gray-700">{`${p.productId.title} (${p.count.toLocaleString('fa-IR')} عدد)`}</td>
                                         <td className="text-left text-gray-700">{p.price ? p.price.toLocaleString('fa-IR') : p.productId.price.toLocaleString('fa-IR')}
                                             <span className=" text-xs font-mono"> تومان</span>
@@ -130,13 +130,13 @@ function Receipt({ activeLink, products, data }: {
                                 </tr>
                                 <tr>
                                     <td className="text-right font-semibold text-gray-700">هزینه ارسال</td>
-                                    <td className={`text-left font-semibold text-gray-700 ${basketForm.shipment == "bike" && "text-xs"}`}>{basketForm?.shipment == "post" ? data.shippingCost.toLocaleString('fa-IR') : "دریافت هزینه در مقصد"}
+                                    <td className={`text-left font-semibold text-gray-700 ${basketForm.shipment == "bike" && "text-xs"}`}>{basketForm?.shipment == "پست" ? data.shippingCost.toLocaleString('fa-IR') : "دریافت هزینه در مقصد"}
                                         <span className={`text-xs font-mono ${basketForm.shipment == "bike" && "hidden"}`}> تومان</span>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td className="text-right font-semibold text-gray-700">مبلغ نهایی</td>
-                                    <td className="text-left font-semibold text-gray-700 whitespace-nowrap">{(basketForm?.shipment == "post" ? data.grandTotal : data.total).toLocaleString('fa-IR')}
+                                    <td className="text-left font-semibold text-gray-700 whitespace-nowrap">{(basketForm?.shipment == "پست" ? data.grandTotal : data.total).toLocaleString('fa-IR')}
                                         <span className=" text-xs font-mono"> تومان</span>
                                     </td>
                                 </tr>

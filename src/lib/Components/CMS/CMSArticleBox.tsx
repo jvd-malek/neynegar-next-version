@@ -10,6 +10,8 @@ import { Modal } from '@mui/material';
 import SearchableAuthorSelect from './SearchableAuthorSelect';
 import { fetcher } from '@/lib/fetcher';
 import ProductInput from './ProductInput';
+import InternalLinkSelector from './InternalLinkSelector';
+import LinkPreview from './LinkPreview';
 
 interface CMSArticleBoxProps {
     type: string;
@@ -125,6 +127,56 @@ function CMSArticleBox({ type, page, links, authors }: CMSArticleBoxProps) {
         }
     }, [data]);
 
+    const handleAddLinkToDescription = (articleId: string, link: string) => {
+        const currentDesc = editingArticles[articleId]?.desc ?? initialValues[articleId]?.desc ?? '';
+        const newDesc = currentDesc + ' ' + link;
+        handleFieldChange(articleId, 'desc', newDesc);
+    };
+
+    const handleAddLinkToContent = (articleId: string, contentIndex: number, link: string) => {
+        const currentContent = editingArticles[articleId]?.content ?? initialValues[articleId]?.content ?? [];
+        const newContent = [...currentContent];
+        
+        // Ensure the content array has enough elements
+        while (newContent.length <= contentIndex) {
+            newContent.push('');
+        }
+        
+        // Add the link to the specific section
+        const currentSectionContent = newContent[contentIndex] || '';
+        newContent[contentIndex] = currentSectionContent + ' ' + link;
+        
+        handleFieldChange(articleId, 'content', newContent);
+    };
+
+    // Function to add a new subtitle section
+    const handleAddNewSubtitle = (articleId: string) => {
+        const currentSubtitles = editingArticles[articleId]?.subtitles ?? initialValues[articleId]?.subtitles ?? [];
+        const newSubtitles = [...currentSubtitles, ''];
+        
+        setEditingArticles(prev => ({
+            ...prev,
+            [articleId]: {
+                ...prev[articleId],
+                subtitles: newSubtitles
+            }
+        }));
+    };
+
+    // Function to add a new content section
+    const handleAddNewContent = (articleId: string) => {
+        const currentContent = editingArticles[articleId]?.content ?? initialValues[articleId]?.content ?? [];
+        const newContent = [...currentContent, ''];
+        
+        setEditingArticles(prev => ({
+            ...prev,
+            [articleId]: {
+                ...prev[articleId],
+                content: newContent
+            }
+        }));
+    };
+
     const handleFieldChange = (articleId: string, field: string, value: any, index?: number) => {
         setErrors(prev => ({
             ...prev,
@@ -141,12 +193,22 @@ function CMSArticleBox({ type, page, links, authors }: CMSArticleBoxProps) {
             if (index !== undefined && Array.isArray(currentValue)) {
                 // Handle array fields (subtitles and content)
                 const newArray = [...currentValue];
-                newArray[index] = value;
+                // Ensure the value is always a string and only update the specific index
+                newArray[index] = String(value || '');
                 return {
                     ...prev,
                     [articleId]: {
                         ...currentArticle,
                         [field]: newArray
+                    }
+                };
+            } else if (Array.isArray(value)) {
+                // Handle when the entire array is passed (like in handleAddLinkToContent)
+                return {
+                    ...prev,
+                    [articleId]: {
+                        ...currentArticle,
+                        [field]: value
                     }
                 };
             }
@@ -262,7 +324,7 @@ function CMSArticleBox({ type, page, links, authors }: CMSArticleBoxProps) {
                 throw new Error('No authentication token found');
             }
 
-            const fileResponse = await fetch('http://localhost:4000/upload', {
+            const fileResponse = await fetch('https://api.neynegar1.ir/upload', {
                 method: 'POST',
                 headers: {
                     'authorization': jwt,
@@ -277,7 +339,7 @@ function CMSArticleBox({ type, page, links, authors }: CMSArticleBoxProps) {
 
             const fileResult = await fileResponse.json();
 
-            const response = await fetch('http://localhost:4000/graphql', {
+            const response = await fetch('https://api.neynegar1.ir/graphql', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -382,8 +444,8 @@ function CMSArticleBox({ type, page, links, authors }: CMSArticleBoxProps) {
                         <div className="mt-5 bg-white shadow-cs py-2 px-4 rounded-xl flex flex-col gap-3" key={article._id}>
                             <div className="flex justify-between items-center gap-2">
                                 <img
-                                    src={`https://api.neynegar1.ir/imgs/${article.cover}`}
-                                    alt=""
+                                    src={`https://api.neynegar1.ir/uploads/${article.cover}`}
+                                    alt={article.title}
                                     className='w-20 rounded-lg h-20 object-cover cursor-pointer hover:opacity-80 transition-opacity'
                                     onClick={() => handleImageClick(article)}
                                 />
@@ -399,14 +461,50 @@ function CMSArticleBox({ type, page, links, authors }: CMSArticleBoxProps) {
                                         error={articleErrors.title}
                                     />
 
-                                    <ProductInput
-                                        label="توضیحات"
-                                        value={editingArticles[article._id]?.desc ?? initialArticleValues?.desc}
-                                        type="textarea"
-                                        onChange={(value) => handleFieldChange(article._id, 'desc', value)}
-                                        onFocus={() => handleFieldFocus(article._id, 'desc', editingArticles[article._id]?.desc ?? initialArticleValues?.desc)}
-                                        error={articleErrors.desc}
-                                    />
+                                    <div className="flex flex-col gap-1 w-20 sm:w-46">
+                                        <label className="text-xs sm:text-sm text-gray-700 text-shadow">توضیحات</label>
+                                        <div className="text-xs text-blue-600 mb-2">
+                                            💡 برای لینک خارجی: [متن نمایشی](https://example.com)<br/>
+                                            💡 برای لینک داخلی: [متن نمایشی](/article/ARTICLE_ID) یا [متن نمایشی](/product/PRODUCT_ID)
+                                        </div>
+                                        
+                                        {/* Internal Link Selectors */}
+                                        <div className="flex gap-2 mb-2">
+                                            <div className="flex-1">
+                                                <InternalLinkSelector
+                                                    type="article"
+                                                    placeholder="جستجوی مقاله..."
+                                                    onSelect={(link) => {
+                                                        handleAddLinkToDescription(article._id, link);
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <InternalLinkSelector
+                                                    type="product"
+                                                    placeholder="جستجوی محصول..."
+                                                    onSelect={(link) => {
+                                                        handleAddLinkToDescription(article._id, link);
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                        
+                                        <ProductInput
+                                            label=""
+                                            value={editingArticles[article._id]?.desc ?? initialArticleValues?.desc}
+                                            type="textarea"
+                                            onChange={(value) => handleFieldChange(article._id, 'desc', value)}
+                                            onFocus={() => handleFieldFocus(article._id, 'desc', editingArticles[article._id]?.desc ?? initialArticleValues?.desc)}
+                                            error={articleErrors.desc}
+                                        />
+                                        
+                                        {/* Link Preview for Description */}
+                                        <LinkPreview 
+                                            content={(editingArticles[article._id]?.desc ?? initialArticleValues?.desc ?? '') || ''} 
+                                            title="پیش‌نمایش لینک‌های توضیحات"
+                                        />
+                                    </div>
 
                                     <div className="flex flex-col gap-1 w-20 sm:w-46">
                                         <label className="text-xs sm:text-sm text-gray-700 text-shadow">عناوین فرعی</label>
@@ -423,10 +521,7 @@ function CMSArticleBox({ type, page, links, authors }: CMSArticleBoxProps) {
                                                 />
                                             ))}
                                             <button
-                                                onClick={() => {
-                                                    const currentSubtitles = editingArticles[article._id]?.subtitles ?? initialArticleValues?.subtitles ?? [];
-                                                    handleFieldChange(article._id, 'subtitles', [...currentSubtitles, ''], currentSubtitles.length);
-                                                }}
+                                                onClick={() => handleAddNewSubtitle(article._id)}
                                                 className="text-sm text-blue-500 hover:text-blue-600"
                                             >
                                                 + افزودن عنوان فرعی
@@ -436,24 +531,56 @@ function CMSArticleBox({ type, page, links, authors }: CMSArticleBoxProps) {
 
                                     <div className="flex flex-col gap-1 w-20 sm:w-46">
                                         <label className="text-xs sm:text-sm text-gray-700 text-shadow">محتوا</label>
+                                        <div className="text-xs text-blue-600 mb-2">
+                                            💡 برای لینک خارجی: [متن نمایشی](https://example.com)<br/>
+                                            💡 برای لینک داخلی: [متن نمایشی](/article/ARTICLE_ID) یا [متن نمایشی](/product/PRODUCT_ID)
+                                        </div>
                                         <div className="flex flex-col gap-2">
                                             {(editingArticles[article._id]?.content ?? initialArticleValues?.content ?? []).map((content: string, index: number) => (
-                                                <ProductInput
-                                                    key={index}
-                                                    label={`بخش ${index + 1}`}
-                                                    value={content}
-                                                    type="textarea"
-                                                    onChange={(value) => handleFieldChange(article._id, 'content', value, index)}
-                                                    onFocus={() => handleFieldFocus(article._id, 'content', content)}
-                                                    error={articleErrors.content}
-                                                    form={true}
-                                                />
+                                                <div key={index} className="border border-gray-200 rounded-lg p-3">
+                                                    <div className="text-xs text-gray-600 mb-2">بخش {index + 1}</div>
+                                                    
+                                                    {/* Internal Link Selectors for this content section */}
+                                                    <div className="flex gap-2 mb-2">
+                                                        <div className="flex-1">
+                                                            <InternalLinkSelector
+                                                                type="article"
+                                                                placeholder="جستجوی مقاله..."
+                                                                onSelect={(link) => {
+                                                                    handleAddLinkToContent(article._id, index, link);
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <InternalLinkSelector
+                                                                type="product"
+                                                                placeholder="جستجوی محصول..."
+                                                                onSelect={(link) => {
+                                                                    handleAddLinkToContent(article._id, index, link);
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <ProductInput
+                                                        label=""
+                                                        value={content || ''}
+                                                        type="textarea"
+                                                        onChange={(value) => handleFieldChange(article._id, 'content', value, index)}
+                                                        onFocus={() => handleFieldFocus(article._id, 'content', content)}
+                                                        error={articleErrors.content}
+                                                        form={true}
+                                                    />
+                                                    
+                                                    {/* Link Preview for Content */}
+                                                    <LinkPreview 
+                                                        content={content || ''} 
+                                                        title={`پیش‌نمایش لینک‌های بخش ${index + 1}`}
+                                                    />
+                                                </div>
                                             ))}
                                             <button
-                                                onClick={() => {
-                                                    const currentContent = editingArticles[article._id]?.content ?? initialArticleValues?.content ?? [];
-                                                    handleFieldChange(article._id, 'content', [...currentContent, ''], currentContent.length);
-                                                }}
+                                                onClick={() => handleAddNewContent(article._id)}
                                                 className="text-sm text-blue-500 hover:text-blue-600"
                                             >
                                                 + افزودن بخش جدید

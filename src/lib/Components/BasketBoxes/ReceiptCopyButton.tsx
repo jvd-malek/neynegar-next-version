@@ -1,45 +1,17 @@
 'use client';
 import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
-import { Bounce, toast } from 'react-toastify';
+import { notify } from '@/lib/utils/notify';
 
 export default function ReceiptCopyButton({ receiptText }: { receiptText: string }) {
 
 
-    const notify = (txt: string, status: boolean) => {
-        if (status) {
-            toast.success(txt, {
-                position: "bottom-left",
-                autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: false,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-                theme: "dark",
-                transition: Bounce,
-            });
-        } else {
-            toast.error(txt, {
-                position: "bottom-left",
-                autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: false,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-                theme: "dark",
-                transition: Bounce,
-            });
-        }
-    };
-
     const handleCopy = async () => {
         try {
             await navigator.clipboard.writeText(receiptText);
-            notify('متن رسید با موفقیت کپی شد', true);
+            notify('متن رسید با موفقیت کپی شد', 'success');
         } catch (err) {
             console.error('Failed to copy receipt:', err);
-            notify('خطا در کپی کردن رسید', false);
+            notify('خطا در کپی کردن رسید', 'error');
         }
     };
 

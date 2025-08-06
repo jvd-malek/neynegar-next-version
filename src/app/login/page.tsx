@@ -5,14 +5,46 @@ import ClearRoundedIcon from '@mui/icons-material/ClearRounded';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Head from 'next/head';
-import TxtBox from '@/lib/Components/InputBoxes/TxtBox';
-import { setCookie } from 'cookies-next';
+import ProductInput from '@/lib/Components/CMS/ProductInput';
+import { deleteCookie, getCookie, setCookie } from 'cookies-next';
+import { fetcher } from '@/lib/fetcher';
+import { mutate } from 'swr';
+import { notify } from '@/lib/utils/notify';
 
 type ErrorType = {
     type: string;
     state: boolean;
     message?: string;
 };
+
+const SEND_VERIFICATION_CODE = `
+  mutation SendCode($phone: String!, $name: String!) {
+    sendVerificationCode(phone: $phone, name: $name)
+  }
+`;
+
+const VERIFY_CODE = `
+  mutation VerifyCode($phone: String!, $code: String!, $name: String!, $basket: [BasketInput]) {
+    verifyCode(phone: $phone, code: $code, name: $name, basket: $basket) {
+      token
+      user {
+        _id
+        name
+        phone
+      }
+    }
+  }
+`;
+
+const GET_USER_BY_PHONE = `
+  query UserByPhone($phone: String!) {
+    userByPhone(phone: $phone) {
+      _id
+      name
+      phone
+    }
+  }
+`;
 
 export default function Login() {
     const router = useRouter();
@@ -31,9 +63,10 @@ export default function Login() {
         { type: "name", state: false, message: "نام و نام خانوادگی الزامی است" },
         { type: "code", state: false, message: "کد یکبارمصرف الزامی است" }
     ]);
-    
+
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [sendPass, setSendPass] = useState(false);
+    const [sendPassAgain, setSendPassAgain] = useState(false);
     const [showNameField, setShowNameField] = useState(false);
     const [apiError, setApiError] = useState('');
     const [remainingTime, setRemainingTime] = useState(0);
@@ -62,30 +95,27 @@ export default function Login() {
         }
     }, [remainingTime]);
 
+    useEffect(() => {
+        if (remainingTime === 0 && sendPass) {
+            setSendPass(false)
+            setSendPassAgain(true);
+        }
+    }, [remainingTime, sendPass]);
+
     // ارسال کد تایید
     const sendVerificationCode = useCallback(async () => {
         try {
             setIsSubmitting(true);
-            const response = await fetch('https://api.neynegar1.ir/users/sms', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: formData.name,
-                    phone: formData.phone
-                })
+            await fetcher(SEND_VERIFICATION_CODE, {
+                name: formData.name,
+                phone: formData.phone
             });
 
-            const data = await response.json();
-
-            if (response.ok) {
-                setSendPass(true);
-                setRemainingTime(120); // 2 دقیقه تایمر
-                setApiError('');
-            } else {
-                setApiError(data.message || 'خطا در ارسال کد تایید');
-            }
-        } catch (error) {
-            setApiError('خطا در ارتباط با سرور');
+            setSendPass(true);
+            setRemainingTime(120); // 2 دقیقه تایمر
+            setApiError('');
+        } catch (error: any) {
+            setApiError(error.message || 'خطا در ارسال کد');
         } finally {
             setIsSubmitting(false);
         }
@@ -106,48 +136,20 @@ export default function Login() {
             setApiError('');
 
             // 1. بررسی وجود کاربر
-            const userCheckResponse = await fetch(
-                `https://api.neynegar1.ir/users/isExist/${formData.phone}`
-            );
+            const data = await fetcher(GET_USER_BY_PHONE, {
+                phone: formData.phone
+            });
 
-            // بررسی وضعیت پاسخ
-            if (!userCheckResponse.ok) {
-                throw new Error(userCheckResponse.status === 422
-                    ? 'شماره همراه نامعتبر است'
-                    : 'خطا در بررسی کاربر');
-            }
-
-            const userData = await userCheckResponse.json();
-            console.log('User check response:', userData);
-
-            // 2. تصمیم‌گیری بر اساس پاسخ
-            if (userData) { // فرض بر اینکه API یک فیلد exists برمی‌گرداند
-                setFormData(prev => ({ ...prev, name: userData.name || '' }));
-
-                // 3. ارسال کد تایید
-                const smsResponse = await fetch('https://api.neynegar1.ir/users/sms', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: userData.name,
-                        phone: formData.phone
-                    })
-                });
-
-                if (!smsResponse.ok) {
-                    const errorData = await smsResponse.json();
-                    throw new Error(errorData.message || 'خطا در ارسال کد تایید');
-                }
-
-                setSendPass(true);
+            if (data.userByPhone) {
+                setFormData(prev => ({ ...prev, name: data.userByPhone.name || '' }));
+                await sendVerificationCode();
                 setShowNameField(false);
-                setRemainingTime(120);
             } else {
                 setShowNameField(true);
             }
         } catch (error: any) {
             console.error('Error in user check:', error);
-            setApiError(error.message || 'خطا در ارتباط با سرور');
+            setApiError(error.message || 'خطا در بررسی شماره');
         } finally {
             setIsSubmitting(false);
         }
@@ -176,64 +178,54 @@ export default function Login() {
         return isValid;
     }, [formData, errors, showNameField]);
 
-    // عملیات ورود
-    const handleLogin = useCallback(async () => {
-        try {
-            const response = await fetch(
-                `https://api.neynegar1.ir/users/${showNameField ? "register" : "login"}`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: formData.name,
-                        phone: formData.phone
-                    })
-                }
-            );
-
-            const data = await response.json();
-
-            if (response.ok) {
-                setCookie('jwt', data.accessToken, {
-                    maxAge: 60 * 60 * 24 * 90,
-                    path: '/',
-                });
-                router.push(bas ? "/basket" : "/");
-                router.refresh();
-            } else {
-                setApiError(data.message || 'خطا در ورود به سیستم');
-            }
-        } catch (error) {
-            setApiError('خطا در ارتباط با سرور');
-        }
-    }, [formData, showNameField, bas, router]);
-
     // تایید کد یکبارمصرف
     const verifyCode = useCallback(async () => {
         try {
             setIsSubmitting(true);
-            const response = await fetch('https://api.neynegar1.ir/users/code', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    phone: formData.phone,
-                    code: formData.code
-                })
-            });
 
-            const data = await response.json();
-
-            if (data.state) {
-                await handleLogin();
-            } else {
-                setApiError(data.msg || 'کد وارد شده نامعتبر است');
+            let basket = [];
+            try {
+                const basketCookie = getCookie('basket');
+                if (basketCookie) {
+                    basket = JSON.parse(basketCookie as string);
+                    basket = basket.map((item: any) => ({
+                        productId: item.productId || item._id,
+                        count: item.count
+                    }));
+                }
+            } catch (e) {
+                basket = [];
             }
-        } catch (error) {
-            setApiError('خطا در ارتباط با سرور');
+
+            // مقداردهی name حتی اگر showNameField فعال نباشد
+            const nameToSend = formData.name && formData.name.trim() ? formData.name : 'کاربر جدید';
+
+            const variables: any = {
+                phone: formData.phone,
+                code: `${formData.code}`,
+                name: nameToSend,
+                basket: basket
+            };
+
+            const data = await fetcher(VERIFY_CODE, variables);
+
+            const token = data.verifyCode.token;
+            if (token) {
+                setCookie('jwt', token, {
+                    maxAge: 60 * 60 * 24 * 90,
+                    path: '/'
+                });
+                deleteCookie('basket');
+                mutate(["userByToken"])
+                router.push(bas ? '/basket' : '/');
+                notify("ورود با موفقیت انجام شد.", 'success');
+            }
+        } catch (error: any) {
+            setApiError(error.message || 'کد نامعتبر است');
         } finally {
             setIsSubmitting(false);
         }
-    }, [formData.phone, formData.code, handleLogin]);
+    }, [formData.phone, formData.code, formData.name, bas, router]);
 
     // ارسال فرم
     const handleSubmit = useCallback(async () => {
@@ -286,22 +278,6 @@ export default function Login() {
                 <meta property="og:type" content="website" />
                 <meta property="og:url" content="https://neynegar1.ir/login" />
                 <link rel="canonical" href="https://neynegar1.ir/login" />
-
-                {/* اسکیما مارکاپ */}
-                <script type="application/ld+json">
-                    {JSON.stringify({
-                        "@context": "https://schema.org",
-                        "@type": "WebPage",
-                        "name": "ورود به حساب کاربری",
-                        "description": "صفحه ورود به حساب کاربری فروشگاه اینترنتی نی نگار",
-                        "url": "https://neynegar1.ir/login",
-                        "potentialAction": {
-                            "@type": "LoginAction",
-                            "target": "https://api.neynegar1.ir/users/login",
-                            "method": "POST"
-                        }
-                    })}
-                </script>
             </Head>
 
             {/* ساختار اصلی صفحه */}
@@ -353,19 +329,17 @@ export default function Login() {
                             >
                                 {/* فیلد شماره همراه */}
                                 <div className="relative">
-                                    <TxtBox
-                                        id="phone"
-                                        type="tel"
-                                        value={formData.phone}
-                                        onChange={(value) => handleChange('phone', value)}
+                                    <ProductInput
                                         label="شماره همراه"
-                                        error={errors.find(e => e.type === "phone")?.state}
-                                        errorMessage={errors.find(e => e.type === "phone")?.message}
+                                        value={formData.phone}
+                                        type="text"
+                                        onChange={(value) => handleChange('phone', value as string)}
+                                        onFocus={() => { }}
+                                        error={errors.find(e => e.type === "phone")?.state ? errors.find(e => e.type === "phone")?.message : undefined}
                                         disabled={sendPass}
-                                        inputMode="numeric"
-                                        autoComplete="tel"
+                                        form
+                                        login
                                     />
-
                                     {sendPass && (
                                         <button
                                             type="button"
@@ -381,38 +355,37 @@ export default function Login() {
 
                                 {/* فیلد نام (در صورت نیاز) */}
                                 {showNameField && (
-                                    <TxtBox
-                                        id="name"
-                                        type="text"
-                                        value={formData.name}
-                                        onChange={(value) => handleChange('name', value)}
+                                    <ProductInput
                                         label="نام و نام‌خانوادگی"
-                                        error={errors.find(e => e.type === "name")?.state}
-                                        errorMessage={errors.find(e => e.type === "name")?.message}
-                                        autoComplete="name"
+                                        value={formData.name}
+                                        type="text"
+                                        onChange={(value) => handleChange('name', value as string)}
+                                        onFocus={() => { }}
+                                        error={errors.find(e => e.type === "name")?.state ? errors.find(e => e.type === "name")?.message : undefined}
+                                        form
+                                        login
                                     />
                                 )}
 
                                 {/* فیلد کد یکبارمصرف (در صورت نیاز) */}
                                 {sendPass && (
                                     <div className="relative">
-                                        <TxtBox
-                                            id="code"
-                                            type="number"
-                                            value={formData.code}
-                                            onChange={(value) => handleChange('code', value)}
+                                        <ProductInput
                                             label="کد یکبارمصرف"
-                                            error={errors.find(e => e.type === "code")?.state || !!apiError}
-                                            errorMessage={errors.find(e => e.type === "code")?.message}
-                                            inputMode="numeric"
+                                            value={formData.code}
+                                            type="number"
+                                            onChange={(value) => handleChange('code', value as string)}
+                                            onFocus={() => { }}
+                                            error={errors.find(e => e.type === "code")?.state || !!apiError ? (apiError || errors.find(e => e.type === "code")?.message) : undefined}
+                                            form
+                                            login
                                         />
-
                                         <button
                                             type="submit"
-                                            disabled={isSubmitting || remainingTime > 0}
+                                            disabled={isSubmitting}
                                             className={`text-xs px-8 py-2 rounded-md ${apiError
-                                                    ? 'bg-rose-500 text-white'
-                                                    : 'bg-slate-600 text-neutral-200 hover:bg-slate-700'
+                                                ? 'bg-rose-500 text-white'
+                                                : 'bg-slate-600 text-neutral-200 hover:bg-slate-700'
                                                 } transition absolute top-1/2 -translate-y-1/2 left-[10%]`}
                                             aria-label="تایید کد یکبارمصرف"
                                         >
@@ -429,7 +402,7 @@ export default function Login() {
                                 )}
 
                                 {/* دکمه ارسال کد */}
-                                {!sendPass && (
+                                {!sendPass && !sendPassAgain && (
                                     <button
                                         type="button"
                                         onClick={handleSubmit}
@@ -439,6 +412,17 @@ export default function Login() {
                                     >
                                         {isSubmitting ? 'در حال بررسی...' :
                                             showNameField ? 'ارسال کد تایید' : 'ادامه'}
+                                    </button>
+                                )}
+                                {sendPassAgain && (
+                                    <button
+                                        type="button"
+                                        onClick={handleSubmit}
+                                        disabled={isSubmitting || remainingTime > 0}
+                                        className="px-4 py-4 w-full transition-all bg-slate-800 hover:bg-slate-900 rounded-lg text-white border-b-4 border-slate-700 active:border-slate-600 active:translate-y-1 disabled:opacity-70"
+                                        aria-label="ارسال مجدد کد"
+                                    >
+                                        ارسال مجدد کد
                                     </button>
                                 )}
 

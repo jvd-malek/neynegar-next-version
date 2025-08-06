@@ -1,10 +1,10 @@
 import Image from "next/image";
 import { Typewriter } from 'nextjs-simple-typewriter'
-import { Bounce, ToastContainer } from "react-toastify";
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import Link from "next/link";
+import dynamic from 'next/dynamic';
 
 // Components
 import Box from "@/lib/Components/ProductBoxes/Box";
@@ -22,6 +22,7 @@ import poem5 from '@/../public/Img/poem5.webp'
 import poem7 from '@/../public/Img/poem7.webp'
 import dribbble from "@/../../public/Img/dribbble_1.gif";
 import Tutorials from "@/lib/Components/Tutorials/Tutorials";
+import GroupDiscountsBanner from "@/lib/Components/ProductBoxes/GroupDiscountsBanner";
 
 const HOME_PAGE_QUERY = `
   query {
@@ -42,8 +43,45 @@ const HOME_PAGE_QUERY = `
       paintBooks {_id title desc price{price} discount { discount date } popularity cover brand showCount majorCat minorCat}
       gallery {_id title desc price{price} discount { discount date } popularity cover brand showCount majorCat minorCat}
       traditionalBooks {_id title desc price{price} discount { discount date } popularity cover brand showCount majorCat minorCat}
-      articles {_id title desc cover popularity majorCat minorCat authorId{_id fullName firstname lastname}}
+      articles {_id title desc cover popularity views majorCat minorCat authorId{_id fullName firstname lastname}}
       discountProducts {_id title desc price{price} discount { discount date } popularity cover brand showCount majorCat minorCat }
+      groupDiscounts {
+        _id
+        title
+        majorCat
+        minorCat
+        brand
+        discount
+        startDate
+        endDate
+        isActive
+      }
+      courses {
+        _id
+        title
+        desc
+        category
+        articleId { _id title desc }
+        relatedProducts {
+          _id
+          title
+          desc
+          price {
+            price
+            date
+          }
+          discount {
+            discount
+            date
+          }
+          popularity
+          cover
+          brand
+          showCount
+          majorCat
+          minorCat
+        }
+      }
     }
   }
 `;
@@ -142,7 +180,7 @@ const IntroductionSection = () => (
 
         <div className="flex justify-center gap-4 mb-12 w-[90%] mx-auto items-center">
           <Link
-            href="/category/محصولات"
+            href="#section-products"
             className="transition-all text-center cursor-pointer duration-75 bg-black hover:bg-slate-900 active:bg-slate-900 py-2.5 w-full rounded-lg text-white border-2"
             aria-label="مشاهده محصولات خوشنویسی"
           >
@@ -237,7 +275,7 @@ const IntroductionSection = () => (
 async function Home() {
 
   const res = await fetch(`${process.env.NEXT_BACKEND_GRAPHQL_URL}`, {
-    next: { revalidate: 1 },
+    next: { revalidate: 3600 },
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query: HOME_PAGE_QUERY }),
@@ -280,7 +318,7 @@ async function Home() {
   }
 
   const data = dataJson.data.homePageData;
-
+  
   return (
     <>
       <HeaderSection />
@@ -293,6 +331,9 @@ async function Home() {
         />
 
         <Box books={data?.discountProducts} discount />
+
+        {/* بنر تخفیف‌های گروهی */}
+        {data?.groupDiscounts && <GroupDiscountsBanner groupDiscounts={data.groupDiscounts} />}
 
         <div className="my-8 flex justify-center items-center mx-auto w-40">
           <Image
@@ -308,7 +349,6 @@ async function Home() {
       <IntroductionSection />
 
       <div className="container mx-auto px-8" id="section-courses">
-
         <div className="my-8 flex justify-center items-center mx-auto w-40">
           <Image
             src={poem2}
@@ -319,53 +359,38 @@ async function Home() {
           />
         </div>
 
-        <HomeHeader
-          title="خط نستعلیق"
-          ariaLabel="خط نستعلیق"
-          all={false}
-        />
+        {/* نمایش داینامیک دوره‌ها */}
+        {data?.courses?.map((course: any) => (
+          <div key={course._id} className="mb-12">
+            <HomeHeader
+              title={course.title}
+              ariaLabel={course.title}
+              all={false}
+            />
+            <Tutorials
+              title={course.title}
+              articleDesc={course.articleId?.desc || ""}
+              articleLink={course.articleId?._id || ""}
+              courseDesc={course.desc}
+              courseLink={course._id}
+              products={course.relatedProducts}
+              productsLink={course.category}
+            />
+          </div>
+        ))}
 
-        <Tutorials
-          title="نستعلیق"
-          articleDesc='  خوشنویسی نستعلیق، که به عنوان یکی از زیباترین و پیچیده‌ترین خطوط فارسی شناخته می‌شود، در قرن 15 میلادی به اوج خود رسید و توسط استادان بزرگی مانند "میرعماد" و "ابوالحسن صدیقی" به کمال رسید.'
-          articleLink="تست"
-          courseDesc='  خوشنویسی نستعلیق، که به عنوان یکی از زیباترین و پیچیده‌ترین خطوط فارسی شناخته می‌شود، در قرن 15 میلادی به اوج خود رسید و توسط استادان بزرگی مانند "میرعماد" و "ابوالحسن صدیقی" به کمال رسید.'
-          courseLink="تست"
-          productsLink="تست"
-        />
+        {/* بنر دوره‌های بعدی */}
+        <div className="w-full flex justify-center items-center mb-8">
+          <div className="bg-gradient-to-r from-blue-200 to-blue-400 text-blue-900 rounded-xl px-8 py-4 text-xl font-bold shadow-lg animate-pulse">
+            دوره‌های بعدی تو راهه ...
+          </div>
+        </div>
+      </div>
 
-        <HomeHeader
-          title="خط شکسته نستعلیق"
-          ariaLabel="خط شکسته نستعلیق"
-          all={false}
-        />
+      {/* بخش محصولات و مقالات */}
+      <section className="container mx-auto px-8" id="section-products">
 
-        <Tutorials
-          title="شکسته نستعلیق"
-          articleDesc='  خوشنویسی نستعلیق، که به عنوان یکی از زیباترین و پیچیده‌ترین خطوط فارسی شناخته می‌شود، در قرن 15 میلادی به اوج خود رسید و توسط استادان بزرگی مانند "میرعماد" و "ابوالحسن صدیقی" به کمال رسید.'
-          articleLink="تست"
-          courseDesc='  خوشنویسی نستعلیق، که به عنوان یکی از زیباترین و پیچیده‌ترین خطوط فارسی شناخته می‌شود، در قرن 15 میلادی به اوج خود رسید و توسط استادان بزرگی مانند "میرعماد" و "ابوالحسن صدیقی" به کمال رسید.'
-          courseLink="تست"
-          productsLink="تست"
-        />
-
-        <HomeHeader
-          title="خط کتابت"
-          ariaLabel="خط کتابت"
-          all={false}
-        />
-
-        <Tutorials
-          title="کتابت"
-          articleDesc='  خوشنویسی نستعلیق، که به عنوان یکی از زیباترین و پیچیده‌ترین خطوط فارسی شناخته می‌شود، در قرن 15 میلادی به اوج خود رسید و توسط استادان بزرگی مانند "میرعماد" و "ابوالحسن صدیقی" به کمال رسید.'
-          articleLink="تست"
-          courseDesc='  خوشنویسی نستعلیق، که به عنوان یکی از زیباترین و پیچیده‌ترین خطوط فارسی شناخته می‌شود، در قرن 15 میلادی به اوج خود رسید و توسط استادان بزرگی مانند "میرعماد" و "ابوالحسن صدیقی" به کمال رسید.'
-          courseLink="تست"
-          productsLink="تست"
-          products={data?.caliBooks}
-        />
-
-        <div className="mt-8 flex justify-center items-center mx-auto w-40">
+        <div className="flex justify-center items-center mx-auto w-40">
           <Image
             src={poem4}
             alt="تصویر شعر خوشنویسی"
@@ -375,12 +400,7 @@ async function Home() {
           />
         </div>
 
-      </div>
-
-      {/* بخش محصولات و مقالات */}
-      <section className="container mx-auto px-8 mt-12">
-
-        <div className="my-16">
+        <div className="mb-16 mt-10">
           <HomeHeader
             title="تازه‌ترین کتاب‌های خوشنویسی"
             link="/category/کتاب/خوشنویسی"
@@ -435,20 +455,6 @@ async function Home() {
           ))}
         </article>
 
-        <ToastContainer
-          position="bottom-left"
-          autoClose={5000}
-          limit={2}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick={false}
-          rtl={true}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="dark"
-          transition={Bounce}
-        />
       </section>
     </>
   )

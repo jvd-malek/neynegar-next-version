@@ -5,10 +5,12 @@ import BookmarkIcon from '@mui/icons-material/Bookmark';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import Link from 'next/link';
 import LocalMallIcon from '@mui/icons-material/LocalMall';
-import { Bounce, toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
 import { getCookie, setCookie } from 'cookies-next';
 import DiscountTimer from './DiscountTimer';
+import { notify } from '@/lib/utils/notify';
+import { fetcher } from '@/lib/fetcher';
+import { mutate } from 'swr';
 
 type ProductBoxType = {
     box?: boolean;
@@ -22,6 +24,7 @@ type ProductBoxType = {
     popularity: number;
     cover: string;
     showCount: number;
+    state?: string;
 }
 
 type BasketItem = {
@@ -42,12 +45,13 @@ function ProductBox({
     popularity,
     cover,
     showCount,
+    state = "active"
 }: ProductBoxType) {
     const jwt = getCookie('jwt');
     const router = useRouter();
 
     const customLoader = ({ src }: { src: string }) => {
-        return `https://api.neynegar1.ir/imgs/${src}`;
+        return `https://api.neynegar1.ir/uploads/${src}`;
     };
 
     const getBasketFromCookies = (): BasketItem[] => {
@@ -64,7 +68,7 @@ function ProductBox({
 
     const addToBasket = async () => {
         if (showCount <= 0) {
-            notify("این محصول در حال حاضر موجود نیست", false);
+            notify("این محصول در حال حاضر موجود نیست", "error");
             return;
         }
 
@@ -72,32 +76,28 @@ function ProductBox({
 
         if (jwt) {
             try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL!}/api/user`, {
-                    method: "PUT",
-                    headers: {
-                        'authorization': jwt as string,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        basket: [basketItem]
-                    })
-                });
-
-                const data = await response.json();
-
-                if (!data.success) {
-                    notify(data.msg, false);
-                    if (data.msg.includes("token")) {
-                        router.push('/login');
+                const res = await fetcher(`
+                    mutation AddToBasket($productId: ID!, $count: Int!) {
+                        addToBasket(productId: $productId, count: $count) {
+                            _id
+                            bascket {
+                                productId { _id title showCount }
+                                count
+                            }
+                        }
                     }
+                `, { productId: _id, count: 1 });
+
+                if (!res || !res.addToBasket) {
+                    notify("خطا در افزودن به سبد خرید", "error");
                 } else {
-                    notify("این محصول به سبد خرید شما اضافه شد", true);
+                    notify("این محصول به سبد خرید شما اضافه شد", "success");
                     router.refresh()
+                    mutate(["userByToken"])
                 }
             } catch (error) {
                 console.log(error);
-
-                notify("خطا در ارتباط با سرور", false);
+                notify("خطا در ارتباط با سرور", "error");
             }
         } else {
             const currentBasket = getBasketFromCookies();
@@ -107,43 +107,15 @@ function ProductBox({
                 if (currentBasket[existingItemIndex].count < showCount) {
                     currentBasket[existingItemIndex].count += 1;
                 } else {
-                    notify("این محصول در حال حاضر موجود نیست", false);
+                    notify("این محصول در حال حاضر موجود نیست", "error");
                 }
             } else {
                 currentBasket.push(basketItem);
             }
 
             updateBasketCookie(currentBasket);
-            notify("این محصول به سبد خرید شما اضافه شد", true);
+            notify("این محصول به سبد خرید شما اضافه شد", "success");
             router.refresh();
-        }
-    };
-
-    const notify = (txt: string, status: boolean) => {
-        if (status) {
-            toast.success(txt, {
-                position: "bottom-left",
-                autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-                theme: "dark",
-                transition: Bounce,
-            });
-        } else {
-            toast.error(txt, {
-                position: "bottom-left",
-                autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-                theme: "dark",
-                transition: Bounce,
-            });
         }
     };
 
@@ -184,7 +156,7 @@ function ProductBox({
                     )}
                 </Link>
 
-                {showCount > 0 && (
+                {showCount > 0 && state !== "callForPrice" && (
                     <button
                         onClick={addToBasket}
                         className="absolute cursor-pointer text-xs bottom-2 left-1/2 transform -translate-x-1/2 bg-white/90 hover:bg-white px-2 py-1 rounded-lg shadow-md md:opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center gap-2"
@@ -222,7 +194,7 @@ function ProductBox({
                     {popularity.toLocaleString('fa-IR')}
                 </span>
 
-                {showCount > 0 ? (
+                {showCount > 0 && state !== "callForPrice" ? (
                     <div className="flex justify-center items-center md:gap-2 gap-1">
                         <div className="flex flex-col items-start">
                             {discount[discount.length - 1]?.discount > 0 && discount[discount.length - 1]?.date > Date.now() && (
@@ -237,7 +209,7 @@ function ProductBox({
                         <p className="text-xs font-light">تومان</p>
                     </div>
                 ) : (
-                    <p className="text-red-700 bg-red-200 px-2 py-1 rounded-md text-sm font-semibold">ناموجود</p>
+                    <p className="text-red-700 bg-red-200 px-2 py-1 rounded-md text-sm font-semibold">{state === "callForPrice" ? "تماس بگیرید" : "ناموجود"}</p>
                 )}
             </div>
         </div>
