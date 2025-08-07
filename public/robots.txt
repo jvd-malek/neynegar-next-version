@@ -1,0 +1,12 @@
+# *
+User-agent: *
+Disallow: /cms
+Disallow: /account
+Disallow: /basket
+Disallow: /login
+
+# Host
+Host: https://neynegar1.ir
+
+# Sitemaps
+Sitemap: https://neynegar1.ir/sitemap.xml

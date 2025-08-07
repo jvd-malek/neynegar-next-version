@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start -p 3814",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postbuild": "node scripts/generate-sitemap.js"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",

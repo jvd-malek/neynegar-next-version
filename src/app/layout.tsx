@@ -40,6 +40,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://neynegar1.ir/",
   },
+  verification: {
+    google: "JXdipV6eRMT7wZ-j8PGZXqInpd9z75XPR7sn-5i9zUU"
+  }
 };
 
 export const viewport: Viewport = {
