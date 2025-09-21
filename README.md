@@ -1,5 +1,7 @@
 # 🎨 NeyNegar 2.0 — Persian Visual Arts Platform
 
+<img src="public/logo.png" alt="Neynegar Logo" width="200"/>
+
 **NeyNegar** is a modern online platform focused on **calligraphy, painting, design**, and visual arts.  
 This version is completely rebuilt using **Next.js**, **GraphQL**, and **modern UI/UX** technologies to deliver a clean, fast, and reliable experience.
 
