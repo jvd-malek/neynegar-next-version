@@ -172,7 +172,7 @@ const Category = async ({ params, searchParams }: any) => {
         <div className="font-[Baloo]">
 
             {/* Hero Section */}
-            <section aria-labelledby="category-heading" className="relative bg-[url(../../public/Img/blue-low.webp)] bg-repeat bg-contain w-full pt-10 lg:h-[75vh] sm:h-[100vh] h-[70vh] text-white flex justify-center items-center">
+            <section aria-labelledby="category-heading" className="relative bg-[url(../../public/Img/blue-low.webp)] bg-repeat bg-contain w-full sm:pt-10 lg:h-[75vh] sm:h-[100vh] h-[70vh] text-white flex justify-center items-center">
                 <div className="w-40 absolute -bottom-1/7 left-1/2 -translate-x-1/2 z-10">
                     <Image
                         src={poem1}
@@ -313,7 +313,7 @@ async function fetchProducts(loc: string[], page: any) {
                         title
                         desc
                         price {price}
-                        discount {discount}
+                        discount {discount date}
                         popularity
                         cover
                         brand
@@ -532,37 +532,6 @@ async function fetchArticles(loc: string[], page: any) {
     return data.data.articlesByCategory;
 }
 
-// function filterAndSortProducts(products: productCoverType, page: any, loc: string[]) {
-//     return [...products]
-//         .sort((a, b) => {
-//             // اول بر اساس موجودی مرتب می‌کنیم
-//             if (a.showCount > 0 && b.showCount <= 0) return -1;
-//             if (a.showCount <= 0 && b.showCount > 0) return 1;
-
-//             // سپس بر اساس نوع مرتب‌سازی انتخاب شده
-//             switch (page.sort) {
-//                 case 'expensive':
-//                     return calculateFinalPrice(b) - calculateFinalPrice(a);
-//                 case 'cheap':
-//                     return calculateFinalPrice(a) - calculateFinalPrice(b);
-//                 case 'popular':
-//                     return b.popularity - a.popularity;
-//                 case 'offers':
-//                     const aLastDiscount = a.discount[a.discount.length - 1];
-//                     const bLastDiscount = b.discount[b.discount.length - 1];
-//                     const now = Date.now();
-
-//                     // اگر تخفیف معتبر باشد (تاریخ آن نگذشته باشد)
-//                     const aValidDiscount = aLastDiscount && aLastDiscount.date > now ? aLastDiscount.discount : 0;
-//                     const bValidDiscount = bLastDiscount && bLastDiscount.date > now ? bLastDiscount.discount : 0;
-
-//                     return bValidDiscount - aValidDiscount;
-//                 default:
-//                     return 0;
-//             }
-//         });
-// }
-
 function filterAndSortArticles(articles: articleAuthorCoverType, page: any, loc: string[]) {
     return [...articles]
         .filter(a => {
@@ -585,16 +554,6 @@ function filterAndSortArticles(articles: articleAuthorCoverType, page: any, loc:
                     return 0;
             }
         });
-}
-
-function calculateFinalPrice(product: any) {
-    const lastDiscount = product.discount[product.discount.length - 1];
-    const lastPrice = product.price[product.price.length - 1].price;
-    const now = Date.now();
-
-    // اگر تخفیف معتبر باشد (تاریخ آن نگذشته باشد)
-    const validDiscount = lastDiscount && lastDiscount.date > now ? lastDiscount.discount : 0;
-    return validDiscount > 0 ? (lastPrice * (100 - validDiscount) / 100) : lastPrice;
 }
 
 export default Category;

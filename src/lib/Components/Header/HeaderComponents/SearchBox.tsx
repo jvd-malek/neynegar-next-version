@@ -108,7 +108,9 @@ function SearchBox({ links }: any) {
                 open={isSearchOpen}
                 onClose={() => setIsSearchOpen(false)}
             >
-                <div className="top-1/2 -translate-y-1/2 absolute left-1/2 -translate-x-1/2 w-full max-w-2xl">
+                <div
+                    role="search"
+                    className="top-1/2 -translate-y-1/2 absolute left-1/2 -translate-x-1/2 w-full max-w-2xl">
                     <div className="bg-slate-50 rounded-md p-6 mx-4 h-[80vh]">
                         <form onSubmit={handleSearch} className="space-y-4">
                             <div className="flex items-center gap-2">
@@ -166,7 +168,7 @@ function SearchBox({ links }: any) {
                                                         >
                                                             <div className="flex items-center gap-3">
                                                                 {product.cover && (
-                                                                    <img 
+                                                                    <img
                                                                         src={`https://api.neynegar1.ir/uploads/${product.cover}`}
                                                                         alt={product.title}
                                                                         className="w-10 h-10 object-cover rounded"
@@ -197,8 +199,8 @@ function SearchBox({ links }: any) {
                                                         >
                                                             <div className="flex items-center gap-3">
                                                                 {article.cover && (
-                                                                    <img 
-                                                                        src={`https://api.neynegar1.ir/uploads/${article.cover}`} 
+                                                                    <img
+                                                                        src={`https://api.neynegar1.ir/uploads/${article.cover}`}
                                                                         alt={article.title}
                                                                         className="w-10 h-10 object-cover rounded"
                                                                     />
@@ -223,9 +225,9 @@ function SearchBox({ links }: any) {
                                 )}
                             </div>
 
-                            {((searchQuery.length == 0) || 
-                              ((data?.data?.searchProducts?.products?.length == 0) && 
-                               (data?.data?.searchArticles?.articles?.length == 0))) &&
+                            {((searchQuery.length == 0) ||
+                                ((data?.data?.searchProducts?.products?.length == 0) &&
+                                    (data?.data?.searchArticles?.articles?.length == 0))) &&
                                 <div className="space-y-2">
                                     {links.map((l: linksType) => (
                                         <Link

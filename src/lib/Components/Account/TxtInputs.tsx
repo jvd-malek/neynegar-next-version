@@ -96,8 +96,8 @@ function TxtInputs({ data, account }: { data: any, account?: boolean }) {
             if (addressError) addressError.state = true;
             isValid = false;
         }
-
-        if (!formData.postCode.trim()) {
+        
+        if (!formData.postCode) {
             const postCodeError = newErrors.find(e => e.type === "postCode");
             if (postCodeError) postCodeError.state = true;
             isValid = false;
@@ -165,7 +165,7 @@ function TxtInputs({ data, account }: { data: any, account?: boolean }) {
     const updateInfoHandler = async () => {
         if (jwt) {
             try {
-                await updateInfoUser({ name: formData.name.trim(), postCode: +formData.postCode.trim(), address: `${formData.state.trim()}%%${formData.city.trim()}%%${formData.address.trim()}` });
+                await updateInfoUser({ name: formData.name.trim(), postCode: +formData.postCode, address: `${formData.state}%%${formData.city}%%${formData.address.trim()}` });
                 notify("اطلاعات شما با موفقیت ذخیره شد.", 'success');
                 if (!account) router.push("?activeLink=shipment")
             } catch (error) {
@@ -181,6 +181,7 @@ function TxtInputs({ data, account }: { data: any, account?: boolean }) {
 
     const updateInfoUser = async (body: object) => {
         try {
+
             if (jwt && data.user && data.user._id) {
                 const mutation = `
                     mutation UpdateUser($id: ID!, $input: UserInput!) {

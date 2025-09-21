@@ -39,7 +39,6 @@ const CourseProgressObserver: React.FC<CourseProgressObserverProps> = ({ courseI
                 }
             `)
             const user = res.user;
-            console.log(user);
 
             if (user?.courseProgress) {
                 const courseProgress = user.courseProgress.find(

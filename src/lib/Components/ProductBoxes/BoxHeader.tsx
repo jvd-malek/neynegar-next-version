@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import FilterListRoundedIcon from '@mui/icons-material/FilterListRounded';
 import FilterAltRoundedIcon from '@mui/icons-material/FilterAltRounded';
 import LocalMallIcon from '@mui/icons-material/LocalMall';
+import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import { notify } from '@/lib/utils/notify';
 import { fetcher } from '@/lib/fetcher';
 import useSWR from 'swr';
@@ -124,6 +125,8 @@ export default function BoxHeader({
                         )}
                         {searchBar && !bascket ? (
                             <h1 className={`text-2xl ${searchBar && "sm:text-3xl"}`}>
+                                <Link href={`/`} className='cursor-pointer'>
+                                    <HomeRoundedIcon /> | </Link>
                                 {catTitle ? (
                                     <>
                                         {catTitle != "جستجو" ?

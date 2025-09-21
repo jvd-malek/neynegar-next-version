@@ -30,7 +30,7 @@ export default function ProductInput({ label, value, type = 'text', options, onC
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        if (e.key === 'Enter' && type !== 'textarea') {
             e.preventDefault();
             handleSave();
         } else if (e.key === 'Escape') {

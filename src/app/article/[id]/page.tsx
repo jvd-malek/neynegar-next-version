@@ -455,7 +455,7 @@ async function Article({ params, searchParams }: any) {
 
     return (
         <>
-            <div className="sm:w-[85vw] w-[98vw] mx-auto mt-32 relative px-2">
+            <div className="sm:w-[85vw] w-[98vw] mx-auto mt-26 relative px-2">
                 {/* Breadcrumb navigation */}
                 <nav aria-label="breadcrumb" className="bg-slate-200 rounded-xl py-3 px-4 flex justify-start items-center gap-4 font-medium">
                     {state?.article && (
@@ -480,7 +480,7 @@ async function Article({ params, searchParams }: any) {
                 </nav>
 
                 {/* Article section */}
-                <section className="grid gap-10 my-20 lg:grid-cols-9 grid-cols-1">
+                <section className="grid gap-10 my-10 lg:grid-cols-9 grid-cols-1">
                     {/* Article content */}
                     <div className="col-start-1 lg:col-end-7 lg:row-start-1 row-start-2 lg:row-end-4 w-full relative bg-slate-100 rounded-xl pt-9 pb-4 px-6 text-black">
                         <h1 className="border-b border-white border-solid pb-10 text-xl text-slate-900">

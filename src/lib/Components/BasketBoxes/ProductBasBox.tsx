@@ -44,39 +44,6 @@ interface ProductBasBoxProps {
 function ProductBasBox({ Products, page, basket }: ProductBasBoxProps) {
     const products = [...Products];
 
-    switch (page.sort) {
-        case 'expensive':
-            products.sort((a: UserBasket, b: UserBasket) => {
-                let Aprice = a.itemTotal;
-                let Bprice = b.itemTotal;
-                return Bprice - Aprice;
-            });
-            break;
-
-        case 'cheap':
-            products.sort((a: UserBasket, b: UserBasket) => {
-                let Aprice = a.itemTotal;
-                let Bprice = b.itemTotal;
-                return Aprice - Bprice;
-            });
-            break;
-
-        case 'popular':
-            products.sort((a: UserBasket, b: UserBasket) => (b.productId.popularity - a.productId.popularity));
-            break;
-
-        case 'offers':
-            products.sort((a: UserBasket, b: UserBasket) => {
-                const aDiscount = a.productId.discount;
-                const bDiscount = b.productId.discount;
-                return bDiscount - aDiscount;
-            });
-            break;
-        default:
-            products.sort((a: UserBasket, b: UserBasket) => (b.productId.popularity - a.productId.popularity));
-            break;
-    }
-
     return (
         <div className={`bg-slate-200 col-start-1 lg:col-end-4 col-end-6 row-start-1 transition-all ${page.activeLink == "product" ? "w-full opacity-100" : "h-0 opacity-60 w-0 overflow-hidden z-0"} flex flex-col justify-between transition-opacity rounded-l-xl rounded-b-xl`}>
             <div className={`lg:pt-16 py-10 px-10 w-full transition-all duration-700 grid grid-cols-1 grid-flow-row justify-center items-center gap-8 ${page.activeLink == "product" ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"}`}>

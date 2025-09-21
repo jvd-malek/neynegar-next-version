@@ -310,7 +310,7 @@ async function Account({ searchParams }: any) {
     ];
 
     return (
-        <div className="mt-32 w-[85vw] mx-auto grid grid-cols-4 gap-4">
+        <div className="mt-26 w-[85vw] mx-auto grid grid-cols-4 gap-4">
             <div className="lg:w-[20%] w-full col-start-1 col-end-5 row-start-1 h-fit relative bg-slate-200 text-slate-700 rounded-xl p-4 text-center pt-20 z-10">
                 <h1 className="absolute top-4 -right-2 text-xl rounded-r-lg rounded-l-xl pr-6 pl-4 py-2 bg-black text-white">
                     پیشخوان

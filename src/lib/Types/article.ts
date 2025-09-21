@@ -30,6 +30,7 @@ export type articleAuthorCoverType = {
 export type articleCoverProductType = {
     _id: string,
     desc: string,
+    title?: string
 }
 
 export type articleSingleType = {

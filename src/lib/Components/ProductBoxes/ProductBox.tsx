@@ -209,7 +209,9 @@ function ProductBox({
                         <p className="text-xs font-light">تومان</p>
                     </div>
                 ) : (
-                    <p className="text-red-700 bg-red-200 px-2 py-1 rounded-md text-sm font-semibold">{state === "callForPrice" ? "تماس بگیرید" : "ناموجود"}</p>
+                    <Link
+                    href="tel:09934242315"
+                    className="text-red-700 bg-red-200 px-2 py-1 rounded-md text-sm font-semibold">{state === "callForPrice" ? "تماس بگیرید" : "ناموجود"}</Link>
                 )}
             </div>
         </div>

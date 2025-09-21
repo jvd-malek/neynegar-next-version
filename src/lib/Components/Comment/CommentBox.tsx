@@ -7,7 +7,6 @@ import ReplyBox from './ReplyBox';
 import { repliesType } from "@/lib/Types/replies";
 import { commentType } from "@/lib/Types/comment";
 import Image from 'next/image';
-import moment from 'jalali-moment';
 import Link from 'next/link';
 
 type CommentBoxProps = commentType & {

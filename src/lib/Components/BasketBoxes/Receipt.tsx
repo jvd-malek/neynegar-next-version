@@ -1,6 +1,5 @@
 "use client"
 import ReceiptRoundedIcon from '@mui/icons-material/ReceiptRounded';
-import moment from 'jalali-moment';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import { generateReceiptText } from './ReceiptUtils';
 import ReceiptCopyButton from './ReceiptCopyButton';
@@ -19,7 +18,7 @@ function Receipt({ activeLink, products, data }: {
         grandTotal: number;
     }
 }) {
-    const today = moment().locale('fa').format('jD jMMMM jYYYY');
+    const today = new Date().toLocaleDateString('fa-IR')
     const basket = getCookie('basketForm');
     let basketForm = {
         phone: '',
@@ -35,12 +34,28 @@ function Receipt({ activeLink, products, data }: {
         basketForm = JSON.parse(basket as string)
     }
 
+    const discountCookie = getCookie('discountCode');
+    let discountPercent = 0;
+    let discountCode = '';
+    if (discountCookie) {
+        try {
+            const parsed = JSON.parse(discountCookie as string);
+            discountPercent = Number(parsed?.percent) || 0;
+            discountCode = String(parsed?.code || '');
+        } catch (e) { /* noop */ }
+    }
+
+    const baseTotal = basketForm?.shipment == "پست" ? data.grandTotal : data.total;
+    const extraDiscount = Math.floor(baseTotal * discountPercent / 100);
+    const finalPayable = Math.floor(baseTotal * (100 - discountPercent) / 100);
+
     const receiptText = generateReceiptText(products, data, {
         name: basketForm.name,
         state: basketForm.state,
         city: basketForm.city,
         address: basketForm.address,
-        shipment: basketForm.shipment
+        shipment: basketForm.shipment,
+        phone: basketForm.phone
     });
 
     const receiptRef = useRef<HTMLDivElement>(null);
@@ -123,8 +138,8 @@ function Receipt({ activeLink, products, data }: {
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td className="text-right font-semibold text-gray-700">تخفیف</td>
-                                    <td className="text-left font-semibold text-gray-700">{data.totalDiscount.toLocaleString('fa-IR')}
+                                    <td className="text-right font-semibold text-gray-700">تخفیف{discountCode ? ` (کد: ${discountCode})` : ''}</td>
+                                    <td className="text-left font-semibold text-gray-700">{(data.totalDiscount + extraDiscount).toLocaleString('fa-IR')}
                                         <span className=" text-xs font-mono"> تومان</span>
                                     </td>
                                 </tr>
@@ -136,7 +151,7 @@ function Receipt({ activeLink, products, data }: {
                                 </tr>
                                 <tr>
                                     <td className="text-right font-semibold text-gray-700">مبلغ نهایی</td>
-                                    <td className="text-left font-semibold text-gray-700 whitespace-nowrap">{(basketForm?.shipment == "پست" ? data.grandTotal : data.total).toLocaleString('fa-IR')}
+                                    <td className="text-left font-semibold text-gray-700 whitespace-nowrap">{finalPayable.toLocaleString('fa-IR')}
                                         <span className=" text-xs font-mono"> تومان</span>
                                     </td>
                                 </tr>

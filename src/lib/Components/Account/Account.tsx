@@ -3,8 +3,7 @@ import CircleNotificationsRoundedIcon from '@mui/icons-material/CircleNotificati
 import CommentInput from '@/lib/Components/Comment/CommentInput';
 import { userType } from '@/lib/Types/user';
 import SentimentDissatisfiedTwoToneIcon from '@mui/icons-material/SentimentDissatisfiedTwoTone';
-import { paginatedTicketsType, ticketType } from '@/lib/Types/ticket';
-import moment from "jalali-moment"
+import { paginatedTicketsType } from '@/lib/Types/ticket';
 import Box from '@/lib/Components/ProductBoxes/Box';
 import Link from 'next/link';
 import { paginatedCommentsType } from '@/lib/Types/comment';
@@ -112,7 +111,7 @@ function AccountChild({ type, user, orders, comments, tickets }: AccountChildTyp
                                                 <p className="">{`تخفیف: ${d.discount.toLocaleString("FA-IR")}`}</p>
                                                 {d.date < Date.now() ?
                                                     <p className="">منقضی شد</p> :
-                                                    <p className="">{`تاریخ انقضا: ${moment(d.date).locale('fa').format('YYYY/MM/DD')}`}</p>
+                                                    <p className="">{`تاریخ انقضا: ${d.date ? new Date(Number(d.date)).toLocaleDateString('fa-IR') : 'نامشخص'}`}</p>
                                                 }
                                             </div>
                                         )) :

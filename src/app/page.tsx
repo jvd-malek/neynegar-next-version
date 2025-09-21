@@ -98,9 +98,8 @@ const GlassBox = ({ name, full = false }: { name: string, full?: boolean }) => (
 
 const HeaderSection = () => (
   <section
-    className="relative bg-[url(../../public/Img/blue-low.webp)] bg-repeat bg-contain pt-10 lg:h-[80vh] sm:h-[100vh] w-full h-[80vh] text-white flex justify-center items-center"
-    aria-label="بخش جستجوی محصولات خوشنویسی"
-    role="search"
+    className="relative bg-[url(../../public/Img/blue-low.webp)] bg-repeat bg-contain sm:pt-10 lg:h-[80vh] sm:h-[100vh] w-full h-[70vh] text-white flex justify-center items-center"
+    aria-label="بخش سرصفحه محصولات خوشنویسی"
   >
     <div className="absolute inset-x-0 -bottom-1 h-[70%] bg-gradient-to-t from-slate-50 to-transparent" />
 
@@ -208,7 +207,7 @@ const IntroductionSection = () => (
         <Image
           src={HomeImg}
           alt="تصویر صفحه اصلی نی نگار"
-          className="object-contain lg:w-[95%] mask-radial-[100%_100%] mask-radial-from-75% mask-radial-at-left"
+          className="object-contain lg:w-[75%] mask-radial-[100%_100%] mask-radial-from-75% mask-radial-at-left"
           width={600}
           height={600}
           priority
@@ -449,7 +448,7 @@ async function Home() {
           link="/category/مقالات"
           ariaLabel="مقالات تخصصی خوشنویسی"
         />
-        <article className="mt-16 mx-auto w-[82vw] flex flex-wrap gap-10 justify-center">
+        <article className="mt-16 mx-auto md:px-0 px-8 container flex flex-wrap gap-10 justify-center items-center">
           {data?.articles.map((a: any) => (
             <ArticleBox key={a._id} {...a} />
           ))}

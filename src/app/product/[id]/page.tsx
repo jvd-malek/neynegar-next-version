@@ -140,7 +140,7 @@ export async function generateMetadata({ params }: any) {
             },
             openGraph: {
                 title: `${state.product.title} | نی نگار`,
-                description: state.product.desc?.substring(0, 160) || "توضیحات محصول",
+                description: state.product.desc?.substring(0, 160) || "محصول با کیفیت از فروشگاه اینترنتی نی نگار",
                 url: `https://neynegar1.ir/product/${id}`,
                 type: 'website',
                 images: [
@@ -156,7 +156,7 @@ export async function generateMetadata({ params }: any) {
             twitter: {
                 card: 'summary_large_image',
                 title: `${state.product.title} | نی نگار`,
-                description: state.product.desc?.substring(0, 160) || "توضیحات محصول",
+                description: state.product.desc?.substring(0, 160) || "محصول با کیفیت از فروشگاه اینترنتی نی نگار",
                 images: [imageUrl],
             },
             // بهبود ۵: اضافه کردن metadataهای اضافی
@@ -171,7 +171,8 @@ export async function generateMetadata({ params }: any) {
                 'product_id': state.product._id,
                 'product_name': state.product.title,
                 'product_price': price.toString(),
-                'product_old_price': state.product.price[state.product.price.length - 2]?.price.toString() || price.toString(),
+                'product_status': state.product.status,
+                'product_old_price': state.product.price[state.product.price.length - 1]?.price.toString() || price.toString(),
                 'availability': state.product.showCount > 0 ? 'instock' : 'outofstock',
                 'product:price:amount': price.toString(),
                 'product:price:currency': 'IRR',
@@ -336,9 +337,7 @@ async function Product({ params, searchParams }: any) {
         }
     );
 
-
     const stateGraph = await productGraphData.json()
-    console.log(stateGraph);
 
     const commentsGraph = await commentsGraphData.json()
     const state: productType = { product: stateGraph.data.product, comments: commentsGraph.data.commentsByProduct }
@@ -411,9 +410,9 @@ async function Product({ params, searchParams }: any) {
 
     return (
         <>
-            <div className="sm:w-[85vw] w-[98vw] mx-auto mt-32 relative px-2">
+            <div className="sm:w-[85vw] w-[98vw] mx-auto lg:mt-32 mt-26 relative px-2">
                 {/* Fixed buy button for mobile */}
-                <div className="fixed bottom-0 left-1/2 -translate-x-1/2 shadow-css sm:hidden w-full bg-slate-200 rounded-t-2xl p-4 text-center z-50">
+                <div className="fixed bottom-0 left-1/2 -translate-x-1/2 shadow-css sm:hidden bg-glassh rounded-t-2xl px-4 w-[98vw] mx-auto py-2 text-center z-50">
                     <BuyBtn
                         id={id}
                         showCount={state.product.showCount}
@@ -460,7 +459,7 @@ async function Product({ params, searchParams }: any) {
                     {/* Product images */}
                     <div className="col-start-1 lg:col-end-2 col-end-3 row-start-2 lg:row-end-4 row-end-3 w-full bg-slate-200 rounded-xl pt-10 pb-4 px-4 flex flex-col justify-between">
                         <div className="lg:block md:flex block gap-8">
-                            <div className="rounded-xl overflow-hidden py-6 pl-6 pr-12 shadow-cs bg-white relative w-full mx-auto lg:mb-0 md:mb-4">
+                            <div className="rounded-xl overflow-hidden flex justify-center items-center py-6 pl-6 pr-12 shadow-cs bg-white relative w-full mx-auto lg:mb-0 md:mb-4">
                                 {state.product.discount[state.product.discount.length - 1]?.discount > 0 &&
                                     state.product.discount[state.product.discount.length - 1].date > Date.now() && (
                                         <DiscountTimer endDate={state.product.discount[state.product.discount.length - 1].date} page />
@@ -494,7 +493,7 @@ async function Product({ params, searchParams }: any) {
                                             />
                                         </Link>
                                     )}
-                                    {state?.product?.imgs?.split(",").map((i: string) => (
+                                    {state?.product?.images?.map((i: string) => (
                                         <Link
                                             href={`?img=${i}`}
                                             scroll={false}
@@ -614,7 +613,7 @@ async function Product({ params, searchParams }: any) {
                     {/* Product specifications */}
                     <div className="lg:col-start-2 col-start-1 col-end-3 lg:row-start-3 lg:row-end-4 row-start-4 row-end-5 w-full relative bg-slate-200 rounded-xl pt-9 pb-4 px-6">
                         <h2 className="absolute top-4 -right-2 text-xl rounded-r-lg rounded-l-xl pr-6 pl-4 py-2 bg-black text-white">
-                            مشخصات
+                            مقالات مرتبط
                         </h2>
 
                         <div className="mt-10">
@@ -625,7 +624,17 @@ async function Product({ params, searchParams }: any) {
                                         aria-controls="panel1-content"
                                         id="panel1-header"
                                     >
-                                        در باب محصول
+                                        {state?.product ? (
+                                            <p className="line-clamp-2">
+                                                {state.product.productArticleId ? (
+                                                    state.product.productArticleId.title
+                                                ) : (
+                                                    <SentimentDissatisfiedTwoToneIcon />
+                                                )}
+                                            </p>
+                                        ) : (
+                                            <Skeleton variant="text" className="rounded-md" />
+                                        )}
                                     </AccordionSummary>
                                 </div>
                                 <div className="bg-white">
@@ -650,19 +659,15 @@ async function Product({ params, searchParams }: any) {
                                     </AccordionDetails>
                                 </div>
                                 {state?.product?.productArticleId && (
-                                    <div className="dark:bg-slate-400">
-                                        <AccordionActions>
-                                            <Link
-                                                href={`/article/${state.product.productArticleId._id}`}
-                                                className="flex items-center gap-x-1.5 cursor-pointer text-sm text-sky-600 dark:text-white"
-                                            >
-                                                مشاهده مقاله
-                                                <div className="dark:text-slate-600">
-                                                    <KeyboardBackspaceRoundedIcon fontSize="small" />
-                                                </div>
-                                            </Link>
-                                        </AccordionActions>
-                                    </div>
+                                    <AccordionActions>
+                                        <Link
+                                            href={`/article/${state.product.productArticleId._id}`}
+                                            className="flex items-center gap-x-1.5 cursor-pointer text-sm text-blue-600"
+                                        >
+                                            مشاهده مقاله
+                                            <KeyboardBackspaceRoundedIcon fontSize="small" />
+                                        </Link>
+                                    </AccordionActions>
                                 )}
                             </Accordion>
                             <Accordion>
@@ -672,7 +677,17 @@ async function Product({ params, searchParams }: any) {
                                         aria-controls="panel2-content"
                                         id="panel2-header"
                                     >
-                                        در باب نویسنده
+                                        {state?.product ? (
+                                            <p className="line-clamp-2">
+                                                {state.product.authorArticleId ? (
+                                                    state.product.authorArticleId.title
+                                                ) : (
+                                                    <SentimentDissatisfiedTwoToneIcon />
+                                                )}
+                                            </p>
+                                        ) : (
+                                            <Skeleton variant="text" className="rounded-md" />
+                                        )}
                                     </AccordionSummary>
                                 </div>
                                 <div className="bg-white">
@@ -697,19 +712,15 @@ async function Product({ params, searchParams }: any) {
                                     </AccordionDetails>
                                 </div>
                                 {state?.product?.authorArticleId && (
-                                    <div className="dark:bg-slate-400">
-                                        <AccordionActions>
-                                            <Link
-                                                href={`/article/${state.product.authorArticleId._id}`}
-                                                className="flex items-center gap-x-1.5 text-sm cursor-pointer text-sky-600 dark:text-white"
-                                            >
-                                                مشاهده مقاله
-                                                <div className="dark:text-slate-600">
-                                                    <KeyboardBackspaceRoundedIcon fontSize="small" />
-                                                </div>
-                                            </Link>
-                                        </AccordionActions>
-                                    </div>
+                                    <AccordionActions>
+                                        <Link
+                                            href={`/article/${state.product.authorArticleId._id}`}
+                                            className="flex items-center gap-x-1.5 text-sm cursor-pointer text-blue-600"
+                                        >
+                                            مشاهده مقاله
+                                            <KeyboardBackspaceRoundedIcon fontSize="small" />
+                                        </Link>
+                                    </AccordionActions>
                                 )}
                             </Accordion>
                             <Accordion>
@@ -719,7 +730,17 @@ async function Product({ params, searchParams }: any) {
                                         aria-controls="panel3-content"
                                         id="panel3-header"
                                     >
-                                        در باب انتشارات
+                                        {state?.product ? (
+                                            <p className="line-clamp-2">
+                                                {state.product.publisherArticleId ? (
+                                                    state.product.publisherArticleId.title
+                                                ) : (
+                                                    <SentimentDissatisfiedTwoToneIcon />
+                                                )}
+                                            </p>
+                                        ) : (
+                                            <Skeleton variant="text" className="rounded-md" />
+                                        )}
                                     </AccordionSummary>
                                 </div>
                                 <div className="bg-white">
@@ -744,19 +765,15 @@ async function Product({ params, searchParams }: any) {
                                     </AccordionDetails>
                                 </div>
                                 {state?.product?.publisherArticleId && (
-                                    <div className="dark:bg-slate-400">
-                                        <AccordionActions>
-                                            <Link
-                                                href={`/article/${state.product.publisherArticleId._id}`}
-                                                className="flex items-center gap-x-1.5 text-sm cursor-pointer text-sky-600 dark:text-white"
-                                            >
-                                                مشاهده مقاله
-                                                <div className="dark:text-slate-600">
-                                                    <KeyboardBackspaceRoundedIcon fontSize="small" />
-                                                </div>
-                                            </Link>
-                                        </AccordionActions>
-                                    </div>
+                                    <AccordionActions>
+                                        <Link
+                                            href={`/article/${state.product.publisherArticleId._id}`}
+                                            className="flex items-center gap-x-1.5 text-sm cursor-pointer text-blue-600"
+                                        >
+                                            مشاهده مقاله
+                                            <KeyboardBackspaceRoundedIcon fontSize="small" />
+                                        </Link>
+                                    </AccordionActions>
                                 )}
                             </Accordion>
                         </div>

@@ -10,6 +10,7 @@ import { fetcher } from '@/lib/fetcher';
 
 function Header() {
   const [isOpen, setOpen] = useState(false);
+  const [isFocusSearch, setFocusSearch] = useState(false);
   const loc = usePathname();
 
   // Fetch لینک‌های منو
@@ -72,11 +73,13 @@ function Header() {
       <Navbar
         isOpen={isOpen}
         setOpen={setOpen}
+        setFocusSearch={setFocusSearch}
         links={links}
         user={userData?.userByToken}
       />
       <NavLinks
         isOpen={isOpen}
+        isFocusSearch={isFocusSearch}
         setOpen={setOpen}
         links={links}
         user={userData?.userByToken}

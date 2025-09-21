@@ -54,6 +54,7 @@ export type productSingleType = {
     majorCat: string,
     minorCat: string,
     imgs: string,
+    images: string[],
     createdAt?: string,
     updatedAt?: string,
     color?: string,

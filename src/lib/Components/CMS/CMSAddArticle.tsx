@@ -49,6 +49,8 @@ function CMSAddArticle({ links = [], authors = [] }: { links: linksType[], autho
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSaving, setIsSaving] = useState(false);
     const [showErrorBox, setShowErrorBox] = useState(false);
+    const [aiTopic, setAiTopic] = useState<string>('');
+    const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
     const handleFieldChange = (field: string, value: any) => {
         setFormData(prev => ({
@@ -127,6 +129,43 @@ function CMSAddArticle({ links = [], authors = [] }: { links: linksType[], autho
 
         setErrors(newErrors);
         return isValid;
+    };
+
+    const handleGenerate = async () => {
+        if (!aiTopic || aiTopic.trim().length === 0) {
+            setShowErrorBox(true);
+            setErrors(prev => ({ ...prev, aiTopic: 'موضوع برای تولید خودکار الزامی است' }));
+            return;
+        }
+        try {
+            setIsGenerating(true);
+            setShowErrorBox(false);
+            setErrors(prev => ({ ...prev, aiTopic: '' }));
+
+            const res = await fetch('/api/generate-article', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topic: aiTopic })
+            });
+            if (!res.ok) {
+                const detail = await res.json().catch(() => ({}));
+                throw new Error(detail?.error || 'خطا در تولید محتوا');
+            }
+            const data: { desc: string; sections: { subtitle: string; content: string }[] } = await res.json();
+
+            setFormData(prev => ({
+                ...prev,
+                desc: data.desc || prev.desc,
+                contentSections: (Array.isArray(data.sections) && data.sections.length > 0)
+                    ? data.sections.map(s => ({ content: s.content || '', subtitle: s.subtitle || '', image: '' }))
+                    : prev.contentSections
+            }));
+        } catch (e: any) {
+            setShowErrorBox(true);
+            setErrors(prev => ({ ...prev, ai: e?.message || 'خطای ناشناخته در تولید محتوا' }));
+        } finally {
+            setIsGenerating(false);
+        }
     };
 
     const handleSubmit = async () => {
@@ -277,6 +316,26 @@ function CMSAddArticle({ links = [], authors = [] }: { links: linksType[], autho
 
             <div className="mt-5 py-4 px-8 rounded-xl">
                 <div className="grid md:grid-cols-2 grid-cols-1 justify-between items-start gap-x-8 gap-y-4 pb-4 w-full mx-auto">
+                    <div className="col-span-2 grid md:grid-cols-3 grid-cols-1 gap-3 items-end">
+                        <ProductInput
+                            form
+                            label="موضوع مقاله (تولید خودکار با هوش مصنوعی)"
+                            value={aiTopic}
+                            onChange={(value) => setAiTopic(String(value))}
+                            error={errors.aiTopic}
+                        />
+                        <div className="md:col-span-1 col-span-1 flex gap-2">
+                            <button
+                                type="button"
+                                onClick={handleGenerate}
+                                disabled={isGenerating}
+                                className="w-full py-2 px-4 bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-50"
+                            >
+                                {isGenerating ? 'در حال تولید...' : 'تولید با AI'}
+                            </button>
+                        </div>
+                    </div>
+
                     <ProductInput
                         form
                         label="عنوان"

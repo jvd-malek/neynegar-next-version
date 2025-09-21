@@ -40,6 +40,7 @@ export const GET_PRODUCTS = `
         publishDate
         brand
         status
+        state
         size
         weight
         majorCat

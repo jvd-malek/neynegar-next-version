@@ -145,7 +145,7 @@ export default async function CoursePage({ params }: any) {
     }
 
     return (
-        <div className="sm:w-[85vw] w-[98vw] mx-auto mt-32 relative px-2">
+        <div className="sm:w-[85vw] w-[98vw] mx-auto mt-26 lg:mt-32 relative px-2">
             {/* Breadcrumb navigation */}
             <nav aria-label="breadcrumb" className="bg-slate-200 rounded-xl py-3 px-4 flex justify-start items-center gap-4 font-medium mb-8">
                 {course && (

@@ -43,6 +43,7 @@ const GET_ORDERS = `
                 totalWeight
                 shippingCost
                 discount
+                discountCode
                 status
                 paymentId
                 authority
@@ -110,9 +111,9 @@ function CMSOrderBox({ type, page }: CMSOrderBoxProps) {
 
     function getReceiptDataFromOrder(order: orderType) {
         const totalDiscount = order.discount || 0;
-        const subtotal = order.totalPrice / 10 + totalDiscount || 0;
+        const subtotal = (order.totalPrice / 10) + totalDiscount - order.shippingCost || 0 ;
         const shippingCost = (order as any).shippingCost || 0;
-        const total = order.totalPrice / 10;
+        const total = order.totalPrice / 10 - order.shippingCost;
         const grandTotal = total + shippingCost;
         return { subtotal, totalDiscount, total, shippingCost, grandTotal };
     }
@@ -469,13 +470,16 @@ function CMSOrderBox({ type, page }: CMSOrderBoxProps) {
                                                 state: selectedOrder.userId?.address?.split("%%")[0] || "",
                                                 city: selectedOrder.userId?.address?.split("%%")[1] || "",
                                                 shipment: selectedOrder.submition || "",
+                                                discountCode: (selectedOrder as any)?.discountCode || "",
+                                                phone: `${selectedOrder.userId?.phone}` || "",
                                             }
                                         )
                                         : ""} />
                                 </div>
                             </div>
                             <div className="mb-8">
-                                <div className="text-gray-700 mb-2">{selectedOrder?.userId?.name}</div>
+                                <div className="text-gray-700">{selectedOrder?.userId?.name}</div>
+                                <div className="text-gray-700">{`تلفن: ${selectedOrder?.userId?.phone}`}</div>
                                 <div className="text-gray-700 mb-2">{selectedOrder?.userId?.address?.split("%%").join("-")}</div>
                                 <div className="text-gray-700 bg-slate-200 border-slate-300 border-solid border-2 rounded-md w-fit px-2 py-1">{selectedOrder?.submition}</div>
                             </div>
@@ -498,9 +502,18 @@ function CMSOrderBox({ type, page }: CMSOrderBoxProps) {
                                 </tbody>
                                 <tfoot>
                                     <tr>
-                                        <td className="text-right font-bold text-gray-700">تخفیف</td>
+                                        <td className="text-right font-bold text-gray-700">تخفیف{(selectedOrder as any)?.discountCode ? ` (کد: ${(selectedOrder as any).discountCode})` : ''}</td>
                                         <td className="text-left font-bold text-gray-700">{selectedOrder?.discount.toLocaleString('fa-IR')}
                                             <span className="text-xs font-mono"> تومان</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td className="text-right font-bold text-gray-700">هزینه ارسال</td>
+                                        <td className="text-left font-bold text-gray-700">
+                                            {selectedOrder?.submition === "پست" ? 
+                                                `${selectedOrder?.shippingCost?.toLocaleString('fa-IR')} تومان` : 
+                                                "دریافت هزینه در مقصد"
+                                            }
                                         </td>
                                     </tr>
                                     <tr>

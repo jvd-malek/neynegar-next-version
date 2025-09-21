@@ -28,15 +28,20 @@ function CMSOutOfStackProducts() {
     });
 
     const [savingId, setSavingId] = useState<string | null>(null);
-    const [localShowCounts, setLocalShowCounts] = useState<Record<string, number>>({});
-
-    const handleShowCountChange = (productId: string, value: number) => {
-        setLocalShowCounts(prev => ({ ...prev, [productId]: value }));
-    };
+    const [localShowCounts, setLocalShowCounts] = useState<Record<string, string | number>>({});
 
     const handleShowCountSave = async (product: Product) => {
-        const newShowCount = localShowCounts[product._id] ?? product.showCount;
+        const currentValue = localShowCounts[product._id];
+        let newShowCount: number;
+        
+        if (currentValue === '' || currentValue === undefined) {
+            newShowCount = 0;
+        } else {
+            newShowCount = Number(currentValue);
+        }
+        
         if (newShowCount === product.showCount) return;
+        
         setSavingId(product._id);
         try {
             await fetcher(UPDATE_PRODUCT, {
@@ -75,17 +80,41 @@ function CMSOutOfStackProducts() {
                                 </div>
                             </div>
                             <div className="flex flex-wrap gap-4 mt-2 items-end">
-                                <ProductInput
-                                    label="تعداد نمایشی"
-                                    value={localShowCounts[product._id] ?? product.showCount}
-                                    type="number"
-                                    onChange={value => handleShowCountChange(product._id, value as number)}
-                                    onFocus={() => {}}
-                                />
+                                <div className="flex flex-col gap-2 w-20 sm:w-48">
+                                    <label className="text-xs sm:text-sm font-medium text-gray-700 text-shadow">تعداد نمایشی</label>
+                                    <input
+                                        type="number"
+                                        value={localShowCounts[product._id] ?? product.showCount}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            // Allow empty string for proper editing
+                                            setLocalShowCounts(prev => ({ 
+                                                ...prev, 
+                                                [product._id]: value === '' ? '' : Number(value) 
+                                            }));
+                                        }}
+                                        onBlur={(e) => {
+                                            // Convert empty string to 0 when losing focus
+                                            if (e.target.value === '') {
+                                                setLocalShowCounts(prev => ({ 
+                                                    ...prev, 
+                                                    [product._id]: 0 
+                                                }));
+                                            }
+                                        }}
+                                        className="rounded-lg p-1.5 sm:p-2 border bg-slate-50 text-xs sm:text-sm focus:outline-none w-full h-8.5 sm:h-10 border-gray-300"
+                                    />
+                                </div>
                                 <button
                                     className={`px-3 py-1 rounded bg-blue-500 text-white text-xs ${savingId === product._id ? 'opacity-50' : ''}`}
                                     onClick={() => handleShowCountSave(product)}
-                                    disabled={savingId === product._id || (localShowCounts[product._id] ?? product.showCount) === product.showCount}
+                                    disabled={savingId === product._id || (() => {
+                                        const currentValue = localShowCounts[product._id];
+                                        if (currentValue === '' || currentValue === undefined) {
+                                            return product.showCount === 0;
+                                        }
+                                        return Number(currentValue) === product.showCount;
+                                    })()}
                                 >
                                     ذخیره
                                 </button>

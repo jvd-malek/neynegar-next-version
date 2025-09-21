@@ -7,6 +7,8 @@ import ProductBasBox from '../../lib/Components/BasketBoxes/ProductBasBox';
 import { cookies } from 'next/headers';
 import { Metadata } from "next";
 import Receipt from '../../lib/Components/BasketBoxes/Receipt';
+import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
+import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 
 export const metadata: Metadata = {
     title: "سبد خرید | فروشگاه اینترنتی نی‌نگار",
@@ -39,15 +41,6 @@ export const metadata: Metadata = {
         canonical: "https://neynegar1.ir/cart",
     },
 };
-
-interface searchParams {
-    page?: string;
-    sort?: string;
-    cat?: string;
-    count?: string;
-    search?: string;
-    activeLink?: string
-}
 
 interface UserBasket {
     count: number
@@ -103,19 +96,21 @@ async function Basket({ searchParams }: any) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 query: `
-                    query GetOffers {
+                   query GetOffers {
                         offer {
-                            _id
-                            title
-                            desc
-                            price{price}
-                            discount{discount}
-                            popularity
-                            cover
-                            brand
-                            showCount
-                            majorCat
-                            minorCat
+                            products {	
+                                _id
+                                title
+                                desc
+                                price{price}
+                                discount{discount}
+                                popularity
+                                cover
+                                brand
+                                showCount
+                                majorCat
+                                minorCat
+                            }
                         }
                     }
             `
@@ -150,6 +145,7 @@ async function Basket({ searchParams }: any) {
                                 code
                                 date
                                 discount
+                                status
                             }
                             favorite {
                                 productId {
@@ -208,7 +204,7 @@ async function Basket({ searchParams }: any) {
         .catch(error => {
             console.error("Error fetching user data:", error);
         }) : undefined
-    
+
     const LocalBasket = localBasket.length > 0 ? await fetch(
         `${process.env.NEXT_BACKEND_GRAPHQL_URL!}`,
         {
@@ -270,64 +266,22 @@ async function Basket({ searchParams }: any) {
     const products: UserBasket[] = data?.state ?
         [...data.basket] :
         (LocalBasket ? [...LocalBasket.basket] : [])
-            .filter((p: UserBasket) => {
-                if (page.cat === 'همه') {
-                    return p
-                } else {
-                    return p.productId.minorCat == page.cat
-                }
-            })
-            .filter((i: UserBasket) => (
-                i.productId.title.includes(page.search.trim())
-            ))
-
-    switch (page.sort) {
-        case 'expensive':
-            products.sort((a: UserBasket, b: UserBasket) => {
-                let Aprice = a.itemTotal
-                let Bprice = b.itemTotal
-                return Bprice - Aprice;
-            });
-            break;
-
-        case 'cheap':
-            products.sort((a: UserBasket, b: UserBasket) => {
-                let Aprice = a.itemTotal
-                let Bprice = b.itemTotal
-                return Aprice - Bprice;
-            });
-            break;
-
-        case 'popular':
-            products.sort((a: UserBasket, b: UserBasket) => (b.productId.popularity - a.productId.popularity));
-            break;
-
-        case 'offers':
-            products.sort((a: UserBasket, b: UserBasket) => {
-                const aDiscount = a.productId.discount;
-                const bDiscount = b.productId.discount;
-                return bDiscount - aDiscount;
-            });
-            break;
-        default:
-            products.sort((a: UserBasket, b: UserBasket) => (b.productId.popularity - a.productId.popularity));
-            break;
-    }
 
     let basket = data?.basket ? data.basket : (LocalBasket ? LocalBasket.basket : [])
     return (
-        <div className=''>
-            <div className="lg:w-[85vw] md:w-[90vw] w-[98vw] mx-auto px-2 md:px-0 mt-32">
-                <BoxHeader
-                    title={'سبد خرید شما'}
-                    all={false}
-                    searchBar={page.activeLink == "product"}
-                    count={[5, 10, 15]}
-                    bascket
-                />
-            </div>
+        <div className='lg:w-[85vw] md:w-[90vw] w-[98vw] mx-auto px-2 md:px-0'>
+            {/* Breadcrumb navigation */}
+            <nav aria-label="breadcrumb" className="lg:mt-30 mt-26 bg-slate-200 rounded-xl py-3 px-4 flex justify-start items-center gap-4 font-medium">
+                <Link href="/" className="relative pl-6 flex items-center" aria-label="خانه">
+                    <HomeRoundedIcon />
+                    <span className="text-slate-50 text-7xl absolute -left-6 top-1/2 -translate-y-1/2">
+                        <ArrowBackIosNewRoundedIcon fontSize="inherit" />
+                    </span>
+                </Link>
+                <p className="line-clamp-1 text-shadow" aria-current="page">سبد خرید شما</p>
+            </nav>
 
-            <div className="lg:w-[85vw] md:w-[90vw] w-[98vw] mx-auto relative mt-16 px-2 md:px-0">
+            <div className="relative mt-6">
 
                 {/* starts of header button of basket boxes */}
                 <div className="flex gap-4 sm:justify-start justify-between">
@@ -354,7 +308,6 @@ async function Basket({ searchParams }: any) {
                                     </Link>
 
                                 </div>
-
                         }
 
                     </div>
@@ -388,7 +341,7 @@ async function Basket({ searchParams }: any) {
                         </h3>
 
                         <div className="w-[90%] lg:w-[60%] md:w-full mx-auto mt-10">
-                            <Box books={offer.data.offer} />
+                            <Box books={offer?.data?.offer?.products} />
                         </div>
                     </div>
                     {/* ends of favorite products */}

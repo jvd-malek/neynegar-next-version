@@ -5,6 +5,7 @@ import IconButton from '@mui/material/IconButton';
 import LocalMallRoundedIcon from '@mui/icons-material/LocalMallRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import LocalLibraryRoundedIcon from '@mui/icons-material/LocalLibraryRounded';
+import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import Link from "next/link";
 import { useState } from "react";
 import SwipeableDrawer from '@mui/material/SwipeableDrawer';
@@ -18,10 +19,12 @@ type NavLinksProps = {
     setOpen: React.Dispatch<React.SetStateAction<boolean>>;
     links: linksType[];
     user: userType | undefined;
+    isFocusSearch: boolean;
 }
 
-const NavLinks = memo(({ isOpen, setOpen, links, user }: NavLinksProps) => {
+const NavLinks = memo(({ isOpen, setOpen, links, user, isFocusSearch }: NavLinksProps) => {
     const [search, setSearch] = useState('');
+    const [searchInputRef, setSearchInputRef] = useState<HTMLInputElement | null>(null);
 
     const scrollTop = useCallback(() => {
         animateScroll.scrollToTop({
@@ -102,6 +105,12 @@ const NavLinks = memo(({ isOpen, setOpen, links, user }: NavLinksProps) => {
         }
     }, [search, mutate]);
 
+    useEffect(() => {
+        if (isFocusSearch && searchInputRef && isOpen) {
+            searchInputRef.focus();
+        }
+    }, [isFocusSearch, searchInputRef, isOpen]);
+
     return (
         <SwipeableDrawer
             anchor='bottom'
@@ -114,8 +123,11 @@ const NavLinks = memo(({ isOpen, setOpen, links, user }: NavLinksProps) => {
         >
             <div className="h-[80vh] w-full bg-gray-200 text-center font-[Baloo]">
                 <div className="relative z-10 bg-gray-200 text-white">
-                    <ul className="flex gap-4 text-center flex-col lg:hidden w-full p-6 transition-all duration-200 h-full">
-                        <div className="flex gap-4">
+                    <ul
+                        role="search"
+                        className="flex gap-4 text-center flex-col lg:hidden w-full p-6 transition-all duration-200 h-full">
+                        <div
+                            className="flex gap-4">
                             <li className="p-[0.08rem] rounded-xl bg-black">
                                 <div className="w-full rounded-xl" onClick={searchHandler}>
                                     <IconButton sx={{ color: 'white' }} >
@@ -124,10 +136,14 @@ const NavLinks = memo(({ isOpen, setOpen, links, user }: NavLinksProps) => {
                                 </div>
                             </li>
                             <li className="w-full p-[0.08rem] rounded-xl ">
-                                <input type="text" value={search} onChange={e => setSearch(e.target.value)} 
+                                <input
+                                    ref={setSearchInputRef}
+                                    type="text"
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
                                     onKeyDown={e => { if (e.key === 'Enter') searchHandler(); }}
-                                    className="w-full bg-black rounded-xl outline-none px-4 py-[0.55rem] placeholder:text-slate-300" 
-                                    placeholder="جستجو محصولات" 
+                                    className="w-full bg-black rounded-xl outline-none px-4 py-[0.55rem] placeholder:text-slate-300"
+                                    placeholder="جستجو محصولات"
                                 />
                             </li>
                         </div>
@@ -152,9 +168,16 @@ const NavLinks = memo(({ isOpen, setOpen, links, user }: NavLinksProps) => {
                                 </Link>
                             </li>
                             <li className="p-[0.08rem] rounded-xl bg-black">
-                                <Link href={user ?  "/account?activeLink=دوره‌های من" : "/#section-courses"} onClick={scrollTop} className="w-full rounded-xl flex items-center">
+                                <Link href={user ? "/account?activeLink=دوره‌های من" : "/#section-courses"} onClick={scrollTop} className="w-full rounded-xl flex items-center">
                                     <IconButton sx={{ color: 'white' }}>
                                         <LocalLibraryRoundedIcon />
+                                    </IconButton>
+                                </Link>
+                            </li>
+                            <li className="p-[0.08rem] rounded-xl bg-black">
+                                <Link href="/" onClick={scrollTop} className="w-full rounded-xl flex items-center">
+                                    <IconButton sx={{ color: 'white' }}>
+                                        <HomeRoundedIcon />
                                     </IconButton>
                                 </Link>
                             </li>
@@ -187,7 +210,7 @@ const NavLinks = memo(({ isOpen, setOpen, links, user }: NavLinksProps) => {
                                                     >
                                                         <div className="flex items-center gap-3">
                                                             {product.cover && (
-                                                                <img 
+                                                                <img
                                                                     src={`https://api.neynegar1.ir/uploads/${product.cover}`}
                                                                     alt={product.title}
                                                                     className="w-8 h-8 object-cover rounded"
@@ -218,7 +241,7 @@ const NavLinks = memo(({ isOpen, setOpen, links, user }: NavLinksProps) => {
                                                     >
                                                         <div className="flex items-center gap-3">
                                                             {article.cover && (
-                                                                <img 
+                                                                <img
                                                                     src={`https://api.neynegar1.ir/uploads/${article.cover}`}
                                                                     alt={article.title}
                                                                     className="w-8 h-8 object-cover rounded"

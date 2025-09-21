@@ -78,6 +78,35 @@ function CMSAddProduct({ links = [], authors = [] }: { links: linksType[], autho
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSaving, setIsSaving] = useState(false);
     const [showErrorBox, setShowErrorBox] = useState(false);
+    const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
+
+    const generateDesc = async () => {
+        try {
+            if (!formData.title || String(formData.title).trim().length === 0) {
+                alert('لطفاً ابتدا عنوان محصول را وارد کنید');
+                return;
+            }
+            setIsGeneratingDesc(true);
+            const resp = await fetch('/api/generate-product-desc', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: formData.title })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+                throw new Error(data?.error || 'خطا در تولید توضیحات');
+            }
+            const desc = data?.desc ?? '';
+            if (!desc) {
+                throw new Error('پاسخ نامعتبر از سرویس تولید توضیحات دریافت شد');
+            }
+            handleFieldChange('desc', desc);
+        } catch (e: any) {
+            alert(e?.message || 'خطایی رخ داد');
+        } finally {
+            setIsGeneratingDesc(false);
+        }
+    };
 
     const handleFieldChange = (field: string, value: any) => {
         const error = validateField(field, value);
@@ -354,6 +383,17 @@ function CMSAddProduct({ links = [], authors = [] }: { links: linksType[], autho
                         onFocus={() => handleFieldFocus('desc', formData.desc)}
                         error={errors.desc}
                     />
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={generateDesc}
+                            disabled={isGeneratingDesc}
+                            className="px-3 py-1.5 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 text-xs sm:text-sm"
+                        >
+                            {isGeneratingDesc ? 'در حال تولید توضیحات…' : 'تولید خودکار توضیحات'}
+                        </button>
+                        <span className="text-xs text-gray-500">بر اساس عنوان</span>
+                    </div>
 
                     <ProductInput
                         form

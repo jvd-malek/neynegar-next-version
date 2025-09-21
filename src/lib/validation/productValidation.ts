@@ -69,7 +69,7 @@ const validationRules: Record<string, ValidationRule> = {
         required: true,
         maxLength: 60,
         message: 'وضعیت محصول الزامی است',
-        pattern: /^(active|inactive|outOfStock|comingSoon)$/,
+        pattern: /^(active|inactive|outOfStock|comingSoon|callForPrice)$/,
         patternMessage: 'وضعیت باید یکی از موارد active، inactive، outOfStock یا comingSoon باشد'
     },
     size: {

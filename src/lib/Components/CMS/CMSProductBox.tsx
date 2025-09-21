@@ -498,7 +498,7 @@ function CMSProductBox({ type, page, links, authors }: CMSProductBoxProps) {
                                         error={errors[product._id]?.showCount}
                                     />
 
-                                    <div className="flex flex-col gap-1 w-20 sm:w-46">
+                                    <div className="flex flex-col gap-2 w-20 sm:w-46">
                                         <label className="text-xs sm:text-sm text-gray-700 text-shadow">میزان فروش</label>
                                         <div className="rounded-lg p-1.5 sm:p-2 border bg-slate-50 text-xs sm:text-sm focus:outline-none w-full h-8.5 sm:h-10 border-gray-300">
                                             {product.totalSell}
@@ -606,7 +606,8 @@ function CMSProductBox({ type, page, links, authors }: CMSProductBoxProps) {
                                             { value: 'active', label: 'فعال' },
                                             { value: 'inactive', label: 'غیرفعال' },
                                             { value: 'outOfStock', label: 'ناموجود' },
-                                            { value: 'comingSoon', label: 'به زودی' }
+                                            { value: 'comingSoon', label: 'به زودی' },
+                                            { value: 'callForPrice', label: 'تماس بگیرید' }
                                         ]}
                                         onChange={(value) => handleFieldChange(product._id, 'state', value)}
                                         onFocus={() => handleFieldFocus(product._id, 'state', editingProducts[product._id]?.state ?? initialProductValues?.state ?? 'active')}

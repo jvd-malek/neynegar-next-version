@@ -33,6 +33,7 @@ function CostBox({ data, page }: CostBoxProps) {
     const basket = getCookie('basketForm');
 
     const [DiscountCode, setDiscountCode] = useState(0)
+    const [DiscountCodeString, setDiscountCodeString] = useState("")
     const [shipment, setShipment] = useState("")
 
     useEffect(() => {
@@ -77,8 +78,8 @@ function CostBox({ data, page }: CostBoxProps) {
         } else if (page.activeLink == "shipment") {
             if (jwt) {
                 const res = await fetcher(`
-                            mutation CreateCheckoutPayment($shipment: String!, $discount: Float!) {
-                                createCheckoutPayment(shipment: $shipment, discount: $discount) {
+                            mutation CreateCheckoutPayment($shipment: String!, $discountCode: String) {
+                                createCheckoutPayment(shipment: $shipment, discountCode: $discountCode) {
                                     authority
                                     paymentURL
                                     success
@@ -88,7 +89,7 @@ function CostBox({ data, page }: CostBoxProps) {
                         `,
                     {
                         shipment,
-                        discount: DiscountCode
+                        discountCode: DiscountCodeString
                     }
                 )
 
@@ -109,7 +110,13 @@ function CostBox({ data, page }: CostBoxProps) {
             {/* starts of discount box */}
             <div className={`md:col-end-4 col-start-1 col-end-6 row-start-2 p-4 flex flex-col justify-around transition-all w-full rounded-xl bg-slate-200 `}>
 
-                <DiscountInput DiscountCode={DiscountCode} setDiscountCode={setDiscountCode} user={data?.user} />
+                <DiscountInput
+                    DiscountCode={DiscountCode}
+                    setDiscountCode={setDiscountCode}
+                    DiscountCodeString={DiscountCodeString}
+                    setDiscountCodeString={setDiscountCodeString}
+                    user={data?.user}
+                />
 
                 <h3 className={`font-bold text-slate-800`}>
                     امکان ارسال با پیک موتوری برای ساکنین تهران
@@ -154,8 +161,14 @@ function CostBox({ data, page }: CostBoxProps) {
                     <h3 className="">تخفیف:</h3>
                     <h2>
                         <strong>{
-                            data?.totalDiscount ?
-                                (data?.totalDiscount + DiscountCode).toLocaleString('fa-IR') :
+                            data?.totalDiscount ||  DiscountCode?
+                                (
+                                    data?.totalDiscount + ((
+                                        shipment == "پست" ?
+                                            data?.grandTotal * DiscountCode / 100 :
+                                            data?.total * DiscountCode / 100
+                                    ))
+                                ).toLocaleString('fa-IR') :
                                 0
                                     .toLocaleString('fa-IR')} </strong><span className='text-sm'>تومان</span>
                     </h2>

@@ -145,7 +145,7 @@ function BuyBtn({ showCount, id, fix = false, cat, price, state }: { showCount: 
     const buttonText = showCount > 0 ? "افزودن به سبد خرید" : "ناموجود";
     const buttonClass = `
     transition-all duration-200 
-    py-2.5 w-full rounded-lg text-white font-medium
+    py-2 w-full rounded-lg text-white font-medium
     ${!fix && "mt-4"}
     ${isLoading ? 'opacity-80 cursor-wait' : ''}
     ${showCount > 0 ? 'active:translate-y-1 border-b-4 border-solid border-slate-700 hover:bg-slate-900 active:border-slate-200 bg-black' : 'opacity-80 bg-red-600'}
@@ -155,16 +155,16 @@ function BuyBtn({ showCount, id, fix = false, cat, price, state }: { showCount: 
         <div className={`relative group`}>
 
             {showCount > 0 && fix && (
-                <div className="my-2 flex gap-2">
+                <div className="my-1.5 flex gap-2">
                     <p
-                        className="w-full bg-black hover:bg-slate-900 text-white py-2 rounded-lg text-sm"
+                        className="w-full bg-black hover:bg-slate-900 text-white py-1 rounded-lg text-sm"
                     >
                         {state === "callForPrice" ? "تماس بگیرید" : price}
                         {state === "callForPrice" ? "" : <span className="text-base"> تومان</span>} 
                     </p>
                     <Link
                         href={`/category/${cat}`}
-                        className="w-full bg-gray-300 text-slate-800 py-2 rounded-lg text-sm text-center"
+                        className="w-full bg-gray-300 text-slate-800 py-1 rounded-lg text-sm text-center"
                     >
                         محصولات مشابه
                     </Link>

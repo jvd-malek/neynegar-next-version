@@ -2,7 +2,7 @@ import { Bounce, toast } from 'react-toastify';
 
 export const notify = (txt: string, type: 'success' | 'error' | 'warn' = 'success') => {
     toast[type](txt, {
-        position: "bottom-left",
+        position: "top-center",
         autoClose: 5000,
         hideProgressBar: false,
         closeOnClick: true,
