@@ -2,6 +2,7 @@
 User-agent: *
 Disallow: /cms
 Disallow: /account
+Disallow: /about-us
 Disallow: /basket
 Disallow: /login
 

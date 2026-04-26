@@ -89,9 +89,9 @@ src/
 
 ---
 
-## 🤖 AI Article and product description Generator 
+## 🤖 AI Article Generator (Coming Soon)
 
-A content tool to generate, moderate, and publish calligraphy-related articles and product description with the help of AI and human validation.
+A content tool to generate, moderate, and publish calligraphy-related articles with the help of AI and human validation.
 
 ---
 

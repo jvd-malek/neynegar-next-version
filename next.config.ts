@@ -3,7 +3,14 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   images: {
-    domains: ['api.neynegar1.ir'], // دامنه‌های مجاز برای تصاویر
+    remotePatterns:[
+      {
+        protocol: 'https',
+        hostname: 'api.neynegar1.ir',
+        port: '',
+        pathname: '/**'
+      }
+    ]
   }
 };
 

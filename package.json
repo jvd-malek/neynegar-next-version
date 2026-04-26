@@ -1,39 +1,36 @@
 {
-  "name": "neynegar-next",
-  "version": "0.1.0",
+  "name": "Neynegar",
+  "version": "2.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start -p 3814",
-    "lint": "next lint",
+    "lint": "eslint",
     "postbuild": "node scripts/generate-sitemap.js"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
-    "@emotion/styled": "^11.14.0",
-    "@mui/icons-material": "^6.4.4",
-    "@mui/material-nextjs": "^6.4.3",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.8",
+    "@mui/material-nextjs": "^7.3.8",
     "@types/dom-to-image": "^2.6.7",
-    "cookies-next": "^5.1.0",
     "dom-to-image": "^2.6.0",
-    "dotenv": "^16.4.7",
-    "mongoose": "^8.13.1",
-    "next": "^15.4.3",
-    "nextjs-simple-typewriter": "^5.2.2",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-scroll": "^1.9.3",
+    "cookies-next": "^6.1.1",
+    "next": "16.1.6",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
     "react-toastify": "^11.0.5",
     "swiper": "^11.2.5",
-    "swr": "^2.3.3"
+    "swr": "^2.4.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/react-scroll": "^1.8.10",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

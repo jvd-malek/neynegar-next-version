@@ -308,10 +308,10 @@ async function generateSitemap() {
   </sitemap>
 </sitemapindex>`;
 
-    fs.writeFileSync(path.join(process.cwd(), 'public', 'sitemap.xml'), sitemapIndexXml, 'utf8');
+    fs.writeFileSync(path.join(process.cwd(), 'public_html', 'public', 'sitemap.xml'), sitemapIndexXml, 'utf8');
 
     // ذخیره فایل
-    const sitemapPath = path.join(process.cwd(), 'public', 'sitemap-0.xml');
+    const sitemapPath = path.join(process.cwd(), 'public_html', 'public', 'sitemap-0.xml');
     fs.writeFileSync(sitemapPath, sitemapXML, 'utf8');
 
     console.log(`Sitemap generated successfully with ${urls.length} URLs`);
