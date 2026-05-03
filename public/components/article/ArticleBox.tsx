@@ -60,10 +60,12 @@ function ArticleBox({ title, desc, _id, cover, minorCat, views }: ArticleBoxType
                     className="flex items-center gap-1 group"
                 >
                     <span className="text-sm font-medium">مشاهده مقاله</span>
-                    <KeyboardBackspaceRoundedIcon
+                    <div
                         className=" text-lg transform group-hover:-translate-x-1 transition-transform duration-700 animate-pulse"
                         aria-hidden="true"
-                    />
+                    >
+                        <KeyboardBackspaceRoundedIcon fontSize='inherit' />
+                    </div>
                 </Link>
             </div>
         </div>

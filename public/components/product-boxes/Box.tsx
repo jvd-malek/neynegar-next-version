@@ -6,6 +6,7 @@ import { useMemo } from 'react';
 // swiper
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay } from 'swiper/modules';
+import 'swiper/css';
 
 // components
 import ProductBox from '@/public/components/product-boxes/ProductBox';
@@ -14,7 +15,7 @@ import ProductBox from '@/public/components/product-boxes/ProductBox';
 import { productCoverType, productType } from '@/public/types/product';
 import { packageCoverType } from '@/public/types/package';
 import { articleAuthorCoverType } from '@/public/types/article';
-import ArticleBox from '../article/ArticleBox';
+import ArticleBox from '@/public/components/article/ArticleBox';
 
 type BoxType = {
     products?: productCoverType[]

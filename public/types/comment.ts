@@ -1,21 +1,27 @@
 import { repliesType } from "./replies"
 import { userType } from "./user"
-import { articleSingleType } from "./article"
-import { productType } from "./product"
 
 export type commentType = {
-    _id: string,
-    txt: string,
-    star?: number,
-    like?: number,
-    productId?: productType,
-    articleId?: articleSingleType,
-    userId: userType,
-    createdAt?: string,
-    replies?: repliesType[],
-    response?:string
-    status?:string
-}
+  _id: string;
+  txt: string;
+  star?: number;
+  status: string;
+  like?: number;
+  target?: {
+    type: string;
+    refId: string;
+    data?: {
+      _id: string;
+      title: string;
+      cover?: string;
+    };
+  };
+  userId: userType;
+  replies: repliesType[];
+  createdAt: string;
+  updatedAt: string;
+  response?:string
+};
 
 export type paginatedCommentsType = {
     comments: commentType[],

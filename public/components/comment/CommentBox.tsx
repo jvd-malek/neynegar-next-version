@@ -8,6 +8,7 @@ import ReplyBox from './ReplyBox';
 import { commentType } from "@/public/types/comment";
 import Image from 'next/image';
 import Link from 'next/link';
+import LOGO from '@/public/images/Logo.webp';
 
 type CommentBoxProps = commentType & {
     account?: boolean;
@@ -37,8 +38,7 @@ function CommentBox({
     userId,
     setReplyId,
     _id,
-    productId,
-    articleId
+    target,
 }: CommentBoxProps) {
 
     const handleReply = () => {
@@ -48,16 +48,33 @@ function CommentBox({
         }
     };
 
+    const getTargetLink = () => {
+        if (!target?.refId) return '#';
+        const type = target.type === 'Package' ? 'package' :
+            target.type === 'Article' ? 'article' :
+                target.type === 'Course' ? 'course' : 'product';
+        return `/${type}/${target.refId}`;
+    };
+
+    const getTargetTitle = () => {
+        return target?.data?.title || 'نامشخص';
+    };
+
     const userStatus = getUserStatus(userId.status);
+    const img = userStatus != "کاربر" ?
+        LOGO :
+        (userId.img ?
+        `https://api.neynegar1.ir/uploads/${userId.img}`:
+        null)
 
     return (
-        <div className={`${account || ticket ? 'mt-10 bg-white' : 'mt-16 bg-mist-100'} mb-6 py-4 px-6 rounded-xl`}>
+        <div className={`${account || ticket ? 'mt-6 bg-white' : 'mt-6 bg-mist-100'} p-4 rounded-xl`}>
             {/* Header section */}
             <div className="flex justify-between items-center w-full pb-4 border-b border-slate-400">
                 <div className="flex items-center gap-4">
-                    {userId.img ? (
+                    {img ? (
                         <Image
-                            src={`https://api.neynegar1.ir/uploads/${userId.img}`}
+                            src={img}
                             alt={userId.name}
                             width={account ? 80 : 64}
                             height={account ? 80 : 64}
@@ -79,10 +96,10 @@ function CommentBox({
                             <p className='flex flex-col md:flex-row gap-1 md:items-center items-start'>
                                 {`دیدگاه شما در مورد: `}
                                 <Link
-                                    href={productId ? `/product/${productId._id}` : `/article/${articleId?._id}`}
+                                    href={getTargetLink()}
                                     className='text-blue-600 hover:text-blue-800 underline decoration-blue-300 hover:decoration-blue-500 transition-all duration-200 font-medium bg-blue-100 hover:bg-blue-200 px-1.5 py-0.5 my-0.5 rounded-md'
                                 >
-                                    {`${productId ? productId.title : articleId?.title}`}
+                                    {getTargetTitle()}
                                 </Link>
                             </p>
                         )}
@@ -109,7 +126,7 @@ function CommentBox({
             </div>
 
             {/* Content section */}
-            <div className="flex flex-col gap-4 w-full mt-4">
+            <div className="flex flex-col gap-2 w-full mt-4">
                 <p className="whitespace-pre-line">{txt}</p>
 
                 {!ticket && (
@@ -127,13 +144,13 @@ function CommentBox({
 
             {/* Response section */}
             {response ? (
-                <div className="bg-slate-100 mt-6 p-4 rounded-xl">
+                <div className="bg-slate-100 mt-4 space-y-4 p-4 rounded-xl">
                     <p>{response}</p>
                 </div>
             ) : replies.length > 0 && (
                 <div className="mt-4 space-y-4">
-                    {replies.map(reply => (
-                        <ReplyBox key={`${reply._id}-${reply.createdAt}`} {...reply} />
+                    {replies.map((reply, index) => (
+                        <ReplyBox key={index} {...reply} />
                     ))}
                 </div>
             )}

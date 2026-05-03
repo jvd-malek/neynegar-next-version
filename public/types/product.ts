@@ -35,6 +35,9 @@ export interface Product {
     minorCat: string;
     cover: string;
     images: string[];
+    currentPrice: number,
+    currentDiscount: number,
+    finalPrice: number,
 }
 
 export type productCoverType = {

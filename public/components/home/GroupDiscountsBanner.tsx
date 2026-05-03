@@ -7,6 +7,7 @@ import Link from 'next/link';
 // swiper
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay } from 'swiper/modules';
+import 'swiper/css';
 
 // components
 import DiscountTimer from '@/public/components/product-boxes/DiscountTimer';
@@ -50,10 +51,11 @@ export default function GroupDiscountsBanner({ groupDiscounts }: { groupDiscount
                                 className="flex items-center gap-1 text-red-700 hover:text-red-900 transition-colors duration-200 group"
                             >
                                 <span className="text-sm font-medium">مشاهده</span>
-                                <KeyboardBackspaceRoundedIcon
-                                    className=" text-lg transform group-hover:-translate-x-1 transition-transform duration-700 animate-pulse"
+                                <div
                                     aria-hidden="true"
-                                />
+                                    className="text-lg transform group-hover:-translate-x-1 transition-transform duration-700 animate-pulse">
+                                    <KeyboardBackspaceRoundedIcon fontSize='inherit'/>
+                                </div>
                             </Link>
                         </div>
                     </div>

@@ -1,730 +1,671 @@
 'use client';
 
-import { useState } from 'react';
-import ProductInput, { DiscountInput } from '@/public/components/CMS/ProductInput';
-import SearchableAuthorSelect from '@/public/components/CMS/SearchableAuthorSelect';
-import { validateField } from '@/public/validation/productValidation';
-import { getCookie } from 'cookies-next';
+// react
+import { useCallback, useState } from 'react';
+
+// utils
+import { notify } from '@/public/utils/notify';
+import { fetcher, imageUploader } from '@/public/utils/fetcher';
+import { handleChangeForm, handleClearForm, handleFormValidator, Input, placeholderForRequired } from '@/public/components/login/Input';
+import { state, status } from '@/public/utils/cms/variables';
+
+// validation
+import { validateDescription, validatePrice, validateTitle } from "@/public/validation/productValidation";
+
+// queries and types
 import { linksType } from '@/public/types/links';
 import InternalLinkSelector from '@/public/components/CMS/InternalLinkSelector';
 import LinkPreview from '@/public/components/CMS/LinkPreview';
+import { formType } from '@/public/types/input';
+import { CREATE_PRODUCT } from '@/public/graphql/productQueries';
 
-const ADD_PRODUCT = `
-    mutation CreateProduct ($input: ProductInput!) {
-        createProduct (input: $input) {
-            _id
-            title
-            desc
-            price {
-                price
-                date
-            }
-            cost {
-                cost
-                date
-            }
-            count
-            discount {
-                discount
-                date
-            }
-            showCount
-            popularity
-            authorId {
-                _id
-                fullName
-            }
-            publisher
-            publishDate
-            brand
-            status
-            size
-            weight
-            majorCat
-            minorCat
-            cover
-            images
-        }
-    }
-`;
+type CMSAddProductProps = {
+    links: linksType[],
+    authors: {
+        _id: string
+        firstname: string
+        lastname: string
+        fullName?: string
+    }[]
+}
 
-
-function CMSAddProduct({ links = [], authors = [] }: { links: linksType[], authors: any }) {
-    const [formData, setFormData] = useState<Record<string, any>>({
-        title: '',
-        desc: '',
-        instaLink:'',
-        price: '',
-        cost: '',
-        costCount: "",
-        count: "",
-        discount: "",
-        discountDuration: "30",
-        showCount: "",
-        popularity: 5,
-        authorId: '',
-        publisher: '',
-        publishDate: '',
-        brand: '',
-        status: 'نو',
-        state: 'active',
-        size: '',
-        weight: '',
-        majorCat: '',
-        minorCat: '',
-        cover: '',
-        images: []
-    });
-
+function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
     const [imageFiles, setImageFiles] = useState<File[]>([]);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
-    const [errors, setErrors] = useState<Record<string, string>>({});
-    const [isSaving, setIsSaving] = useState(false);
-    const [showErrorBox, setShowErrorBox] = useState(false);
-    const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
-
-    const generateDesc = async () => {
-        try {
-            if (!formData.title || String(formData.title).trim().length === 0) {
-                alert('لطفاً ابتدا عنوان محصول را وارد کنید');
-                return;
-            }
-            setIsGeneratingDesc(true);
-            const resp = await fetch('/api/generate-product-desc', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: formData.title })
-            });
-            const data = await resp.json();
-            if (!resp.ok) {
-                throw new Error(data?.error || 'خطا در تولید توضیحات');
-            }
-            const desc = data?.desc ?? '';
-            if (!desc) {
-                throw new Error('پاسخ نامعتبر از سرویس تولید توضیحات دریافت شد');
-            }
-            handleFieldChange('desc', desc);
-        } catch (e: any) {
-            alert(e?.message || 'خطایی رخ داد');
-        } finally {
-            setIsGeneratingDesc(false);
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const Authors = authors.map(author => (
+        {
+            label: author.fullName || author.lastname,
+            value: author._id
         }
-    };
+    ))
 
-    const handleFieldChange = (field: string, value: any) => {
-        const error = validateField(field, value);
-        setErrors(prev => ({
-            ...prev,
-            [field]: error || ''
-        }));
-
-        setFormData(prev => ({
-            ...prev,
-            [field]: value
-        }));
-    };
-
-    const handleFieldFocus = (field: string, value: any) => {
-        const error = validateField(field, value);
-        setErrors(prev => ({
-            ...prev,
-            [field]: error || ''
-        }));
-    };
-
-    const validateForm = (): boolean => {
-        const newErrors: Record<string, string> = {};
-        let isValid = true;
-
-        // Validate all form fields
-        Object.keys(formData).forEach(field => {
-            const value = formData[field];
-            const error = validateField(field, value);
-            if (error) {
-                newErrors[field] = error;
-                isValid = false;
-            }
-        });
-
-        // Validate imageFiles separately
-        if (imageFiles.length === 0) {
-            newErrors.imageFiles = 'حداقل یک تصویر برای محصول الزامی است';
-            isValid = false;
+    // حالت‌های فرم
+    const [formData, setFormData] = useState<formType[]>([
+        {
+            name: "title",
+            type: "text",
+            value: "",
+            validateRule: validateTitle,
+            error: false,
+            errorMessage: "عنوان باید بین 3 تا 60 کاراکتر باشد"
+        },
+        {
+            name: "desc",
+            type: "text",
+            value: "",
+            validateRule: validateDescription,
+            error: false,
+            errorMessage: "توضیحات باید بین 3 تا 600 کاراکتر باشد"
+        },
+        {
+            name: "price",
+            type: "number",
+            value: "",
+            validateRule: validatePrice,
+            error: false,
+            errorMessage: "قیمت باید به تومان باشد"
+        },
+        {
+            name: "cost",
+            type: "number",
+            value: "",
+            validateRule: null,
+            error: false,
+            errorMessage: ""
+        },
+        {
+            name: "costCount",
+            type: "number",
+            value: "",
+            validateRule: null,
+            error: false,
+            errorMessage: ""
+        },
+        {
+            name: "count",
+            type: "number",
+            value: "",
+            validateRule: null,
+            error: false,
+            errorMessage: ""
+        },
+        {
+            name: "showCount",
+            type: "number",
+            value: "",
+            validateRule: null,
+            error: false,
+            errorMessage: ""
+        },
+        {
+            name: "discount",
+            type: "number",
+            value: "",
+            validateRule: null,
+            error: false,
+            errorMessage: ""
+        },
+        {
+            name: "date",
+            type: "number",
+            value: "",
+            validateRule: null,
+            error: false,
+            errorMessage: ""
+        },
+        {
+            name: "majorCat",
+            type: "text",
+            value: "",
+            validateRule: null,
+            error: false,
+            errorMessage: 'دسته‌بندی اصلی الزامی است'
+        },
+        {
+            name: "minorCat",
+            type: "text",
+            value: "",
+            validateRule: null,
+            error: false,
+            errorMessage: 'دسته‌بندی فرعی الزامی است'
+        },
+        {
+            name: "brand",
+            type: "text",
+            value: "",
+            validateRule: null,
+            error: false,
+            errorMessage: ""
+        },
+        {
+            name: "status",
+            type: "text",
+            value: "",
+            validateRule: null,
+            error: false,
+            errorMessage: 'وضعیت کیفیت بسته الزامی است'
+        },
+        {
+            name: "state",
+            type: "text",
+            value: "",
+            validateRule: null,
+            error: false,
+            errorMessage: 'وضعیت نمایش بسته الزامی است'
+        },
+        {
+            name: "weight",
+            type: "number",
+            value: "",
+            validateRule: null,
+            error: false,
+            errorMessage: "وزن محصول الزامی است"
+        },
+        {
+            name: "authorId",
+            type: "text",
+            value: "",
+            validateRule: null,
+            error: false,
+            errorMessage: ""
+        },
+        {
+            name: "publisher",
+            type: "text",
+            value: "",
+            validateRule: null,
+            error: false,
+            errorMessage: ""
+        },
+        {
+            name: "publishDate",
+            type: "text",
+            value: "",
+            validateRule: null,
+            error: false,
+            errorMessage: ""
+        },
+        {
+            name: "size",
+            type: "text",
+            value: "",
+            validateRule: null,
+            error: false,
+            errorMessage: ""
+        },
+        {
+            name: "instagramLink",
+            type: "text",
+            value: "",
+            validateRule: null,
+            error: false,
+            errorMessage: ""
         }
+    ]);
 
-        setErrors(newErrors);
-        return isValid;
-    };
+    const handleSubmit = useCallback(async () => {
+        if (!handleFormValidator(formData)) return;
+        setIsSubmitting(true);
 
-    const handleSubmit = async () => {
-        try {
-            console.log('Starting handleSubmit...');
-            console.log('Current imageFiles:', imageFiles);
+        // upload and add cover
+        let cover = ""
+        let images: string[] = []
 
-            if (!validateForm()) {
-                setShowErrorBox(true);
-                return;
+        // Handle file uploads
+        if (imageFiles && imageFiles.length > 0) {
+            const fileFormData = new FormData();
+
+            // Add cover image
+            if (imageFiles[0]) {
+                fileFormData.append('cover', imageFiles[0]);
             }
 
-            setIsSaving(true);
-
-            // Initialize uploaded files object
-            const uploadedFiles = {
-                cover: '',
-                images: [] as string[]
-            };
-
-            // Handle file uploads
-            if (imageFiles && imageFiles.length > 0) {
-                console.log('Processing image files...');
-                const fileFormData = new FormData();
-
-                // Add cover image
-                if (imageFiles[0]) {
-                    console.log('Adding cover image:', imageFiles[0].name);
-                    fileFormData.append('cover', imageFiles[0]);
-                }
-
-                // Add additional images
-                if (imageFiles.length > 1) {
-                    console.log('Adding additional images...');
-                    for (let i = 1; i < imageFiles.length; i++) {
-                        if (imageFiles[i]) {
-                            console.log('Adding image:', imageFiles[i].name);
-                            fileFormData.append('images', imageFiles[i]);
-                        }
+            if (imageFiles.length > 1) {
+                for (let i = 1; i < imageFiles.length; i++) {
+                    if (imageFiles[i]) {
+                        fileFormData.append('images', imageFiles[i]);
                     }
                 }
-
-                // Get JWT token
-                const jwt = getCookie("jwt") as string;
-                if (!jwt) {
-                    throw new Error('No authentication token found');
-                }
-
-                console.log('Uploading files to server...');
-                const fileResponse = await fetch('https://api.neynegar1.ir/upload', {
-                    method: 'POST',
-                    headers: {
-                        'authorization': jwt,
-                        'Accept': 'application/json'
-                    },
-                    body: fileFormData
-                });
-
-                console.log('File upload response status:', fileResponse.status);
-                const responseText = await fileResponse.text();
-                console.log('File upload response text:', responseText);
-
-                if (!fileResponse.ok) {
-                    throw new Error(`Failed to upload files: ${responseText}`);
-                }
-
-                try {
-                    const fileResult = JSON.parse(responseText);
-                    console.log('Parsed file result:', fileResult);
-
-                    if (fileResult && typeof fileResult === 'object') {
-                        uploadedFiles.cover = fileResult.cover || '';
-                        uploadedFiles.images = Array.isArray(fileResult.images) ? fileResult.images : [];
-                    }
-                } catch (parseError) {
-                    console.error('Error parsing file upload response:', parseError);
-                    throw new Error('Invalid response from file upload server');
-                }
             }
+
+            try {
+                const fileResult = await imageUploader(fileFormData);
+
+                if (fileResult && typeof fileResult === 'object') {
+                    cover = fileResult.cover || '';
+                    images = Array.isArray(fileResult.images) ? fileResult.images : [];
+                }
+
+            } catch (parseError) {
+                console.error('Error parsing file upload response:', parseError);
+                throw new Error('Invalid response from file upload server');
+            }
+
+        } else {
+            notify("تصویر کاور الزامی است", "error")
+            setIsSubmitting(false);
+            return;
+        }
+
+        try {
+            const date = new Date().toISOString()
 
             // Create product data
             const productData = {
-                title: formData.title,
-                desc: formData.desc,
+                title: formData[0].value,
+                desc: formData[1].value,
                 price: {
-                    price: Number(formData.price),
-                    date: new Date().toISOString()
+                    price: Number(formData[2].value),
+                    date
                 },
                 cost: {
-                    cost: Number(formData.cost),
-                    date: new Date().toISOString(),
-                    count: Number(formData.costCount)
+                    cost: Number(formData[3].value),
+                    date,
+                    count: Number(formData[4].value)
                 },
-                count: Number(formData.count),
+                count: Number(formData[5].value),
+                showCount: Number(formData[6].value),
                 discount: {
-                    discount: Number(formData.discount),
-                    date: Number(formData.discountDuration) * 24 * 60 * 60 * 1000 + Date.now()
+                    discount: Number(formData[7].value),
+                    date: Number(formData[8].value) * 24 * 60 * 60 * 1000 + Date.now()
                 },
-                showCount: Number(formData.showCount),
+                majorCat: formData[9].value,
+                minorCat: formData[10].value,
+                brand: formData[11].value || '',
+                status: formData[12].value,
+                state: formData[13].value,
+                weight: Number(formData[14].value) || 0,
+                authorId: formData[15].value || null,
+                publisher: formData[16].value || '',
+                publishDate: formData[17].value || '',
+                size: formData[18].value || '',
+                popularity: 5,
                 totalSell: 0,
-                popularity: Number(formData.popularity),
-                authorId: formData.authorId || null,
-                publisher: formData.publisher || '',
-                publishDate: formData.publishDate || '',
-                brand: formData.brand || '',
-                status: formData.status || 'نو',
-                state: formData.state || 'active',
-                size: formData.size || '',
-                weight: Number(formData.weight) || 0,
-                majorCat: formData.majorCat || '',
-                minorCat: formData.minorCat || '',
-                cover: uploadedFiles.cover,
-                images: uploadedFiles.images
+                images,
+                cover
             };
 
-            console.log('Sending product data to GraphQL:', productData);
-            const jwt = getCookie("jwt") as string;
-            if (!jwt) {
-                throw new Error('No authentication token found');
-            }
+            await fetcher(CREATE_PRODUCT, { input: productData });
 
-            const response = await fetch('https://api.neynegar1.ir/graphql', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'authorization': jwt
-                },
-                body: JSON.stringify({
-                    query: ADD_PRODUCT,
-                    variables: {
-                        input: productData
-                    }
-                })
-            });
-
-            console.log('GraphQL response status:', response.status);
-            const result = await response.json();
-            console.log('GraphQL response:', result);
-
-            if (result.errors) {
-                throw new Error(result.errors[0].message);
-            }
-
-            alert('محصول با موفقیت اضافه شد');
-
-            // Reset form
-            setFormData({
-                title: '',
-                desc: '',
-                instaLink:'',
-                price: '',
-                cost: '',
-                costCount: "",
-                count: "",
-                discount: "",
-                discountDuration: "30",
-                showCount: "",
-                popularity: 5,
-                authorId: '',
-                publisher: '',
-                publishDate: '',
-                brand: '',
-                status: 'نو',
-                state: 'active',
-                size: '',
-                weight: '',
-                majorCat: '',
-                minorCat: '',
-                cover: '',
-                images: []
-            });
-            setImageFiles([]);
-            setPreviewUrls([]);
-            setErrors({});
-
-        } catch (error: any) {
-            console.error('Error in handleSubmit:', error);
-            alert('خطا در افزودن محصول: ' + (error instanceof Error ? error.message : 'خطای ناشناخته'));
+            notify("محصول با موفقیت ذخیره شد.", 'success');
+        } catch (error) {
+            console.log(error);
+            notify("عدم برقراری ارتباط با سرور", 'error');
         } finally {
-            setIsSaving(false);
+            handleClearForm(setFormData)
+            setImageFiles([])
+            setPreviewUrls([])
+            setIsSubmitting(false);
         }
-    };
+    }, [formData]);
 
     return (
-        <div className="bg-slate-200 relative rounded-xl p-4 lg:col-start-2 col-end-5 col-start-1 lg:row-start-1 row-start-2 pt-20">
-            {showErrorBox && Object.keys(errors).length > 0 && (
-                <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg z-50 max-w-md">
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <h3 className="font-bold mb-2">لطفاً خطاهای زیر را برطرف کنید:</h3>
-                            <ul className="list-disc list-inside">
-                                {Object.entries(errors)
-                                    .filter(([_, message]) => message)
-                                    .map(([field, message]) => (
-                                        <li key={field} className="mb-1">
-                                            {message}
-                                        </li>
-                                    ))}
-                            </ul>
-                        </div>
-                        <button
-                            onClick={() => setShowErrorBox(false)}
-                            className="text-red-700 hover:text-red-900 font-bold"
-                        >
-                            ×
-                        </button>
-                    </div>
-                </div>
-            )}
-            <h3 className="absolute top-4 -right-6 text-lg rounded-r-lg rounded-l-xl pr-6 pl-4 py-2 bg-black text-white">
+        <div className="bg-white relative rounded-lg p-4 lg:col-start-2 col-end-5 col-start-1 lg:row-start-1 row-start-2">
+
+            <h3 className="text-xl font-bold">
                 افزودن محصول جدید
             </h3>
 
-            <div className="mt-5 py-4 px-8 rounded-xl">
-                <div className="grid md:grid-cols-2 grid-cols-1 justify-between items-start gap-x-8 gap-y-4 pb-4 w-full mx-auto **:transition-all duration-200">
-                    <ProductInput
-                        form
-                        label="عنوان"
-                        value={formData.title}
-                        onChange={(value) => handleFieldChange('title', value)}
-                        onFocus={() => handleFieldFocus('title', formData.title)}
-                        error={errors.title}
-                    />
-
-                    <ProductInput
-                        form
-                        label="توضیحات"
-                        value={formData.desc}
-                        type="textarea"
-                        onChange={(value) => handleFieldChange('desc', value)}
-                        onFocus={() => handleFieldFocus('desc', formData.desc)}
-                        error={errors.desc}
-                    />
-                    <div className="flex items-center gap-2">
-                        <button
-                            type="button"
-                            onClick={generateDesc}
-                            disabled={isGeneratingDesc}
-                            className="px-3 py-1.5 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 text-xs sm:text-sm"
-                        >
-                            {isGeneratingDesc ? 'در حال تولید توضیحات…' : 'تولید خودکار توضیحات'}
-                        </button>
-                        <span className="text-xs text-gray-500">بر اساس عنوان</span>
-                    </div>
-
-                    <div className="md:col-span-2 col-span-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            افزودن لینک داخلی به توضیحات
-                        </label>
-                        <div className="flex gap-2">
-                            <div className="flex-1">
-                                <InternalLinkSelector
-                                    type="article"
-                                    placeholder="جستجوی مقاله..."
-                                    onSelect={(link) => {
-                                        handleFieldChange('desc', formData.desc + '\n' + link);
-                                    }}
-                                />
-                            </div>
-                            <div className="flex-1">
-                                <InternalLinkSelector
-                                    type="product"
-                                    placeholder="جستجوی محصول..."
-                                    onSelect={(link) => {
-                                        handleFieldChange('desc', formData.desc + '\n' + link);
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="md:col-span-2 col-span-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            افزودن لینک اینستاگرام به توضیحات
-                        </label>
-                        <div className="flex-1">
-                            <input
-                                type='text'
-                                value={formData.instaLink}
-                                placeholder="لینک پست اینستاگرام"
-                                onChange={(e) => {
-                                    const link = e.target.value
-                                    handleFieldChange('desc', formData.desc + '\n' +"مشاهده تصاویر این محصول در اینستاگرام" +'\n' + `[${formData.title}](${link})`);
-                                }}
-                                className={`rounded-lg p-1.5 sm:p-2 border bg-slate-50 text-xs sm:text-sm focus:outline-none w-full h-8.5 sm:h-10 ${!formData?.title && 'opacity-50 cursor-not-allowed'}`}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="md:col-span-2 col-span-1">
-                        <LinkPreview
-                            content={formData.desc || ''} 
-                            title="پیش‌نمایش لینک‌های توضیحات"
-                        />
-                    </div>
-
-                    <ProductInput
-                        form
-                        label="قیمت"
-                        value={formData.price}
-                        type="number"
-                        onChange={(value) => handleFieldChange('price', value)}
-                        onFocus={() => handleFieldFocus('price', formData.price)}
-                        error={errors.price}
-                    />
-
-                    <ProductInput
-                        form
-                        label="قیمت خرید"
-                        value={formData.cost}
-                        type="number"
-                        onChange={(value) => handleFieldChange('cost', value)}
-                        onFocus={() => handleFieldFocus('cost', formData.cost)}
-                        error={errors.cost}
-                    />
-
-                    <ProductInput
-                        form
-                        label="تعداد خرید"
-                        value={formData.costCount}
-                        type="number"
-                        onChange={(value) => handleFieldChange('costCount', value)}
-                        onFocus={() => handleFieldFocus('costCount', formData.costCount)}
-                        error={errors.costCount}
-                    />
+            <form
+                className="grid md:grid-cols-2 grid-cols-1  gap-4 justify-between mt-6"
+                dir="rtl"
+                itemScope
+                itemType="https://schema.org/LoginAction"
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSubmit();
+                }}
+            >
 
 
-                    <DiscountInput
-                        discount={formData.discount}
-                        duration={formData.discountDuration}
-                        onDiscountChange={(value) => handleFieldChange('discount', value)}
-                        onDurationChange={(value) => handleFieldChange('discountDuration', value)}
-                        onFocus={handleFieldFocus}
-                        errors={errors}
-                        form
-                    />
 
-                    <ProductInput
-                        form
-                        label="موجودی"
-                        value={formData.count}
-                        type="number"
-                        onChange={(value) => handleFieldChange('count', value)}
-                        onFocus={() => handleFieldFocus('count', formData.count)}
-                        error={errors.count}
-                    />
+                <div className="row-start-1 col-start-1 col-end-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        تصویر محصول
+                        <span className='text-red-600'>*</span>
+                    </label>
+                    <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={(e) => {
+                            const files = Array.from(e.target.files || []);
+                            setImageFiles(prev => [...prev, ...files]);
 
-                    <ProductInput
-                        form
-                        label="تعداد نمایشی"
-                        value={formData.showCount}
-                        type="number"
-                        onChange={(value) => handleFieldChange('showCount', value)}
-                        onFocus={() => handleFieldFocus('showCount', formData.showCount)}
-                        error={errors.showCount}
-                    />
-
-                    <ProductInput
-                        form
-                        label="محبوبیت"
-                        value={formData.popularity}
-                        type="number"
-                        onChange={(value) => handleFieldChange('popularity', value)}
-                        onFocus={() => handleFieldFocus('popularity', formData.popularity)}
-                        error={errors.popularity}
-                    />
-
-                    <SearchableAuthorSelect
-                        value={formData.authorId}
-                        onChange={(value) => handleFieldChange('authorId', value)}
-                        onFocus={() => handleFieldFocus('authorId', formData.authorId)}
-                        error={errors.authorId}
-                        authors={authors}
-                        form
-                    />
-
-                    <ProductInput
-                        form
-                        label="ناشر"
-                        value={formData.publisher}
-                        onChange={(value) => handleFieldChange('publisher', value)}
-                        onFocus={() => handleFieldFocus('publisher', formData.publisher)}
-                        error={errors.publisher}
-                    />
-
-                    <ProductInput
-                        form
-                        label="تاریخ انتشار"
-                        value={formData.publishDate}
-                        onChange={(value) => handleFieldChange('publishDate', value)}
-                        onFocus={() => handleFieldFocus('publishDate', formData.publishDate)}
-                        error={errors.publishDate}
-                    />
-
-                    <ProductInput
-                        form
-                        label="دسته‌بندی اصلی"
-                        value={formData.majorCat}
-                        onChange={(value) => handleFieldChange('majorCat', value)}
-                        onFocus={() => handleFieldFocus('majorCat', formData.majorCat)}
-                        error={errors.majorCat}
-                        type="select"
-                        options={[
-                            { value: "", label: "__ انتخاب کنید __" },
-                            ...links.map(l => (
-                                { value: l.txt, label: l.txt }
-                            ))]
-                        }
-                    />
-
-                    <ProductInput
-                        form
-                        label="دسته‌بندی فرعی"
-                        value={formData.minorCat}
-                        onChange={(value) => handleFieldChange('minorCat', value)}
-                        onFocus={() => handleFieldFocus('minorCat', formData.minorCat)}
-                        error={errors.minorCat}
-                        type="select"
-                        disabled={!formData.majorCat}
-                        options={[
-                            { value: "", label: "دسته‌بندی اصلی را انتخاب کنید" },
-                            ...links.find(l => l.txt === formData.majorCat)?.subLinks?.map((l: any) => ({
-                                value: l.link,
-                                label: l.link
-                            })) || []]
-                        }
-                    />
-
-                    <ProductInput
-                        form
-                        label="برند"
-                        value={formData.brand}
-                        onChange={(value) => handleFieldChange('brand', value)}
-                        onFocus={() => handleFieldFocus('brand', formData.brand)}
-                        error={errors.brand}
-                        type="select"
-                        disabled={!formData.majorCat || !formData.minorCat}
-                        options={[
-                            { value: "", label: "دسته‌بندی فرعی را انتخاب کنید" },
-                            ...links.find(l => l.txt === formData.majorCat)
-                                ?.subLinks.find(sl => sl.link === formData.minorCat)
-                                ?.brand?.filter(brand => brand !== "همه")
-                                .map((brand: string) => ({
-                                    value: brand,
-                                    label: brand
-                                })) || []]
-                        }
-                    />
-
-                    <ProductInput
-                        form
-                        label="وضعیت"
-                        value={formData.status}
-                        type="select"
-                        options={[
-                            { value: 'نو', label: 'نو' },
-                            { value: 'درحد‌نو', label: 'درحد‌نو' },
-                            { value: 'دسته‌دوم', label: 'دسته‌دوم' }
-                        ]}
-                        onChange={(value) => handleFieldChange('status', value)}
-                        onFocus={() => handleFieldFocus('status', formData.status)}
-                        error={errors.status}
-                    />
-
-                    <ProductInput
-                        form
-                        label="وضعیت نمایش"
-                        value={formData.state}
-                        type="select"
-                        options={[
-                            { value: 'active', label: 'فعال' },
-                            { value: 'inactive', label: 'غیرفعال' },
-                            { value: 'outOfStock', label: 'ناموجود' },
-                            { value: 'comingSoon', label: 'به زودی' },
-                            { value: 'callForPrice', label: 'تماس بگیرید' }
-                        ]}
-                        onChange={(value) => handleFieldChange('state', value)}
-                        onFocus={() => handleFieldFocus('state', formData.state)}
-                        error={errors.state}
-                    />
-
-                    <ProductInput
-                        form
-                        label="سایز"
-                        value={formData.size}
-                        onChange={(value) => handleFieldChange('size', value)}
-                        onFocus={() => handleFieldFocus('size', formData.size)}
-                        error={errors.size}
-                    />
-
-                    <ProductInput
-                        form
-                        label="وزن"
-                        value={formData.weight}
-                        type="number"
-                        onChange={(value) => handleFieldChange('weight', value)}
-                        onFocus={() => handleFieldFocus('weight', formData.weight)}
-                        error={errors.weight}
-                    />
-
-                    <div className="">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            تصاویر محصول
-                        </label>
-                        <input
-                            type="file"
-                            multiple
-                            accept="image/*"
-                            onChange={(e) => {
-                                const files = Array.from(e.target.files || []);
-                                setImageFiles(prev => [...prev, ...files]);
-
-                                // Create preview URLs
-                                const newPreviewUrls = files.map(file => URL.createObjectURL(file));
-                                setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
-                            }}
-                            className="block w-full text-sm text-gray-500
+                            // Create preview URLs
+                            const newPreviewUrls = files.map(file => URL.createObjectURL(file));
+                            setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
+                        }}
+                        className="block w-full text-sm text-gray-500
                                 file:mr-4 file:py-2 file:px-4
                                 file:rounded-full file:border-0
                                 file:text-sm file:font-semibold
                                 file:bg-black file:text-white
                                 hover:file:bg-gray-800"
+                    />
+
+                    {previewUrls.length > 0 && (
+                        <div className="mt-4 grid grid-cols-4 gap-4">
+                            {previewUrls.map((image: string, index: number) => (
+                                <div key={index} className="relative">
+                                    <img
+                                        src={image}
+                                        alt={`Product image ${index + 1}`}
+                                        className={`w-full h-24 object-cover rounded-lg ${index === 0 ? 'ring-2 ring-blue-500' : ''}`}
+                                    />
+                                    {index === 0 && (
+                                        <div className="absolute top-0 left-0 bg-blue-500 text-white text-xs px-2 py-1 rounded-tl-lg rounded-br-lg">
+                                            کاور
+                                        </div>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const newFiles = [...imageFiles];
+                                            const newPreviews = [...previewUrls];
+                                            newFiles.splice(index, 1);
+                                            newPreviews.splice(index, 1);
+                                            setImageFiles(newFiles);
+                                            setPreviewUrls(newPreviews);
+                                        }}
+                                        className="absolute cursor-pointer -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 w-6 h-6 flex justify-center items-center"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                <button
+                    type='submit'
+                    disabled={isSubmitting}
+                    aria-label="ارسال فرم اطلاعات کاربر"
+                    className="md:row-start-1 mt-6 font-bold md:col-start-2 h-fit px-4 md:py-2 py-4 md:w-fit w-full transition-all bg-cyan-800 hover:bg-cyan-900 rounded-lg text-white cursor-pointer"
+                >
+                    {isSubmitting ? 'در حال ذخیره...' : 'ذخیره محصول'}
+                </button>
+
+                <div className="col-start-1 col-end-2 row-start-2 flex flex-col gap-2 mt-4 w-full md:pb-6 h-full">
+                    <div className="bg-black p-2 rounded-lg">
+                        <Input
+                            id={formData[0].name}
+                            label="عنوان"
+                            form={formData[0]}
+                            setForm={setFormData}
+                            disabled={isSubmitting}
+                            placeholder="عنوان باید بین 3 تا 60 کاراکتر باشد."
+                            required
                         />
-                        {errors.imageFiles && (
-                            <p className="mt-1 text-sm text-red-600">{errors.imageFiles}</p>
-                        )}
-                        {previewUrls.length > 0 && (
-                            <div className="mt-4 grid grid-cols-4 gap-4">
-                                {previewUrls.map((image: string, index: number) => (
-                                    <div key={index} className="relative">
-                                        <img
-                                            src={image}
-                                            alt={`Product image ${index + 1}`}
-                                            className={`w-full h-24 object-cover rounded-lg ${index === 0 ? 'ring-2 ring-blue-500' : ''}`}
-                                        />
-                                        {index === 0 && (
-                                            <div className="absolute top-0 left-0 bg-blue-500 text-white text-xs px-2 py-1 rounded-tl-lg rounded-br-lg">
-                                                کاور
-                                            </div>
-                                        )}
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const newFiles = [...imageFiles];
-                                                const newPreviews = [...previewUrls];
-                                                newFiles.splice(index, 1);
-                                                newPreviews.splice(index, 1);
-                                                setImageFiles(newFiles);
-                                                setPreviewUrls(newPreviews);
-                                            }}
-                                            className="absolute cursor-pointer -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 w-6 h-6 flex justify-center items-center"
-                                        >
-                                            ×
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                    </div>
+                    <div className="bg-black p-2 rounded-lg">
+                        <Input
+                            type='textarea'
+                            id={formData[1].name}
+                            label="توضیحات"
+                            form={formData[1]}
+                            setForm={setFormData}
+                            disabled={isSubmitting}
+                            placeholder="توضیحات باید بین 3 تا 600 کاراکتر باشد."
+                            required
+                        />
+                    </div>
+                    <div className="bg-black p-2 rounded-lg">
+                        <Input
+                            id={formData[2].name}
+                            label="قیمت فروش"
+                            form={formData[2]}
+                            setForm={setFormData}
+                            disabled={isSubmitting}
+                            placeholder={placeholderForRequired("قیمت فروش")}
+                            required
+                        />
+                    </div>
+                    <div className="bg-black p-2 rounded-lg flex justify-between gap-2 items-center">
+                        <Input
+                            id={formData[3].name}
+                            label="قیمت خرید"
+                            form={formData[3]}
+                            setForm={setFormData}
+                            disabled={isSubmitting}
+                            placeholder={placeholderForRequired("قیمت خرید")}
+                            required
+                        />
+                        <Input
+                            id={formData[4].name}
+                            label="تعداد خرید"
+                            form={formData[4]}
+                            setForm={setFormData}
+                            disabled={isSubmitting}
+                            placeholder={placeholderForRequired("تعداد خرید")}
+                            required
+                        />
+                    </div>
+                    <div className="bg-black p-2 rounded-lg flex justify-between gap-2 items-center">
+                        <Input
+                            id={formData[5].name}
+                            label="تعداد انبار"
+                            form={formData[5]}
+                            setForm={setFormData}
+                            disabled={isSubmitting}
+                            placeholder={placeholderForRequired("تعداد انبار")}
+                            required
+                        />
+                        <Input
+                            id={formData[6].name}
+                            label="تعداد نمایشی"
+                            form={formData[6]}
+                            setForm={setFormData}
+                            disabled={isSubmitting}
+                            placeholder={placeholderForRequired("تعداد نمایشی")}
+                            required
+                        />
+                    </div>
+                    <div className="bg-black p-2 rounded-lg flex justify-between gap-2 items-center">
+                        <Input
+                            id={formData[7].name}
+                            label="درصد تخفیف"
+                            form={formData[7]}
+                            setForm={setFormData}
+                            disabled={isSubmitting}
+                        />
+                        <Input
+                            id={formData[8].name}
+                            label="مدت تخفیف (روز)"
+                            form={formData[8]}
+                            setForm={setFormData}
+                            disabled={isSubmitting}
+                        />
+                    </div>
+                    <div className="bg-black p-2 rounded-lg">
+                        <Input
+                            id={formData[9].name}
+                            label="دسته‌بندی اصلی"
+                            form={formData[9]}
+                            setForm={setFormData}
+                            disabled={isSubmitting}
+                            required
+                            type='select'
+                            options={[
+                                { value: "", label: "--انتخاب کنید--" },
+                                ...links.map(l => (
+                                    { value: l.txt, label: l.txt }
+                                )) || []
+                            ]}
+                        />
+                    </div>
+                    <div className="bg-black p-2 rounded-lg">
+                        <Input
+                            id={formData[10].name}
+                            label="دسته‌بندی فرعی"
+                            form={formData[10]}
+                            setForm={setFormData}
+                            disabled={isSubmitting}
+                            required
+                            type='select'
+                            options={[
+                                { value: "", label: "--دسته‌بندی اصلی را انتخاب کنید--" },
+                                ...links.find(l => l.txt === formData[9].value)?.subLinks?.map((l: any) => ({
+                                    value: l.link,
+                                    label: l.link
+                                })) || []
+                            ]}
+                        />
+                    </div>
+                    <div className="bg-black p-2 rounded-lg">
+                        <Input
+                            id={formData[11].name}
+                            label="برند"
+                            form={formData[11]}
+                            setForm={setFormData}
+                            disabled={isSubmitting}
+                            type='select'
+                            options={[
+                                { value: "", label: "--دسته‌بندی فرعی را انتخاب کنید--" },
+                                ...links.find(l => l.txt === formData[9].value)
+                                    ?.subLinks.find(sl => sl.link === formData[10].value)
+                                    ?.brand?.filter(brand => brand !== "همه")
+                                    .map((brand: string) => ({
+                                        value: brand,
+                                        label: brand
+                                    })) || []
+                            ]}
+                        />
                     </div>
                 </div>
 
-                <div className="flex justify-end mt-4">
-                    <button
-                        onClick={handleSubmit}
-                        disabled={isSaving}
-                        className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50"
-                    >
-                        {isSaving ? 'در حال ذخیره...' : 'ذخیره محصول'}
-                    </button>
+                <div className="md:col-start-2 md:col-end-3 col-start-1 col-end-2 md:row-start-2 row-start-3 flex flex-col gap-2 md:mt-4 w-full pb-6 h-full">
+                    <div className="bg-black p-2 rounded-lg">
+                        <Input
+                            id={formData[12].name}
+                            label="وضعیت"
+                            form={formData[12]}
+                            setForm={setFormData}
+                            disabled={isSubmitting}
+                            required
+                            type='select'
+                            options={status}
+                        />
+                    </div>
+                    <div className="bg-black p-2 rounded-lg">
+                        <Input
+                            id={formData[13].name}
+                            label="وضعیت نمایش"
+                            form={formData[13]}
+                            setForm={setFormData}
+                            disabled={isSubmitting}
+                            required
+                            type='select'
+                            options={state}
+                        />
+                    </div>
+                    <div className="bg-black p-2 rounded-lg">
+                        <Input
+                            id={formData[14].name}
+                            label="وزن"
+                            form={formData[14]}
+                            setForm={setFormData}
+                            disabled={isSubmitting}
+                            placeholder={placeholderForRequired("وزن")}
+                            required
+                        />
+                    </div>
+                    <div className="bg-black p-2 rounded-lg">
+                        <Input
+                            id={formData[15].name}
+                            label="نویسنده (امکان افزودن نویسنده در پنل مدیریت)"
+                            form={formData[15]}
+                            setForm={setFormData}
+                            disabled={isSubmitting}
+                            type='select'
+                            options={[
+                                { value: "", label: "--انتخاب کنید--" },
+                                ...Authors
+                            ]}
+                        />
+                    </div>
+                    <div className="bg-black p-2 rounded-lg">
+                        <Input
+                            id={formData[16].name}
+                            label="ناشر"
+                            form={formData[16]}
+                            setForm={setFormData}
+                            disabled={isSubmitting}
+                        />
+                    </div>
+                    <div className="bg-black p-2 rounded-lg">
+                        <Input
+                            id={formData[17].name}
+                            label="تاریخ انتشار"
+                            form={formData[17]}
+                            setForm={setFormData}
+                            disabled={isSubmitting}
+                        />
+                    </div>
+                    <div className="bg-black p-2 rounded-lg">
+                        <Input
+                            id={formData[18].name}
+                            label="سایز"
+                            form={formData[18]}
+                            setForm={setFormData}
+                            disabled={isSubmitting}
+                        />
+                    </div>
+                    <div className="bg-black p-2 rounded-lg">
+                        <Input
+                            type="instagram-link"
+                            id={formData[19].name}
+                            label="لینک اینستاگرام"
+                            form={formData[19]}
+                            setForm={setFormData}
+                            disabled={isSubmitting}
+                            descForm={formData[1]}
+                            titleForm={formData[0]}
+                        />
+                    </div>
+                    <div className="p-2 rounded-lg flex justify-between gap-2 items-center">
+                        <div className="md:col-span-2 col-span-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                افزودن لینک داخلی به توضیحات
+                            </label>
+                            <div className="flex gap-2">
+                                <div className="flex-1">
+                                    <InternalLinkSelector
+                                        type="article"
+                                        placeholder="جستجوی مقاله..."
+                                        onSelect={(link) => {
+                                            const value = `${formData[1].value}\n${link}`
+
+                                            handleChangeForm(setFormData, value, formData[1].name)
+                                        }}
+                                    />
+                                </div>
+                                <div className="flex-1">
+                                    <InternalLinkSelector
+                                        type="product"
+                                        placeholder="جستجوی محصول..."
+                                        onSelect={(link) => {
+                                            const value = `${formData[1].value}\n${link}`
+
+                                            handleChangeForm(setFormData, value, formData[1].name)
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="md:col-span-2 col-span-1">
+                        <LinkPreview
+                            content={`${formData[1].value}` || ''}
+                            title="پیش‌نمایش لینک‌های توضیحات"
+                        />
+                    </div>
                 </div>
-            </div>
+
+            </form>
         </div>
     );
 }

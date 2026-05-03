@@ -1,5 +1,6 @@
 import { commentType } from "./comment"
 import { orderType } from "./order"
+import { packageCoverType } from "./package"
 import { productCoverType, productType } from "./product"
 import { ticketType } from "./ticket"
 
@@ -11,8 +12,9 @@ export interface userType {
     phone: number,
     alert: string[],
     bascket: [{
-        count: number, productId
-        : productCoverType
+        count: number,
+        productId?: productCoverType
+        packageId?: packageCoverType
     }],
     discount: [{ code: string, date: number, discount: number }],
     address: string,

@@ -128,4 +128,16 @@ export const validateField = (field: string, value: any): string | null => {
     }
 
     return null;
-}; 
+};
+
+export const validateTitle = (title: string) => {
+    return /^.{3,60}$/.test(title);
+};
+
+export const validateDescription = (desc: string) => {
+    return /^[\s\S]{3,600}$/.test(desc);
+};
+
+export const validatePrice = (price: string | number) => {
+    return /^\d{4,}$/.test(String(price));
+};

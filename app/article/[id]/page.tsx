@@ -47,7 +47,7 @@ const ContentWithLinks = dynamic(() => import('@/public/utils/link/linkParser'),
 
 // queries
 import { GET_ARTICLE_BY_ID, INCREASE_ARTICLE_VIEW } from '@/public/graphql/articleQueries';
-import { GET_COMMENT_BY_ARTICLE_ID } from '@/public/graphql/commentQueries';
+import { GET_COMMENTS_BY_ID } from '@/public/graphql/commentQueries';
 
 // types
 import { articleSingleType } from '@/public/types/article';
@@ -68,17 +68,17 @@ const articleDataFetcher = async (id: string) => {
     if (!articleData) {
         redirect("/404")
     }
-    return articleData.article
+    return articleData?.article
 }
 
-const commentDataFetcher = async (id: string, page: number, limit: number) => {
-    const commentData = await fetcher(GET_COMMENT_BY_ARTICLE_ID, { id, page, limit }, noCaching);
-    return commentData.commentsByArticle
+const commentDataFetcher = async (id: string, type: string, page: number, limit: number) => {
+    const commentData = await fetcher(GET_COMMENTS_BY_ID, { id, type, page, limit }, noCaching);
+    return commentData?.commentsById
 }
 
 const userDataFetcher = async (jwt: string) => {
     const userData = await fetcher(GET_USER_BY_TOKEN, {}, noCaching, jwt);
-    return userData.userByToken
+    return userData?.userByToken
 }
 
 export async function generateMetadata({ params }: any) {
@@ -147,8 +147,9 @@ async function Article({ params, searchParams }: any) {
     await fetcher(INCREASE_ARTICLE_VIEW, { id }, noCaching);
 
     const article: articleSingleType = await articleDataFetcher(id);
-    const comments: paginatedCommentsType = await commentDataFetcher(id, page.page, page.count)
+    const comments: paginatedCommentsType = await commentDataFetcher(id, "Article", page.page, page.count)
     const user: userType | null = jwt ? await userDataFetcher(jwt) : null
+console.log(comments);
 
     // Create combined content array with proper typing
     const combinedContent: CombinedContentItem[] = article.content.map((content: string, index: number) => ({
@@ -272,7 +273,7 @@ async function Article({ params, searchParams }: any) {
                         ban={user ? user.status?.includes("ban") : false}
                         commentsData={comments || { comments: [], totalPages: 0, currentPage: 1, total: 0 }}
                         id={id}
-                        isArticle
+                        targetType="Article"
                     />
                 </section>
 

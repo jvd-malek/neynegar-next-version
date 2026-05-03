@@ -5,6 +5,7 @@ import TicketListBox from "@/public/components/account/TicketListBox";
 // type
 import { userType } from "@/public/types/user";
 import { paginatedTicketsType } from "@/public/types/ticket";
+import CommentInput from "../comment/CommentInput";
 
 type TicketSectionProps = {
     tickets: paginatedTicketsType | null,
@@ -31,6 +32,11 @@ const TicketSection = ({ tickets, user, demo = false }: TicketSectionProps) => {
                     />
                 </div>
             }
+            <div className={`h-fit relative flex flex-col justify-around items-center bg-white rounded-lg mt-6`}>
+                <CommentInput
+                    ticket
+                />
+            </div>
             <div className="w-full">
                 {tickets && tickets.tickets?.length > 0 ?
                     <TicketListBox tickets={tickets} user={user} demo={demo} />

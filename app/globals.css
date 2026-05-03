@@ -52,8 +52,7 @@
 
   /* Show scrollbar only for specific sections */
   .scrollable-section::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
+    @apply sm:w-2 sm:h-2 w-0 h-0
   }
 
   .scrollable-section::-webkit-scrollbar-track {

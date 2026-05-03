@@ -145,6 +145,7 @@ export const GET_PRODUCTS = `
         }
         cost {
           cost
+          count
           date
         }
         discount {
@@ -405,3 +406,58 @@ export const UPDATE_PRODUCT = `
     }
   }
 `;
+
+export const CREATE_PRODUCT = `
+  mutation CreateProduct ($input: ProductInput!) {
+    createProduct (input: $input) {
+      _id
+      title
+      desc
+      price {
+        price
+        date
+      }
+      cost {
+        cost
+        date
+      }
+      count
+      discount {
+        discount
+        date
+      }
+      showCount
+      popularity
+      authorId {
+        _id
+        fullName
+      }
+      publisher
+      publishDate
+      brand
+      status
+      size
+      weight
+      majorCat
+      minorCat
+      cover
+      images
+    }
+  }
+`;
+
+export const DELETE_PRODUCT = `
+  mutation DeleteProduct($id: ID!) {
+    deleteProduct(id: $id)
+  }
+`
+
+export const UPDATE_PRODUCT_IMAGES = `
+  mutation UpdateProductImages($id: ID!, $input: ProductImageInput!) {
+    updateProductImages(id: $id, input: $input) {
+      _id
+      cover
+      images
+    }
+  }
+`

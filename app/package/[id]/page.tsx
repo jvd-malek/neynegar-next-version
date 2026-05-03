@@ -49,7 +49,7 @@ const commentDataFetcher = async (id: string, type: string, page: number, limit:
 
 const userDataFetcher = async (jwt: string) => {
     const userData = await fetcher(GET_USER_BY_TOKEN, {}, revalidateOneHour, jwt);
-    return userData.userByToken
+    return userData?.userByToken
 }
 
 export async function generateMetadata({ params }: any) {
@@ -95,7 +95,7 @@ export async function generateMetadata({ params }: any) {
             keywords: [
                 Package.title,
                 Package.category,
-                ...(Package.products.map(pack=>pack.product.title)),
+                ...(Package.products.map(pack => pack.product.title)),
                 "خوشنویسی",
                 "نستعلیق",
                 "نی نگار",
@@ -404,6 +404,7 @@ async function Package({ params, searchParams }: any) {
                         ban={user ? user.status?.includes("ban") : false}
                         commentsData={comments || { comments: [], totalPages: 0, currentPage: 1, total: 0 }}
                         id={id}
+                        targetType="Package"
                     />
                 </section>
 

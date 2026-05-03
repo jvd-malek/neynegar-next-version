@@ -19,6 +19,18 @@ import { fetcher, noCaching, revalidateOneHour } from '@/public/utils/fetcher';
 import { GET_LOCAL_BASKET, GET_USER_FULL_BASKET } from '@/public/graphql/basketQueries';
 import { UserBasket } from '@/public/types/user';
 
+const GET_SHIPPING_COSTS = `
+  query ShippingCosts {
+    shippingCosts {
+      _id
+      type
+      cost
+      costPerKg
+      createdAt
+      updatedAt
+    }
+  }
+`;
 
 export const metadata: Metadata = {
     title: "سبد خرید | فروشگاه اینترنتی نی‌نگار",
@@ -84,9 +96,10 @@ async function Basket({ searchParams }: any) {
                 }
             ` , {}, revalidateOneHour)
 
+    const postCost = await fetcher(GET_SHIPPING_COSTS , {}, revalidateOneHour)
+
     const products: UserBasket[] = data ? [...data.basket] : (LocalBasket ? [...LocalBasket.basket] : [])
     const total: number = data ? data?.total : LocalBasket?.total
-
 
     let title;
     let majorCat;
@@ -134,7 +147,7 @@ async function Basket({ searchParams }: any) {
                 {page.activeLink == "info" &&
 
                     (data?.user ?
-                        <ProfileForm user={data.user} provinces={provinces.provinces} shippingCost={data.shippingCost} />
+                        <ProfileForm user={data.user} provinces={provinces.provinces} shippingCost={data.shippingCost} postCost={postCost.shippingCosts} totalWeight={data.totalWeight}/>
                         :
                         <div className="text-center bg-white rounded-lg p-6 w-full mt-6 space-y-6">
                             <p className="font-semibold">

@@ -37,6 +37,11 @@ const GET_USERS = `
                         title
                         showCount
                     }
+                    packageId {
+                        cover
+                        _id
+                        title
+                    }
                     count
                 }
                 favorite {
@@ -619,45 +624,53 @@ function CMSUserBox({ type, page }: CMSUserBoxProps) {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {user.bascket?.map((item, index) => (
-                                                    <tr key={index} className="border-t border-gray-400">
-                                                        <td className="px-3 py-1.5">
-                                                            <img
-                                                                src={`https://api.neynegar1.ir/uploads/${item.productId.cover}`}
-                                                                alt={item.productId.title}
-                                                                className="w-16 h-16 object-cover rounded"
-                                                            />
-                                                        </td>
-                                                        <td className="px-3 py-1.5">{item.productId.title}</td>
-                                                        <td className="pl-4 py-1.5">
-                                                            <div className="flex items-center gap-2">
+                                                {user.bascket?.map((item, index) => {
+                                                    const isPackage = item.packageId ? true : false
+                                                    const title = isPackage ? item.packageId?.title : item.productId?.title
+                                                    const cover = isPackage ? item.packageId?.cover : item.productId?.cover
+                                                    const showCount = (isPackage ? item.packageId?.showCount : item.productId?.showCount) || 0
+                                                    const id = (isPackage ? item.packageId?._id : item.productId?._id) || ""
+                                                    return (
+                                                        <tr key={index} className="border-t border-gray-400">
+                                                            <td className="px-3 py-1.5">
+                                                                <img
+                                                                    src={`https://api.neynegar1.ir/uploads/${cover}`}
+                                                                    alt={title}
+                                                                    className="w-16 h-16 object-cover rounded"
+                                                                />
+                                                            </td>
+                                                            <td className="px-3 py-1.5">{title}</td>
+                                                            <td className="pl-4 py-1.5">
+                                                                <div className="flex items-center gap-2">
+                                                                    <button
+                                                                        onClick={() => handleUpdateBasketCount(user._id, id, item.count - 1, showCount)}
+                                                                        className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:bg-slate-400"
+                                                                        disabled={item.count <= 1}
+                                                                    >
+                                                                        -
+                                                                    </button>
+                                                                    <span>{item.count}</span>
+                                                                    <button
+                                                                        onClick={() => handleUpdateBasketCount(user._id, id, item.count + 1, showCount)}
+                                                                        className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:bg-slate-400"
+                                                                        disabled={item.count >= showCount}
+                                                                    >
+                                                                        +
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-3 py-1.5">
                                                                 <button
-                                                                    onClick={() => handleUpdateBasketCount(user._id, item.productId._id, item.count - 1, item.productId.showCount)}
-                                                                    className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:bg-slate-400"
-                                                                    disabled={item.count <= 1}
+                                                                    onClick={() => handleRemoveFromBasket(user._id, id)}
+                                                                    className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                                                                 >
-                                                                    -
+                                                                    حذف
                                                                 </button>
-                                                                <span>{item.count}</span>
-                                                                <button
-                                                                    onClick={() => handleUpdateBasketCount(user._id, item.productId._id, item.count + 1, item.productId.showCount)}
-                                                                    className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:bg-slate-400"
-                                                                    disabled={item.count >= item.productId.showCount}
-                                                                >
-                                                                    +
-                                                                </button>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-3 py-1.5">
-                                                            <button
-                                                                onClick={() => handleRemoveFromBasket(user._id, item.productId._id)}
-                                                                className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                                                            >
-                                                                حذف
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
+                                                            </td>
+                                                        </tr>
+                                                    )
+                                                }
+                                                )}
                                                 {(!user.bascket || user.bascket.length < 1) && (
                                                     <tr>
                                                         <td colSpan={4} className="px-3 py-1.5 text-center text-gray-500">

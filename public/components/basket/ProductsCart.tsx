@@ -33,7 +33,7 @@ function ProductsCart({ Products, total = 0, isLogin }: ProductsCartProps) {
                             const cover = isPackage ? product.packageId.cover : product.productId.cover
                             const showCount = isPackage ? product.packageId.showCount : product.productId.showCount
                             return (
-                                <div key={index} className="flex items-center gap-4 w-full border-b border-mist-300 pb-2">
+                                <div key={ID} className="flex items-center gap-4 w-full border-b border-mist-300 pb-2">
                                     <div className="px-3 py-1.5">
                                         <img
                                             src={`https://api.neynegar1.ir/uploads/${cover}`}

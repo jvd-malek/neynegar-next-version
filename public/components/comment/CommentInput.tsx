@@ -8,6 +8,7 @@ import { getCookie } from 'cookies-next';
 import { useRouter } from 'next/navigation';
 import { fetcher } from '@/public/utils/fetcher';
 import { notify } from '@/public/utils/notify';
+import { ADD_REPLY, CREATE_COMMENT, CREATE_TICKET } from '@/public/graphql/commentQueries';
 
 const ratingLabels: Record<number, string> = {
     0.5: 'ضعیف',
@@ -24,13 +25,12 @@ const ratingLabels: Record<number, string> = {
 
 type CommentInputProps = {
     ticket?: boolean;
-    isArticle?: boolean;
     replyComment?: { _id: string; user: string } | null;
     setReplyComment?: React.Dispatch<React.SetStateAction<{ _id: string; user: string } | null>>;
     setReplyId?: React.Dispatch<React.SetStateAction<string>>;
-    productId?: string;
-    articleId?: string;
-    commentBoxScroll?: React.RefObject<HTMLDivElement>;
+    targetId?: string;
+    targetType?: "Product" | "Article" | "Package" | "Course";
+    commentBoxScroll?: React.RefObject<HTMLDivElement | null>;
 };
 
 export default function CommentInput({
@@ -38,9 +38,8 @@ export default function CommentInput({
     replyComment,
     setReplyComment,
     setReplyId,
-    productId,
-    articleId,
-    isArticle = false,
+    targetId,
+    targetType = "Product",
     commentBoxScroll
 }: CommentInputProps) {
     const jwt = getCookie('jwt');
@@ -79,21 +78,7 @@ export default function CommentInput({
                     return;
                 }
 
-                const response = await fetcher(`
-                          mutation CreateTicket($input: TicketInput!) {
-                            createTicket(input: $input) {
-                              _id
-                              title
-                              txt
-                              status
-                              response
-                              createdAt
-                              userId {
-                                _id
-                              }
-                            }
-                          }
-                        `,
+                const response = await fetcher(CREATE_TICKET,
                     {
                         input: {
                             title,
@@ -102,8 +87,8 @@ export default function CommentInput({
                     }
                 );
 
-                if (response.errors) {
-                    showError("خطا در ارسال تیکت: " + (response.errors.message || ""));
+                if (!response) {
+                    showError("خطا در ارسال تیکت");
                     return;
                 }
 
@@ -115,40 +100,17 @@ export default function CommentInput({
                     return;
                 }
 
-                const response = await fetch('https://api.neynegar1.ir/graphql', {
-                    method: "POST",
-                    headers: {
-                        'authorization': jwt as string,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        query: `
-                          mutation AddReply($commentId: ID!, $input: ReplyInput!) {
-                            addReply(commentId: $commentId, input: $input) {
-                              _id
-                              txt
-                              star
-                              status
-                              like
-                              replies {
-                                txt
-                                like
-                              }
-                            }
-                          }
-                        `,
-                        variables: {
+                const response = await fetcher(ADD_REPLY,
+                        {
                             commentId: replyComment._id,
                             input: {
                                 txt: text
                             }
                         }
-                    })
-                });
+                );
 
-                const data = await response.json();
-                if (data.errors) {
-                    console.error("err ==>", data.errors);
+                if (!response) {
+                    showError("خطا در ارسال پاسخ");
                     return;
                 }
 
@@ -161,48 +123,26 @@ export default function CommentInput({
                     return;
                 }
 
-                // ... existing code ...
-                const response = await fetch('https://api.neynegar1.ir/graphql', {
-                    method: "POST",
-                    headers: {
-                        'authorization': jwt as string,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        query: `
-                          mutation CreateComment($input: CommentInput!) {
-                            createComment(input: $input) {
-                              _id
-                              txt
-                              star
-                              status
-                              like
-                              productId { _id }
-                              articleId { _id }
-                              userId { _id }
-                              createdAt
-                              updatedAt
-                              replies {
-                                txt
-                                userId { _id }
-                                like
-                              }
-                            }
-                          }
-                        `,
-                        variables: {
-                            input: {
-                                txt: text,
-                                star: rating,
-                                productId,
+                if (!targetId || !targetType) {
+                    showError("خطا: اطلاعات هدف مشخص نیست.");
+                    return;
+                }
+
+                const response = await fetcher(CREATE_COMMENT,
+                    {
+                        input: {
+                            txt: text,
+                            star: rating,
+                            target: {
+                                type: targetType,
+                                id: targetId
                             }
                         }
-                    })
-                });
+                    }
+                )
 
-                const data = await response.json();
-                if (data.errors) {
-                    console.error("err ==>", data.errors);
+                if (!response) {
+                    showError("خطا در ثبت دیدگاه");
                     return;
                 }
 
@@ -223,7 +163,7 @@ export default function CommentInput({
             {!ticket && (
                 <>
                     <h3 className="text-lg font-bold">
-                        ثبت دیدگاه
+                        {replyComment ? 'ثبت پاسخ' : 'ثبت دیدگاه'}
                     </h3>
 
                     {!replyComment && (
@@ -255,7 +195,7 @@ export default function CommentInput({
                         onClick={resetForm}
                         disabled={isSubmitting}
                     >
-                        ثبت نظر جدید
+                        انصراف
                     </button>
                 </div>
             )}
@@ -277,7 +217,7 @@ export default function CommentInput({
 
             <div className="bg-mist-100 p-4 rounded-lg my-4">
                 <label htmlFor="commentsBody">
-                    {ticket ? "سوال شما" : 'محتوا دیدگاه'}
+                    {ticket ? "سوال شما" : replyComment ? 'متن پاسخ' : 'محتوا دیدگاه'}
                 </label>
                 <textarea
                     id="commentsBody"
@@ -303,7 +243,7 @@ export default function CommentInput({
                         <span>در حال ارسال...</span>
                     </>
                 ) : (
-                    ticket ? 'ثبت تیکت' : "ثبت دیدگاه"
+                    ticket ? 'ثبت تیکت' : replyComment ? 'ثبت پاسخ' : 'ثبت دیدگاه'
                 )}
             </button>
         </div>

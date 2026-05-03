@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import CommentBox from "./CommentBox";
 import CommentInput from "./CommentInput";
 import { paginatedCommentsType } from "@/public/types/comment";
@@ -11,19 +11,17 @@ import KeyboardBackspaceRounded from "@mui/icons-material/KeyboardBackspaceRound
 
 interface CommentComplexProps {
     ban: boolean;
-    isArticle?: boolean;
     commentsData: paginatedCommentsType;
     id: string;
+    targetType: "Product" | "Article" | "Package" | "Course";
 }
 
-// اضافه کردن حالت کامنت گذاری براساس اینکه محصول - پکیج - مقاله - دوره است
-// دانلود کامنت ها در همین قسمت
-
-function CommentComplex({ ban, commentsData, id, isArticle = false }: CommentComplexProps) {
+function CommentComplex({ ban, commentsData, id, targetType }: CommentComplexProps) {
     const { comments, totalPages, currentPage } = commentsData;
 
     const jwt = getCookie('jwt');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const commentBoxScrollRef = useRef<HTMLDivElement>(null); // اضافه کردن ref
 
     useEffect(() => {
         setIsAuthenticated(!!jwt && !ban);
@@ -40,12 +38,22 @@ function CommentComplex({ ban, commentsData, id, isArticle = false }: CommentCom
     useEffect(() => {
         if (comments && replyId.length > 0) {
             const com = comments.filter(c => c._id === replyId);
-            setReplyComment({ _id: replyId, user: com[0].userId.name });
+            if (com.length > 0) {
+                setReplyComment({ _id: replyId, user: com[0].userId.name });
+            }
         }
     }, [replyId, comments]);
 
+    // متن مناسب برای هر نوع هدف
+    const getTargetText = () => {
+        switch (targetType) {
+            case "Article": return "مقاله";
+            case "Package": return "پکیج";
+            case "Course": return "دوره";
+            default: return "محصول";
+        }
+    };
 
-    // add icon before title like sabzlearn
     return (
         <>
             {/* Comment input */}
@@ -58,8 +66,9 @@ function CommentComplex({ ban, commentsData, id, isArticle = false }: CommentCom
                         replyComment={replyComment}
                         setReplyComment={setReplyComment}
                         setReplyId={setReplyId}
-                        productId={id}
-                        isArticle={isArticle}
+                        targetId={id}
+                        targetType={targetType}
+                        commentBoxScroll={commentBoxScrollRef}
                     />
                 </div>
             )}
@@ -67,6 +76,7 @@ function CommentComplex({ ban, commentsData, id, isArticle = false }: CommentCom
             {/* Comments list */}
             <div
                 id="commentBoxScroll"
+                ref={commentBoxScrollRef}
                 className={`bg-white rounded-lg p-6 h-fit
                     ${!isAuthenticated ?
                         "col-start-1 col-end-3 row-start-3 lg:row-start-2" :
@@ -100,7 +110,7 @@ function CommentComplex({ ban, commentsData, id, isArticle = false }: CommentCom
 
                 {comments.length > 0 ? (
                     <>
-                        {comments.reverse().map(c => (
+                        {[...comments].reverse().map(c => (
                             <div key={c._id}>
                                 <CommentBox
                                     account={false}
@@ -111,10 +121,12 @@ function CommentComplex({ ban, commentsData, id, isArticle = false }: CommentCom
                                 />
                             </div>
                         ))}
-                        <PaginationBox
-                            count={totalPages}
-                            currentPage={currentPage}
-                        />
+                        {totalPages > 1 &&
+                            <PaginationBox
+                                count={totalPages}
+                                currentPage={currentPage}
+                            />
+                        }
                     </>
                 ) : (
                     <div className="mt-6 flex flex-col items-center gap-2  justify-center w-full p-8 border border-mist-200 rounded-lg">
@@ -123,7 +135,7 @@ function CommentComplex({ ban, commentsData, id, isArticle = false }: CommentCom
                         </p>
                         <p className="text-sm text-mist-700">
                             اولین نفری باش که به این
-                            {`${isArticle ? " مقاله " : " محصول "}`}
+                            {` ${getTargetText()} `}
                             نظر میدی.
                         </p>
                     </div>

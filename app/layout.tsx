@@ -3,14 +3,13 @@ import type { Metadata, Viewport } from "next";
 
 // CSS and swiper css
 import "./globals.css";
-import 'swiper/css';
 
 // fonts
 import { Mahoor } from "./fonts";
 
 // components
 import { Bounce, ToastContainer } from 'react-toastify';
-import MaintenanceMode from "@/public/components/home/MaintenanceMode";
+// import MaintenanceMode from "@/public/components/home/MaintenanceMode";
 
 export const metadata: Metadata = {
   title: "نی نگار | لوازم و آموزش خوشنویسی",

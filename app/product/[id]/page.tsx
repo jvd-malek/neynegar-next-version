@@ -30,7 +30,7 @@ import ShareURL from '@/public/components/article/ShareURL';
 // types and queries
 import { productType } from '@/public/types/product';
 import { GET_PRODUCT_BY_ID } from '@/public/graphql/productQueries';
-import { GET_COMMENT_BY_PRODUCT_ID } from '@/public/graphql/commentQueries';
+import { GET_COMMENTS_BY_ID } from '@/public/graphql/commentQueries';
 import { paginatedCommentsType } from '@/public/types/comment';
 import { userType } from '@/public/types/user';
 import { GET_USER_BY_TOKEN } from '@/public/graphql/userQueries';
@@ -48,17 +48,17 @@ const productDataFetcher = async (id: string) => {
     if (!productData) {
         redirect("/404")
     }
-    return productData.product
+    return productData?.product
 }
 
-const commentDataFetcher = async (id: string, page: number, limit: number) => {
-    const commentData = await fetcher(GET_COMMENT_BY_PRODUCT_ID, { id, page, limit }, noCaching);
-    return commentData.commentsByProduct
+const commentDataFetcher = async (id: string, type: string, page: number, limit: number) => {
+    const commentData = await fetcher(GET_COMMENTS_BY_ID, { id, type, page, limit }, noCaching);
+    return commentData?.commentsById
 }
 
 const userDataFetcher = async (jwt: string) => {
     const userData = await fetcher(GET_USER_BY_TOKEN, {}, revalidateOneHour, jwt);
-    return userData.userByToken
+    return userData?.userByToken
 }
 
 export async function generateMetadata({ params }: any) {
@@ -152,7 +152,7 @@ async function Product({ params, searchParams }: any) {
     };
 
     const product: productType = await productDataFetcher(id);
-    const comments: paginatedCommentsType = await commentDataFetcher(id, page.page, page.count)
+    const comments: paginatedCommentsType = await commentDataFetcher(id, "Product", page.page, page.count)
     const user: userType | null = jwt ? await userDataFetcher(jwt) : null
 
     // استفاده در کامپوننت
@@ -539,6 +539,7 @@ async function Product({ params, searchParams }: any) {
                         ban={user ? user.status?.includes("ban") : false}
                         commentsData={comments || { comments: [], totalPages: 0, currentPage: 1, total: 0 }}
                         id={id}
+                        targetType="Product"
                     />
                 </section>
 

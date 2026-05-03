@@ -9,6 +9,9 @@ import { fetcher, imageUploader } from '@/public/utils/fetcher';
 import { handleClearForm, handleClearInput, handleFormValidator, Input } from '@/public/components/login/Input';
 import { state, status } from '@/public/utils/cms/variables';
 
+// validation
+import { validateDescription, validateTitle } from "@/public/validation/productValidation";
+
 // queries and types
 import { CREATE_PACKAGE } from '@/public/graphql/packageQueries';
 import { linksType } from '@/public/types/links';
@@ -28,7 +31,7 @@ function CMSAddPackage({ links = [] }: { links: linksType[] }) {
             name: "title",
             type: "text",
             value: "",
-            validateRule: null,
+            validateRule: validateTitle,
             error: false,
             errorMessage: "عنوان باید بین 3 تا 60 کاراکتر باشد"
         },
@@ -36,7 +39,7 @@ function CMSAddPackage({ links = [] }: { links: linksType[] }) {
             name: "desc",
             type: "text",
             value: "",
-            validateRule: null,
+            validateRule: validateDescription,
             error: false,
             errorMessage: "توضیحات باید بین 3 تا 600 کاراکتر باشد"
         },
@@ -108,34 +111,39 @@ function CMSAddPackage({ links = [] }: { links: linksType[] }) {
 
     const handleSubmit = useCallback(async () => {
         if (!handleFormValidator(formData)) return;
-
         setIsSubmitting(true);
-        try {
 
-            // upload and add cover
-            let cover = ""
+        // upload and add cover
+        let cover = ""
 
-            // Handle file uploads
-            if (imageFiles && imageFiles.length > 0) {
-                const fileFormData = new FormData();
+        // Handle file uploads
+        if (imageFiles && imageFiles.length > 0) {
+            const fileFormData = new FormData();
 
-                // Add cover image
-                if (imageFiles[0]) {
-                    fileFormData.append('cover', imageFiles[0]);
-                }
-
-                try {
-                    const fileResult = await imageUploader(fileFormData);
-
-                    if (fileResult && typeof fileResult === 'object') {
-                        cover = fileResult.cover || '';
-                    }
-
-                } catch (parseError) {
-                    console.error('Error parsing file upload response:', parseError);
-                    throw new Error('Invalid response from file upload server');
-                }
+            // Add cover image
+            if (imageFiles[0]) {
+                fileFormData.append('cover', imageFiles[0]);
             }
+
+            try {
+                const fileResult = await imageUploader(fileFormData);
+
+                if (fileResult && typeof fileResult === 'object') {
+                    cover = fileResult.cover || '';
+                }
+
+            } catch (parseError) {
+                console.error('Error parsing file upload response:', parseError);
+                throw new Error('Invalid response from file upload server');
+            }
+
+        } else {
+            notify("تصویر کاور الزامی است", "error")
+            setIsSubmitting(false);
+            return;
+        }
+
+        try {
 
             // Create product data
             const productData = {
@@ -170,10 +178,11 @@ function CMSAddPackage({ links = [] }: { links: linksType[] }) {
     }, [formData]);
 
     const productHandler = () => {
-        setProducts(perv => ([...perv, { product: formData[8].value, quantity: +formData[9].value }]))
+        setProducts(perv => ([...perv, { product: `${formData[8].value}`, quantity: +formData[9].value }]))
         handleClearInput(setFormData, "productId")
         handleClearInput(setFormData, "quantity")
     }
+
 
     return (
         <div className="bg-white relative rounded-lg p-4 lg:col-start-2 col-end-5 col-start-1 lg:row-start-1 row-start-2">
@@ -181,7 +190,6 @@ function CMSAddPackage({ links = [] }: { links: linksType[] }) {
             <h3 className="text-xl font-bold">
                 افزودن پکیج جدید
             </h3>
-
 
             <form
                 className="grid md:grid-cols-2 grid-cols-1  gap-4 justify-between mt-6"
@@ -199,6 +207,7 @@ function CMSAddPackage({ links = [] }: { links: linksType[] }) {
                 <div className="row-start-1 col-start-1 col-end-2">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                         تصویر پکیج
+                        <span className='text-red-600'>*</span>
                     </label>
                     <input
                         type="file"
@@ -260,7 +269,7 @@ function CMSAddPackage({ links = [] }: { links: linksType[] }) {
                     aria-label="ارسال فرم اطلاعات کاربر"
                     className="md:row-start-1 mt-6 font-bold md:col-start-2 h-fit px-4 md:py-2 py-4 md:w-fit w-full transition-all bg-cyan-800 hover:bg-cyan-900 rounded-lg text-white cursor-pointer"
                 >
-                    ثبت اطلاعات
+                    {isSubmitting ? 'در حال ذخیره...' : 'ذخیره پکیج'}
                 </button>
 
                 <div className="col-start-1 col-end-2 row-start-2 flex flex-col gap-2 mt-4 w-full md:pb-6 h-full">
@@ -271,6 +280,7 @@ function CMSAddPackage({ links = [] }: { links: linksType[] }) {
                             form={formData[0]}
                             setForm={setFormData}
                             disabled={isSubmitting}
+                            placeholder="عنوان باید بین 3 تا 60 کاراکتر باشد."
                             required
                             autoFocus
                         />
@@ -283,6 +293,7 @@ function CMSAddPackage({ links = [] }: { links: linksType[] }) {
                             form={formData[1]}
                             setForm={setFormData}
                             disabled={isSubmitting}
+                            placeholder="توضیحات باید بین 3 تا 600 کاراکتر باشد."
                             required
                         />
                     </div>
@@ -426,59 +437,6 @@ function CMSAddPackage({ links = [] }: { links: linksType[] }) {
                 </div>
 
             </form>
-            {/* <div className="md:col-span-2 col-span-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            افزودن لینک داخلی به توضیحات
-                        </label>
-                        <div className="flex gap-2">
-                            <div className="flex-1">
-                                <InternalLinkSelector
-                                    type="article"
-                                    placeholder="جستجوی مقاله..."
-                                    onSelect={(link) => {
-                                        handleFieldChange('desc', formData.desc + '\n' + link);
-                                    }}
-                                />
-                            </div>
-                            <div className="flex-1">
-                                <InternalLinkSelector
-                                    type="product"
-                                    placeholder="جستجوی محصول..."
-                                    onSelect={(link) => {
-                                        handleFieldChange('desc', formData.desc + '\n' + link);
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="md:col-span-2 col-span-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            افزودن لینک اینستاگرام به توضیحات
-                        </label>
-                        <div className="flex-1">
-                            <input
-                                type='text'
-                                value={formData.instaLink}
-                                placeholder="لینک پست اینستاگرام"
-                                onChange={(e) => {
-                                    const link = e.target.value
-                                    handleFieldChange('desc', formData.desc + '\n' + "مشاهده تصاویر این محصول در اینستاگرام" + '\n' + `[${formData.title}](${link})`);
-                                }}
-                                className={`rounded-lg p-1.5 sm:p-2 border bg-slate-50 text-xs sm:text-sm focus:outline-none w-full h-8.5 sm:h-10 ${!formData?.title && 'opacity-50 cursor-not-allowed'}`}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="md:col-span-2 col-span-1">
-                        <LinkPreview
-                            content={formData.desc || ''}
-                            title="پیش‌نمایش لینک‌های توضیحات"
-                        />
-                    </div> */}
-
-
-
 
         </div>
     );

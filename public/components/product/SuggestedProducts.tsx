@@ -60,7 +60,7 @@ const SuggestedProducts = async ({ id, majorCat, minorCat, cat, isPackage }: Sug
 
             <div className="bg-white rounded-lg px-2 py-4 w-full mt-8">
                 <HomeHeader
-                    title="محصولات مرتبط"
+                    title="پیشنهاد ما"
                     showAll={false}
                 />
             </div>

@@ -15,19 +15,28 @@ import { formType } from '@/public/types/input';
 import { userType } from '@/public/types/user';
 import { fetcher, revalidateOneHour } from '@/public/utils/fetcher';
 
+type postCost = {
+    cost: number
+    costPerKg: number
+    type: string
+}
+
 type LoginFormProps = {
     account?: boolean
     user: userType
     provinces: { province: string, cities: string[] }[]
     shippingCost?: number
+    totalWeight?: number
+    postCost?: postCost[]
 }
 
-const LoginForm = ({ account = false, user, provinces = [], shippingCost = 0 }: LoginFormProps) => {
+const LoginForm = ({ account = false, user, provinces = [], shippingCost = 0, postCost, totalWeight = 0 }: LoginFormProps) => {
 
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [states, setStates] = useState<{ value: string, label: string }[]>([{ value: "", label: "--استان را انتخاب کنید--" }]);
     const [cities, setCities] = useState<{ value: string, label: string }[]>([{ value: "", label: "--استان را انتخاب کنید--" }]);
     const Address = user.address ? user.address.split("%%") : []
+    const post = postCost?.filter(p => p.type == "پست")[0]
 
     const validatePhone = (phone: string) => {
         return /^(\+98|0098|98|0)?9\d{9}$/.test(phone);
@@ -96,7 +105,7 @@ const LoginForm = ({ account = false, user, provinces = [], shippingCost = 0 }: 
 
     useEffect(() => {
         if (provinces.length > 0) {
-            const validprovincesFormat  =  [{ value: "", label: "--انتخاب کنید--" }]
+            const validprovincesFormat = [{ value: "", label: "--انتخاب کنید--" }]
             validprovincesFormat.push(...provinces.map(p => ({ value: p.province, label: p.province })))
             setStates(validprovincesFormat)
         }
@@ -113,7 +122,7 @@ const LoginForm = ({ account = false, user, provinces = [], shippingCost = 0 }: 
 
     const handleSubmit = useCallback(async () => {
         if (!handleFormValidator(formData)) return;
-        if (!account && formData[6].value.length == 0) {
+        if (!account && `${formData[6].value}`.length == 0) {
             notify("لطفا روش ارسال را انتخاب نمایید.", 'error');
             return
         }
@@ -121,9 +130,9 @@ const LoginForm = ({ account = false, user, provinces = [], shippingCost = 0 }: 
         setIsSubmitting(true);
         try {
             await updateInfoUser({
-                name: formData[0].value.trim(),
+                name: `${formData[0].value}`.trim(),
                 postCode: +formData[2].value,
-                address: `${formData[3].value}%%${formData[4].value}%%${formData[5].value.trim()}`
+                address: `${formData[3].value}%%${formData[4].value}%%${`${formData[5].value}`.trim()}`
             });
 
             notify("اطلاعات شما با موفقیت ذخیره شد.", 'success');
@@ -132,7 +141,7 @@ const LoginForm = ({ account = false, user, provinces = [], shippingCost = 0 }: 
             notify("عدم برقراری ارتباط با سرور", 'error');
         } finally {
             setIsSubmitting(false);
-            if (!account && formData[6].value.length > 0) {
+            if (!account && `${formData[6].value}`.length > 0) {
 
                 let form = {
                     name: formData[0].value,
@@ -292,43 +301,82 @@ const LoginForm = ({ account = false, user, provinces = [], shippingCost = 0 }: 
                 </div>
 
                 {!account &&
-                    <div className="col-start-1 col-end-2 md:row-start-2 row-start-3">
-                        <h2 className="font-bold text-lg">
-                            روش ارسال:
-                        </h2>
+                    <>
+                        <div className="col-start-1 col-end-2 md:row-start-2 row-start-3">
+                            <h2 className="font-bold text-lg">
+                                روش ارسال:
+                            </h2>
 
-                        <div className="flex justify-between items-center gap-4 bg-mist-200 p-1 rounded mb-2 mt-6">
-                            <div className="bg-black p-2 rounded w-30">
-                                <Input
-                                    id='post'
-                                    type='radio'
-                                    label="ارسال با پست"
-                                    form={formData[6]}
-                                    setForm={setFormData}
-                                    disabled={isSubmitting}
-                                />
+                            <div className="flex justify-between items-center gap-4 bg-mist-200 p-1 rounded mb-2 mt-6">
+                                <div className="bg-black p-2 rounded w-30">
+                                    <Input
+                                        id='post'
+                                        type='radio'
+                                        label="ارسال با پست"
+                                        form={formData[6]}
+                                        setForm={setFormData}
+                                        disabled={isSubmitting}
+                                    />
+                                </div>
+                                <p className="text-xs font-semibold bg-black text-white p-2.5 rounded w-36 text-center">
+                                    {shippingCost.toLocaleString('fa-IR')}
+                                    <span className='pr-1'>تومان</span>
+                                </p>
                             </div>
-                            <p className="text-xs font-semibold bg-black text-white p-2.5 rounded w-36 text-center">
-                                {shippingCost.toLocaleString('fa-IR')}
-                                <span className='pr-1'>تومان</span>
-                            </p>
+
+                            <div className="flex justify-between items-center gap-4 bg-mist-200 p-1 rounded">
+                                <div className="bg-black p-2 rounded w-30">
+                                    <Input
+                                        id='bike'
+                                        type='radio'
+                                        label="ارسال با پیک"
+                                        form={formData[6]}
+                                        setForm={setFormData}
+                                        disabled={isSubmitting}
+                                    />
+                                </div>
+                                <p className="text-xs bg-black text-white p-2.5 rounded w-36 text-center">فقط برای ساکنین تهران</p>
+                            </div>
+
                         </div>
 
-                        <div className="flex justify-between items-center gap-4 bg-mist-200 p-1 rounded">
-                            <div className="bg-black p-2 rounded w-30">
-                                <Input
-                                    id='bike'
-                                    type='radio'
-                                    label="ارسال با پیک"
-                                    form={formData[6]}
-                                    setForm={setFormData}
-                                    disabled={isSubmitting}
-                                />
-                            </div>
-                            <p className="text-xs bg-black text-white p-2.5 rounded w-36 text-center">فقط برای ساکنین تهران</p>
-                        </div>
+                        <div className="md:col-start-2 md:col-end-3 col-start-1 col-end-2 md:row-start-2 row-start-4 mt-6 md:mt-0">
+                            <h2 className="font-bold text-lg">
+                                جزئیات هزینه پست:
+                            </h2>
 
-                    </div>
+                            <table className="w-fit bg-white border border-gray-200 rounded-lg mt-6">
+                                <thead className="bg-gray-50 font-bold text-sm">
+                                    <tr>
+                                        <td className="px-3 py-1.5 text-right">هزینه پایه</td>
+                                        <td className="px-3 py-1.5 text-right">هزینه به ازای هر کیلو</td>
+                                        <td className="px-3 py-1.5 text-right">وزن سفارش</td>
+                                        <td className="px-3 py-1.5 text-right">هزینه نهایی</td>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td className="px-3 py-1.5">
+                                            {post?.cost.toLocaleString('fa-IR')}
+                                            <span className="text-xs font-medium text-mist-500"> تومان</span>
+                                        </td>
+                                        <td className="px-3 py-1.5">
+                                            {post?.costPerKg.toLocaleString('fa-IR')}
+                                            <span className="text-xs font-medium text-mist-500"> تومان</span>
+                                        </td>
+                                        <td className="px-3 py-1.5">
+                                            {totalWeight?.toLocaleString('fa-IR')}
+                                            <span className="text-xs font-medium text-mist-500"> گرم</span>
+                                        </td>
+                                        <td className="px-3 py-1.5">
+                                            {shippingCost.toLocaleString('fa-IR')}
+                                            <span className="text-xs font-medium text-mist-500"> تومان</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
                 }
 
                 {account &&
@@ -346,7 +394,7 @@ const LoginForm = ({ account = false, user, provinces = [], shippingCost = 0 }: 
                     type='submit'
                     disabled={isSubmitting}
                     aria-label="ارسال فرم اطلاعات کاربر"
-                    className={`${account ? "row-start-4 md:row-start-2" : "md:row-start-3 row-start-4  mt-6"} font-bold cursor-pointer col-start-1 col-end-2  px-4 py-4 w-full transition-all bg-black hover:bg-slate-900 rounded-lg text-white border-b-4 border-slate-700 active:border-white active:translate-y-1 disabled:opacity-70`}
+                    className={`${account ? "row-start-4 md:row-start-2" : "md:row-start-3 row-start-5 mt-6"} font-bold cursor-pointer col-start-1 col-end-2  px-4 py-4 w-full transition-all bg-black hover:bg-slate-900 rounded-lg text-white border-b-4 border-slate-700 active:border-white active:translate-y-1 disabled:opacity-70`}
                 >
                     ثبت اطلاعات
                 </button>
