@@ -778,7 +778,13 @@ function CMSUserBox({ type, page }: CMSUserBoxProps) {
                                                     <tr key={index} className="border-t">
                                                         <td className="px-3 py-1.5">{discount.code}</td>
                                                         <td className="px-3 py-1.5">{discount.discount}%</td>
-                                                        <td className="px-3 py-1.5">{new Date(discount.date).toLocaleDateString('fa-IR')}</td>
+                                                        <td className="px-3 py-1.5">
+                                                            {new Intl.DateTimeFormat('fa-IR', {
+                                                                year: 'numeric',
+                                                                month: 'long',
+                                                                day: 'numeric'
+                                                            }).format(new Date(Number(discount.date)))}
+                                                        </td>
                                                         <td className="px-3 py-1.5">
                                                             <button
                                                                 onClick={() => handleRemoveDiscount(user._id, discount.code)}

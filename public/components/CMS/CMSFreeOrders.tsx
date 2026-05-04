@@ -196,12 +196,12 @@ function CMSFreeOrders() {
 
     const handleProductSelect = (product: Product) => {
         const existingProduct = selectedProducts.find(p => p.productId._id === product._id);
-        
+
         if (existingProduct) {
             // Update count if product already exists
-            setSelectedProducts(prev => 
-                prev.map(p => 
-                    p.productId._id === product._id 
+            setSelectedProducts(prev =>
+                prev.map(p =>
+                    p.productId._id === product._id
                         ? { ...p, count: p.count + 1 }
                         : p
                 )
@@ -210,7 +210,7 @@ function CMSFreeOrders() {
             // Add new product
             const currentPrice = product.price[product.price.length - 1]?.price || 0;
             const currentDiscount = product.discount[product.discount.length - 1]?.discount || 0;
-            
+
             setSelectedProducts(prev => [...prev, {
                 productId: product,
                 price: currentPrice,
@@ -218,7 +218,7 @@ function CMSFreeOrders() {
                 count: 1
             }]);
         }
-        
+
         setIsOpen(false);
         setSearch('');
     };
@@ -232,10 +232,10 @@ function CMSFreeOrders() {
             removeProduct(productId);
             return;
         }
-        
-        setSelectedProducts(prev => 
-            prev.map(p => 
-                p.productId._id === productId 
+
+        setSelectedProducts(prev =>
+            prev.map(p =>
+                p.productId._id === productId
                     ? { ...p, count }
                     : p
             )
@@ -271,9 +271,9 @@ function CMSFreeOrders() {
                 customerPostCode: customerInfo.postCode ? customerInfo.postCode : 0,
                 status: 'در انتظار تایید'
             };
-            
+
             await fetcher(CREATE_FREE_ORDER, { input });
-            
+
             // Reset form
             setSelectedProducts([]);
             setCustomerInfo({
@@ -283,10 +283,10 @@ function CMSFreeOrders() {
                 postCode: 0,
                 submition: 'پست'
             });
-            
+
             // Refresh orders list
             mutateOrders();
-            
+
             alert('سفارش آزاد با موفقیت ایجاد شد');
         } catch (error) {
             console.error('Error creating free order:', error);
@@ -310,11 +310,11 @@ function CMSFreeOrders() {
     return (
         <div className="space-y-6">
             <h2 className="text-lg font-bold mb-4">سفارشات آزاد</h2>
-            
+
             {/* Create New Free Order */}
             <div className="bg-white p-6 rounded-lg shadow-md">
                 <h3 className="text-md font-semibold mb-4">ایجاد سفارش آزاد جدید</h3>
-                
+
                 {/* User Found Notification */}
                 {userFound && (
                     <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-md">
@@ -397,13 +397,13 @@ function CMSFreeOrders() {
                             onFocus={() => setIsOpen(true)}
                             className="w-full p-2 border border-gray-300 rounded-md text-sm"
                         />
-                        
+
                         {isOpen && (
                             <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-80 overflow-y-auto">
                                 {productsError && (
                                     <div className="p-2 text-center text-red-500">خطا در دریافت اطلاعات</div>
                                 )}
-                                
+
                                 {products.length > 0 ? (
                                     products.map((product) => (
                                         <button
@@ -420,21 +420,21 @@ function CMSFreeOrders() {
                                                     className="rounded-lg object-cover w-12 h-12"
                                                 />
                                             </div>
-                                            
+
                                             <div className="flex-1 text-right">
                                                 <div className="font-medium text-gray-900 line-clamp-2">
                                                     {product.title}
                                                 </div>
-                                                
+
                                                 <div className="text-xs text-gray-600 mt-1">
                                                     {formatPrice(product.price[product.price.length - 1]?.price || 0, product.discount[product.discount.length - 1]?.discount)}
                                                 </div>
-                                                
+
                                                 <div className="text-xs text-gray-500 mt-1">
                                                     موجودی: {product.showCount}
                                                 </div>
                                             </div>
-                                            
+
                                             <div className="shrink-0 text-gray-400">
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -447,11 +447,11 @@ function CMSFreeOrders() {
                                 ) : null}
                             </div>
                         )}
-                        
+
                         {/* Click outside to close */}
                         {isOpen && (
-                            <div 
-                                className="fixed inset-0 z-40" 
+                            <div
+                                className="fixed inset-0 z-40"
                                 onClick={() => setIsOpen(false)}
                             />
                         )}
@@ -480,7 +480,7 @@ function CMSFreeOrders() {
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="flex items-center gap-2">
                                         <button
                                             onClick={() => updateProductCount(item.productId._id, item.count - 1)}
@@ -505,7 +505,7 @@ function CMSFreeOrders() {
                                 </div>
                             ))}
                         </div>
-                        
+
                         <div className="mt-4 text-right">
                             <div className="text-lg font-bold">
                                 مجموع: {calculateTotal().toLocaleString('fa-IR')} تومان
@@ -548,14 +548,22 @@ function CMSFreeOrders() {
                                     <div>
                                         <div className="font-medium">مشتری: {order.userId.name}</div>
                                         <div className="text-sm text-gray-600">تلفن: {order.userId.phone}</div>
-                                        <div className="text-sm text-gray-600">تاریخ: {new Date(Number(order.createdAt)).toLocaleDateString('fa-IR')}</div>
+                                        <div className="text-sm text-gray-600">
+                                            {`تاریخ: ${new Intl.DateTimeFormat('fa-IR', {
+                                                year: 'numeric',
+                                                month: 'long',
+                                                day: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            }).format(new Date(Number(order.createdAt)))}`}
+                                        </div>
                                     </div>
                                     <div className="text-left">
                                         <div className="font-bold text-lg">{order.totalPrice.toLocaleString('fa-IR')} تومان</div>
                                         <div className="text-sm text-gray-600">وضعیت: {order.status}</div>
                                     </div>
                                 </div>
-                                
+
                                 <div className="space-y-2">
                                     <div className="text-sm font-medium">محصولات:</div>
                                     {order.products.map((item, index) => (

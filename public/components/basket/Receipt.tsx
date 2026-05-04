@@ -34,7 +34,14 @@ function Receipt({ products, data }: {
     }
 }) {
 
-    const today = new Date().toLocaleDateString('fa-IR')
+    const today = new Intl.DateTimeFormat('fa-IR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    }).format(new Date())
+
     const basket = getCookie('basketForm');
     const [DiscountCode, setDiscountCode] = useState(0)
     const [DiscountCodeString, setDiscountCodeString] = useState("")

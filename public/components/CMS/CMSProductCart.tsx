@@ -360,7 +360,7 @@ const CMSProductCart: React.FunctionComponent<CMSProductCartProps> = memo(({ pro
                     loading='lazy'
                 />
                 <div className="flex justify-center items-center flex-col">
-                    <h2 className="md:text-lg text-sm font-bold line-clamp-2">{product.title.split("؛")[0]}</h2>
+                    <h2 className="md:text-lg text-sm font-bold line-clamp-2">{product.title.split("|")[0].trim()}</h2>
                     {/* Action buttons */}
                     <div className="flex justify-end gap-2 mt-4 self-end">
                         <button

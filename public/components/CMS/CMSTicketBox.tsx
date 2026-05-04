@@ -189,7 +189,13 @@ function CMSTicketBox({ type, page }: CMSTicketBoxProps) {
                             <h2 className="md:text-lg text-shadow">{ticket.title}</h2>
                             <div className="flex items-center gap-2">
                                 <span className="text-xs text-gray-500">
-                                    {new Date(Number(ticket.createdAt)).toLocaleDateString('fa-IR')}
+                                    {new Intl.DateTimeFormat('fa-IR', {
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    }).format(new Date(Number(ticket.createdAt)))}
                                 </span>
                                 <select
                                     value={ticket.status}

@@ -12,7 +12,17 @@ export interface ValidationRule {
     message?: string;
 }
 
-export interface Product {
+interface Feature {
+    key: string;
+    value: string;
+}
+
+interface FAQ {
+    question: string;
+    answer: string;
+}
+
+export type Product ={
     _id: string;
     authorId: Author;
     totalSell: number;
@@ -28,16 +38,23 @@ export interface Product {
     publishDate: string;
     brand: string;
     status: string;
-    state?: string;
+    state: string;
     size: string;
     weight: number;
     majorCat: string;
     minorCat: string;
     cover: string;
+    createdAt: string;
+    updatedAt: string;
     images: string[];
     currentPrice: number,
     currentDiscount: number,
     finalPrice: number,
+    features: Feature[],
+    faqs: FAQ[],
+    authorArticleId?: articleCoverProductType,
+    publisherArticleId?: articleCoverProductType,
+    productArticleId?: articleCoverProductType,
 }
 
 export type productCoverType = {
@@ -101,6 +118,8 @@ export interface ProductInput {
     minorCat: string;
     cover: string;
     images: string[];
+    features: Feature[];
+    faqs: FAQ[];
 }
 
 export type HomePageBooks = {
@@ -159,6 +178,8 @@ export type productType = {
     currentPrice?: number
     currentDiscount?: number
     finalPrice?: number
+    features?: Feature[];
+    faqs?: FAQ[];
 }
 
 export type productAndArticleInputType = {

@@ -40,7 +40,7 @@ function CommentBox({
     _id,
     target,
 }: CommentBoxProps) {
-
+        
     const handleReply = () => {
         if (!account && commentScrollHandler && setReplyId) {
             setReplyId(_id);
@@ -64,8 +64,8 @@ function CommentBox({
     const img = userStatus != "کاربر" ?
         LOGO :
         (userId.img ?
-        `https://api.neynegar1.ir/uploads/${userId.img}`:
-        null)
+            `https://api.neynegar1.ir/uploads/${userId.img}` :
+            null)
 
     return (
         <div className={`${account || ticket ? 'mt-6 bg-white' : 'mt-6 bg-mist-100'} p-4 rounded-xl`}>
@@ -104,7 +104,13 @@ function CommentBox({
                             </p>
                         )}
                         <p className="text-sm text-slate-500 leading-6">
-                            {new Date(Number(createdAt)).toLocaleString('fa-IR')}
+                            {new Intl.DateTimeFormat('fa-IR', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            }).format(new Date(Number(createdAt)))}
                         </p>
                         {ticket && (
                             <div className="sm:hidden">{status}</div>

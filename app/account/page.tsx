@@ -144,10 +144,7 @@ const Account = async ({ searchParams }: any) => {
     const tickets: paginatedTicketsType | null = (user && jwt) ? await ticketDataFetcher(jwt, {
         page: page.page,
         limit: page.count
-    }) : null
-
-    console.log(tickets);
-    
+    }) : null    
 
     if (!user || !jwt) {
         redirect("/login");

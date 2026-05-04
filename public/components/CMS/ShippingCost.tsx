@@ -76,7 +76,7 @@ function ShippingCost() {
       const res = await fetcher(CREATE_SHIPPING_COST, { input });
       if (res.errors) throw new Error(res.errors[0].message);
       setSuccess('هزینه ارسال با موفقیت ثبت شد');
-      setForm({ type: '', cost: '' , costPerKg: ''});
+      setForm({ type: '', cost: '', costPerKg: '' });
       await mutate();
     } catch (err: any) {
       setError(err.message || 'خطا در ثبت هزینه ارسال');
@@ -198,7 +198,13 @@ function ShippingCost() {
                     item.costPerKg?.toLocaleString() || '-'
                   )}
                 </td>
-                <td className="px-3 py-1.5">{new Date(item.createdAt).toLocaleDateString('fa-IR')}</td>
+                <td className="px-3 py-1.5">
+                  {new Intl.DateTimeFormat('fa-IR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  }).format(new Date(Number(item.createdAt)))}
+                </td>
                 <td className="px-3 py-1.5">
                   {editing === item._id ? (
                     <>

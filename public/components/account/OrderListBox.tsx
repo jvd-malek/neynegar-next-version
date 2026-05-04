@@ -126,7 +126,18 @@ function OrderListBox({ orders, user, demo = false }: OrderListBoxProps) {
                     <div className="flex md:flex-row flex-col justify-between items-center gap-2">
                         <div className='sm:border-none border-b border-mist-300 w-full sm:pb-0 pb-4'>
                             <h2 className="md:text-lg text-shadow">سفارش {order._id}</h2>
-                            <p className="text-sm text-gray-600">تاریخ: {order.createdAt ? new Date(Number(order.createdAt)).toLocaleDateString('fa-IR') : 'نامشخص'}</p>
+                            <p className="text-sm text-gray-600">
+                                {`تاریخ: ${order.createdAt ?
+                                    new Intl.DateTimeFormat('fa-IR', {
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    }).format(new Date(Number(order.createdAt)))
+                                    : 'نامشخص'}
+                                    `}
+                            </p>
                         </div>
                         <div className="flex items-center gap-2 text-xs sm:text-sm justify-between sm:mt-0 mt-4">
                             <button
@@ -241,7 +252,15 @@ function OrderListBox({ orders, user, demo = false }: OrderListBoxProps) {
                         <hr className="mb-4" />
                         <div className="flex justify-between mb-4">
                             <div className="text-gray-700 leading-7">
-                                <div>{`تاریخ: ${new Date(Number(selectedOrder?.createdAt)).toLocaleDateString('fa-IR')}`}</div>
+                                <div>
+                                    {`تاریخ: ${new Intl.DateTimeFormat('fa-IR', {
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    }).format(new Date(Number(selectedOrder?.createdAt)))}`}
+                                </div>
                                 <div>{`سفارش: ${selectedOrder?._id}`}</div>
                                 {selectedOrder?.paymentId &&
                                     <div>{`کد رهگیری پرداخت: ${selectedOrder?.paymentId ?? "نامشخص"}`}</div>

@@ -37,7 +37,14 @@ const DiscountSection = (user: userType) => {
                                 <p className="flex gap-2 items-center text-mist-600 text-sm">
                                     انقضا:
                                     <span className="font-bold text-black text-base">
-                                        {d.date ? new Date(Number(d.date)).toLocaleDateString('fa-IR') : 'نامشخص'}
+                                        {d.date ?
+                                            new Intl.DateTimeFormat('fa-IR', {
+                                                year: 'numeric',
+                                                month: 'long',
+                                                day: 'numeric'
+                                            }).format(new Date(Number(d.date)))
+                                            : 'نامشخص'
+                                        }
                                     </span>
                                 </p>
                                 <CopyDiscountCode code={d.code} />

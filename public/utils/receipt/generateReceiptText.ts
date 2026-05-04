@@ -29,7 +29,14 @@ export const generateReceiptText = (
     basketForm: BasketForm,
     isBeforePayment?: boolean
 ): string => {
-    const today = new Date().toLocaleDateString('fa-IR')
+    const today = new Intl.DateTimeFormat('fa-IR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    }).format(new Date(Number()))
+
 
     // Read applied discount (if any) from cookie to mirror UI calculations
     // Also check if discountCode is passed directly (for CMS orders)
@@ -58,7 +65,7 @@ export const generateReceiptText = (
         const title = isPackage ? product.packageId.title : product.productId.title
         return `${title} (${count.toLocaleString('fa-IR')} عدد): ${finalPrice.toLocaleString('fa-IR')} تومان`
     }).join('\n');
-    
+
     return `فروشگاه نی‌نگار
     
 ${isBeforePayment ? "**پیش فاکتور**" : "**فاکتور**"}

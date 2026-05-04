@@ -26,9 +26,9 @@ import Header from '@/public/components/header/Header';
 import Footer from '@/public/components/footer/Footer';
 import SuggestedProducts from '@/public/components/product/SuggestedProducts';
 import ShareURL from '@/public/components/article/ShareURL';
+import FAQ from '@/public/components/product/FAQ';
 
 // types and queries
-import { productType } from '@/public/types/product';
 import { GET_PRODUCT_BY_ID } from '@/public/graphql/productQueries';
 import { GET_COMMENTS_BY_ID } from '@/public/graphql/commentQueries';
 import { paginatedCommentsType } from '@/public/types/comment';
@@ -38,10 +38,11 @@ import { GET_USER_BY_TOKEN } from '@/public/graphql/userQueries';
 // utils
 import ProductAttributes from '@/public/components/product/ProductAttributes';
 import ContentWithLinks from '@/public/utils/link/linkParser';
-import { calculateFinalPrice } from '@/public/utils/product/ProductUtils';
 import { fetcher, noCaching, revalidateOneHour, revalidateOneHourByTags } from '@/public/utils/fetcher';
 import { cookies } from 'next/headers';
 import { customLoader } from '@/public/utils/product/ProductBoxUtils';
+import InfoTable from '@/public/components/product/InfoTable';
+import { Product as productType } from '@/public/types/product';
 
 const productDataFetcher = async (id: string) => {
     const productData = await fetcher(GET_PRODUCT_BY_ID, { id }, revalidateOneHourByTags([`product-${id}`]));
@@ -182,9 +183,9 @@ async function Product({ params, searchParams }: any) {
                 </div>
 
                 {/* Breadcrumb navigation */}
-                <Breadcrumb majorCat={product.majorCat} minorCat={product.minorCat} title={product.title} />
+                <Breadcrumb majorCat={product.majorCat} minorCat={product.minorCat} title={product.title} brand={product.brand ? product.brand : undefined} />
 
-                {/* product attr fro torob */}
+                {/* product attr for torob */}
                 <ProductAttributes
                     attributes={[
                         { label: "توضیحات", value: product.desc || "نامشخص" },
@@ -281,7 +282,48 @@ async function Product({ params, searchParams }: any) {
                             <div className="mt-4">
                                 <div className="text-lg whitespace-pre-line font-medium">
                                     {product?.desc ?
-                                        <ContentWithLinks content={product?.desc || ''} />
+                                        <>
+                                            <ContentWithLinks content={product?.desc || ''} />
+                                            <div className="mt-6 bg-linear-to-br from-blue-50 to-blue-50 rounded-xl p-2 border border-blue-100">
+                                                <p className="text-sm font-bold text-gray-800 mb-3">
+                                                    نیاز به راهنمایی داری؟
+                                                </p>
+
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <Link
+                                                        href="#faq"
+                                                        className="flex items-center justify-center gap-2 bg-white hover:bg-blue-50 text-blue-600 font-medium text-sm py-2.5 px-3 rounded-lg border border-blue-200 transition-all hover:shadow-md active:scale-95"
+                                                    >
+                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                        سوالات متداول
+                                                    </Link>
+
+                                                    <Link
+                                                        href="#info"
+                                                        className="flex items-center justify-center gap-2 bg-white hover:bg-indigo-50 text-blue-600 font-medium text-sm py-2.5 px-3 rounded-lg border border-blue-200 transition-all hover:shadow-md active:scale-95"
+                                                    >
+                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                        اطلاعات بیشتر
+                                                    </Link>
+                                                </div>
+
+                                                <p className="text-xs text-gray-500 mt-3 text-center">
+                                                    سوال دیگه‌ای داری؟
+                                                    <a
+                                                        href="https://ble.ir/neynegarsupport"
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-blue-600 hover:text-blue-800 font-medium mr-1 transition-colors"
+                                                    >
+                                                        با ما در ارتباط باش
+                                                    </a>
+                                                </p>
+                                            </div>
+                                        </>
                                         :
                                         <div className='flex flex-col gap-1'>
                                             <div className="w-50 h-5 rounded bg-mist-200 animate-pulse"></div>
@@ -365,11 +407,25 @@ async function Product({ params, searchParams }: any) {
                         <ShareURL title={product.title} link={`https://neynegar1.ir/product/${id}`} />
                     </div>
 
+                    {/* Suggested products */}
+                    <div className="col-start-1 col-end-3 row-start-4">
+                        <SuggestedProducts
+                            id={id}
+                            majorCat={product.majorCat}
+                            minorCat={product.minorCat}
+                            cat="کتاب"
+                        />
+                    </div>
+
+                    <InfoTable product={product} />
+
+                    <FAQ faqs={product.faqs} />
+
                     {/* Product specifications */}
                     <div className="col-start-2 col-end-3 row-start-3 row-end-4 w-full bg-white rounded-xl p-6">
-                        <h2 className="text-lg font-bold">
+                        <h3 className="text-lg font-bold">
                             مقالات مرتبط
-                        </h2>
+                        </h3>
 
                         <div className="mt-10">
 
@@ -524,15 +580,10 @@ async function Product({ params, searchParams }: any) {
                             </Accordion>
                         </div>
                     </div>
+
                 </section>
 
-                {/* Suggested products */}
-                <SuggestedProducts
-                    id={id}
-                    majorCat={product.majorCat}
-                    minorCat={product.minorCat}
-                    cat="کتاب"
-                />
+
 
                 <section className="grid gap-6 mt-6 mb-10 grid-cols-2">
                     <CommentComplex

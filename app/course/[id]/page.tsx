@@ -159,7 +159,14 @@ export default async function CoursePage({ params }: any) {
                     <div className="flex flex-wrap gap-6 mt-4 text-slate-600">
                         <span>بازدید: {course.views}</span>
                         <span>محبوبیت: {course.popularity}</span>
-                        {course.createdAt && <span>تاریخ ایجاد: {new Date(Number(course.createdAt)).toLocaleDateString('fa-IR')}</span>}
+                        {course.createdAt && <span>
+                            {` تاریخ ایجاد: 
+                            ${new Intl.DateTimeFormat('fa-IR', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            }).format(new Date(Number(course.createdAt)))}`}
+                        </span>}
                     </div>
                     {course.cover && (
                         <div className="mt-8 rounded-xl overflow-hidden p-4 shadow bg-white relative w-fit mx-auto lg:mb-0 md:mb-4">

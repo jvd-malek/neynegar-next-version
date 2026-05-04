@@ -140,6 +140,7 @@ async function Basket({ searchParams }: any) {
                             majorCat={"لوازم خوشنویسی"}
                             minorCat={""}
                             cat="کتاب"
+                            isBasket
                         />
                     </>
                 }

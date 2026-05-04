@@ -149,7 +149,6 @@ async function Article({ params, searchParams }: any) {
     const article: articleSingleType = await articleDataFetcher(id);
     const comments: paginatedCommentsType = await commentDataFetcher(id, "Article", page.page, page.count)
     const user: userType | null = jwt ? await userDataFetcher(jwt) : null
-console.log(comments);
 
     // Create combined content array with proper typing
     const combinedContent: CombinedContentItem[] = article.content.map((content: string, index: number) => ({
@@ -187,7 +186,11 @@ console.log(comments);
                                 <div className="flex items-center gap-2">
                                     <CalendarMonthRoundedIcon />
                                     <span className="pt-1">
-                                        {new Date(Number(article?.createdAt)).toLocaleDateString('fa-IR')}
+                                        {new Intl.DateTimeFormat('fa-IR', {
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric'
+                                        }).format(new Date(Number(article?.createdAt)))}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">

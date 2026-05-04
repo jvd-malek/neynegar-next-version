@@ -345,6 +345,14 @@ export const GET_PRODUCT_BY_ID = `
         title
         desc
       }
+      features {
+        key
+        value
+      }
+      faqs {
+        question
+        answer
+      }
       publisher
       publishDate
       brand
@@ -371,38 +379,6 @@ export const UPDATE_PRODUCT = `
   mutation UpdateProduct($id: ID!, $input: UpdateProductInput!) {
     updateProduct(id: $id, input: $input) {
       _id
-      title
-      desc
-      price {
-        price
-        date
-      }
-      cost {
-        cost
-        date
-      }
-      count
-      discount {
-        discount
-        date
-      }
-      showCount
-      popularity
-      authorId {
-        _id
-        fullName
-      }
-      publisher
-      publishDate
-      brand
-      status
-      size
-      weight
-      majorCat
-      minorCat
-      cover
-      images
-      totalSell
     }
   }
 `;
@@ -411,37 +387,6 @@ export const CREATE_PRODUCT = `
   mutation CreateProduct ($input: ProductInput!) {
     createProduct (input: $input) {
       _id
-      title
-      desc
-      price {
-        price
-        date
-      }
-      cost {
-        cost
-        date
-      }
-      count
-      discount {
-        discount
-        date
-      }
-      showCount
-      popularity
-      authorId {
-        _id
-        fullName
-      }
-      publisher
-      publishDate
-      brand
-      status
-      size
-      weight
-      majorCat
-      minorCat
-      cover
-      images
     }
   }
 `;

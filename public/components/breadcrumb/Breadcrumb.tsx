@@ -9,10 +9,11 @@ type BreadcrumbProps = {
     majorCat?: string,
     minorCat?: string,
     title?: string
+    brand?: string
     cart?: boolean
 }
 
-const Breadcrumb = ({ majorCat, minorCat, title, cart = false }: BreadcrumbProps) => {
+const Breadcrumb = ({ majorCat, minorCat, title, cart = false , brand}: BreadcrumbProps) => {
 
     return (
         <nav
@@ -53,6 +54,17 @@ const Breadcrumb = ({ majorCat, minorCat, title, cart = false }: BreadcrumbProps
                 <Link href={cart ? "?activeLink=info" : `/category/${majorCat}/${minorCat}`} className="relative pl-6">
                     <p className="line-clamp-1">
                         {minorCat}
+                    </p>
+                    <span className="text-mist-100 text-7xl absolute -left-6 top-1/2 -translate-y-1/2">
+                        <ArrowBackIosNewRoundedIcon fontSize="inherit" />
+                    </span>
+                </Link>
+            }
+
+            {brand &&
+                <Link href={cart ? "?activeLink=info" : `/category/${majorCat}/${minorCat}?cat=${brand}`} className="relative pl-6">
+                    <p className="line-clamp-1">
+                        {brand}
                     </p>
                     <span className="text-mist-100 text-7xl absolute -left-6 top-1/2 -translate-y-1/2">
                         <ArrowBackIosNewRoundedIcon fontSize="inherit" />

@@ -20,9 +20,10 @@ type SuggestedProductsProps = {
     minorCat?: string,
     cat?: string
     isPackage?: boolean
+    isBasket?: boolean
 }
 
-const SuggestedProducts = async ({ id, majorCat, minorCat, cat, isPackage }: SuggestedProductsProps) => {
+const SuggestedProducts = async ({ id, majorCat, minorCat, cat, isPackage, isBasket }: SuggestedProductsProps) => {
 
     const query = isPackage ? GET_HOME_PAGE_PACKAGES : GET_SUGGESTED_PRODUCTS
     const variable = isPackage ?
@@ -58,7 +59,7 @@ const SuggestedProducts = async ({ id, majorCat, minorCat, cat, isPackage }: Sug
     return (
         <section>
 
-            <div className="bg-white rounded-lg px-2 py-4 w-full mt-8">
+            <div className={`bg-white rounded-lg px-2 py-4 w-full ${isBasket && "mt-6"}`}>
                 <HomeHeader
                     title="پیشنهاد ما"
                     showAll={false}

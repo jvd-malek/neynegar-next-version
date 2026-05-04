@@ -28,7 +28,7 @@ function ShareURL({ link, title }: { link: string, title: string }) {
         },
         {
             title: "اشتراک گذاری در بله",
-            link: `https://ble.im/share?text=${text}&url=${link}`,
+            link: `https://ble.ir/share?text=${text}&url=${link}`,
             icon: <Image src={bale} className='object-contain' alt="لوگو بله نی نگار" loading="lazy" width={20} height={20} />
         },
         {

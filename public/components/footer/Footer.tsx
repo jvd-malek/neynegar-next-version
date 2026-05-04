@@ -109,7 +109,7 @@ function Footer() {
                             <p className='text-sm'>شبکه‌های اجتماعی:</p>
                             <div className="flex flex-wrap justify-center items-center gap-1">
                                 <Link
-                                    href="https://www.instagram.com/neynegar1.ir"
+                                    href="https://www.instagram.com/neynegarart"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="ml-2 bg-white px-1 py-0.5 rounded-md flex justify-center items-center gap-1 w-7 h-7"
@@ -119,7 +119,7 @@ function Footer() {
                                     <span className="sr-only">اینستاگرام نی نگار</span>
                                 </Link>
                                 <Link
-                                    href="https://t.me/neynegar1_ir"
+                                    href="https://t.me/neynegarart"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="ml-2 bg-white px-1 py-0.5 rounded-md flex  justify-center items-center gap-1 w-7 h-7"
@@ -149,7 +149,7 @@ function Footer() {
                                     <span className="sr-only">لینکدین نی نگار</span>
                                 </Link>
                                 <Link
-                                    href="https://web.bale.ai/@Neynegar1ir"
+                                    href="https://ble.ir/@neynegarart"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="ml-2 bg-white px-1 py-0.5 rounded-md flex  justify-center items-center gap-1 w-7 h-7"
@@ -159,7 +159,7 @@ function Footer() {
                                     <span className="sr-only">بله نی نگار</span>
                                 </Link>
                                 <Link
-                                    href="https://web.eitaa.com/#@Neynegar1_ir"
+                                    href="https://eitaa.com/neynegarart"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="ml-2 bg-white px-1 py-0.5 rounded-md flex  justify-center items-center gap-1 w-7 h-7"
@@ -169,7 +169,7 @@ function Footer() {
                                     <span className="sr-only">ایتا نی نگار</span>
                                 </Link>
                                 <Link
-                                    href="https://web.rubika.ir/neynegar1_ir"
+                                    href="https://web.rubika.ir/neynegarart"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="ml-2 bg-white px-1 py-0.5 rounded-md flex  justify-center items-center gap-1 w-7 h-7"

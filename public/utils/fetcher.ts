@@ -11,7 +11,7 @@ export const fetcher = async (query: string, variables?: any, config?: any, jwt?
     const clientjwt = getCookie("jwt") as string;
     const ValidJWT = jwt ? jwt : clientjwt
     try {
-        const response = await fetch("https://api.neynegar1.ir/graphql", {
+        const response = await fetch("http://localhost:8159/graphql", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

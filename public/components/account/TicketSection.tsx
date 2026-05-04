@@ -32,11 +32,13 @@ const TicketSection = ({ tickets, user, demo = false }: TicketSectionProps) => {
                     />
                 </div>
             }
-            <div className={`h-fit relative flex flex-col justify-around items-center bg-white rounded-lg mt-6`}>
-                <CommentInput
-                    ticket
-                />
-            </div>
+            {!demo &&
+                <div className={`h-fit relative flex flex-col justify-around items-center bg-white rounded-lg mt-6`}>
+                    <CommentInput
+                        ticket
+                    />
+                </div>
+            }
             <div className="w-full">
                 {tickets && tickets.tickets?.length > 0 ?
                     <TicketListBox tickets={tickets} user={user} demo={demo} />
