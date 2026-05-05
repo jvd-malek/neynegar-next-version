@@ -5,7 +5,6 @@ export const GET_USER_BY_TOKEN = `
             name
             phone
             status
-            alert
             postCode
             address
             discount { discount date code }
@@ -67,6 +66,38 @@ export const GET_USER_BY_PHONE = `
   }
 `;
 
+export const GET_USER_ALERTS = `
+  query GetUserAlerts($page: Int, $limit: Int) {
+    userAlerts(page: $page, limit: $limit) {
+      alerts {
+        _id
+        title
+        body
+        target
+        status
+        source
+        sourceId
+        readBy {
+          userId {
+            _id
+          }
+          readAt
+        }
+        createdAt
+      }
+      totalPages
+      currentPage
+      total
+    }
+  }
+`;
+
+export const GET_UNREAD_ALERT_COUNT = `
+  query GetUnreadAlertCount {
+    unreadAlertCount
+  }
+`;
+
 // mutation
 
 export const SEND_VERIFICATION_CODE = `
@@ -85,5 +116,19 @@ export const VERIFY_CODE = `
         phone
       }
     }
+  }
+`;
+
+export const MARK_ALERT_AS_READ = `
+  mutation MarkAlertAsRead($alertId: ID!) {
+    markAlertAsRead(alertId: $alertId) {
+      _id
+    }
+  }
+`;
+
+export const MARK_ALL_ALERTS_AS_READ = `
+  mutation MarkAllAlertsAsRead {
+    markAllAlertsAsRead
   }
 `;

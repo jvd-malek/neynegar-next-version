@@ -79,24 +79,24 @@ const LoginForm = () => {
             if (!sendPass) {
                 setSendPassAgain(false)
                 if (!showNameField) {
-                    const isUserExists = await IsUserExists(formData[0].value);
+                    const isUserExists = await IsUserExists(`${formData[0].value}`);
                     if (isUserExists) {
                         handleChangeForm(setFormData, isUserExists, formData[1].name)
-                        await sendVerificationCode(isUserExists, formData[0].value);
+                        await sendVerificationCode(isUserExists, `${formData[0].value}`);
                         setSendPass(true);
                         setRemainingTime(120); // 2 دقیقه تایمر
                     } else {
                         setShowNameField(true);
                     }
                 } else {
-                    await sendVerificationCode(formData[1].value.trim(), formData[0].value);
+                    await sendVerificationCode(`${formData[1].value}`.trim(), `${formData[0].value}`);
                     setSendPass(true);
                     setRemainingTime(120); // 2 دقیقه تایمر
                 }
 
             } else {
                 const basketCookie = getCookie('basket');
-                const token = await verifyCode(formData[1].value.trim(), formData[0].value, formData[2].value, basketCookie as string);
+                const token = await verifyCode(`${formData[1].value}`.trim(), `${formData[0].value}`, `${formData[2].value}`, basketCookie as string);
                 if (token) {
                     setCookie('jwt', token, {
                         maxAge: 60 * 60 * 24 * 90,
@@ -144,7 +144,7 @@ const LoginForm = () => {
                 {/* فیلد شماره همراه */}
                 <div className="relative bg-black p-2 rounded-lg">
                     <Input
-                        id={formData[0].value}
+                        id={`${formData[0].value}`}
                         label="شماره همراه (با فرمت مثال وارد کنید)"
                         form={formData[0]}
                         setForm={setFormData}
@@ -169,7 +169,7 @@ const LoginForm = () => {
                 {showNameField && (
                     <div className="bg-black p-2 rounded-lg">
                         <Input
-                            id={formData[1].value}
+                            id={`${formData[1].value}`}
                             label="نام و نام‌خانوادگی"
                             form={formData[1]}
                             setForm={setFormData}
@@ -183,7 +183,7 @@ const LoginForm = () => {
                 {sendPass && (
                     <div className="relative bg-black p-2 rounded-lg">
                         <Input
-                            id={formData[2].value}
+                            id={`${formData[2].value}`}
                             label="کد یکبارمصرف"
                             form={formData[2]}
                             setForm={setFormData}

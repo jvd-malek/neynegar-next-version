@@ -100,7 +100,7 @@ export default function MonthlyDetail({ data, isLoading }: MonthlyDetailProps) {
                                     <span className="text-xs text-gray-400 w-4">{index + 1}</span>
                                     <span className="text-gray-700 truncate">{p.product.title}</span>
                                 </div>
-                                <div className="flex gap-3 text-xs flex-shrink-0 mr-2">
+                                <div className="flex gap-3 text-xs shrink-0 mr-2">
                                     <span className="text-blue-600">{p.totalCount} عدد</span>
                                     <span className="text-green-600">{(p.totalProfit / 1000).toFixed(0)}K</span>
                                 </div>
@@ -127,7 +127,7 @@ export default function MonthlyDetail({ data, isLoading }: MonthlyDetailProps) {
                                     <span className="text-xs text-gray-400 w-4">{index + 1}</span>
                                     <span className="text-gray-700 truncate">{p.package.title}</span>
                                 </div>
-                                <div className="flex gap-3 text-xs flex-shrink-0 mr-2">
+                                <div className="flex gap-3 text-xs shrink-0 mr-2">
                                     <span className="text-purple-600">{p.totalCount} عدد</span>
                                     <span className="text-green-600">{(p.totalProfit / 1000).toFixed(0)}K</span>
                                 </div>

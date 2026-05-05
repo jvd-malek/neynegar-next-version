@@ -20,7 +20,10 @@ function TicketListBox({ tickets, user, demo = false }: TicketListBoxProps) {
 
             {displayTickets.map((ticket: ticketType) => (
                 <div key={ticket._id} className="">
-                    <CommentBox ticket={true} {...ticket} />
+                    <CommentBox
+                        ticket={true}
+                        {...ticket}
+                    />
                 </div>
             ))}
 

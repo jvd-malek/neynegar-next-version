@@ -26,6 +26,7 @@ type NavLinksProps = {
     isOpen: boolean;
     setOpen: React.Dispatch<React.SetStateAction<boolean>>;
     user: userType | undefined;
+    unreadAlerts: number;
 }
 
 const accountLinks = [
@@ -55,7 +56,7 @@ const CMSLinks = [
     { id: 14, txt: 'میزان فروش' }
 ];
 
-const NavLinks = ({ isOpen, setOpen, user }: NavLinksProps) => {
+const NavLinks = ({ isOpen, setOpen, user, unreadAlerts }: NavLinksProps) => {
 
     const path = usePathname();
     const isAdminOROwner = user?.status.includes("owner") || user?.status.includes("admin")
@@ -65,6 +66,7 @@ const NavLinks = ({ isOpen, setOpen, user }: NavLinksProps) => {
     const { data: orders } = swrHandler(COUNT_ORDER_BY_STATUS);
     const { data: linksData } = swrHandler(GET_LINKS);
     const links: linksType[] = linksData?.links || [];
+
 
     return (
         <SwipeableDrawer
@@ -94,8 +96,10 @@ const NavLinks = ({ isOpen, setOpen, user }: NavLinksProps) => {
                                 className="text-mist-600 text-3xl relative"
                             >
                                 <CircleNotificationsRoundedIcon fontSize='inherit' />
-                                {user?.alert?.length > 0 &&
-                                    <span className="absolute left-0 bg-red-600 text-xs rounded-full w-4 h-4 -top-1 flex justify-center items-center text-white">{user?.alert.length}</span>
+                                {unreadAlerts > 0 &&
+                                    <span className="absolute left-0 bg-red-600 text-xs rounded-full w-4 h-4 -top-1 flex justify-center items-center text-white">
+                                        {unreadAlerts.toLocaleString('fa-IR')}
+                                    </span>
                                 }
                             </Link>
                         </div>

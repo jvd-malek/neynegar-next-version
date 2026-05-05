@@ -1,7 +1,7 @@
 import { repliesType } from "./replies"
 import { userType } from "./user"
 
-export type commentType = {
+export interface commentType  {
   _id: string;
   txt: string;
   star?: number;
@@ -17,7 +17,7 @@ export type commentType = {
     };
   };
   userId: userType;
-  replies: repliesType[];
+  replies?: repliesType[];
   createdAt: string;
   updatedAt: string;
   response?:string

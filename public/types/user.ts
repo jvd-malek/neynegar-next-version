@@ -10,7 +10,6 @@ export interface userType {
     name: string,
     email: string,
     phone: number,
-    alert: string[],
     bascket: [{
         count: number,
         productId?: productCoverType

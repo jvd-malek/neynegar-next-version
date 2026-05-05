@@ -22,7 +22,7 @@ import NavLinks from "@/public/components/header/headerComponents/NavLinks";
 import SearchBar from "@/public/components/header/headerComponents/SearchBar";
 
 // types and utils
-import { GET_USER_BY_TOKEN } from "@/public/graphql/userQueries";
+import { GET_USER_BY_TOKEN, GET_UNREAD_ALERT_COUNT } from "@/public/graphql/userQueries";
 import { getCookie } from "cookies-next";
 import useSWR from "swr";
 import { fetcher } from "@/public/utils/fetcher";
@@ -40,6 +40,13 @@ const Header = () => {
     ["userByToken"],
     () => fetcher(GET_USER_BY_TOKEN),
   );
+
+  const { data: alertData } = useSWR(
+    userData?.userByToken ? ["unreadAlertCount"] : null,
+    () => fetcher(GET_UNREAD_ALERT_COUNT),
+  );
+  const unreadAlerts = alertData?.unreadAlertCount || 0;
+
 
   return (
     <AppBar
@@ -66,6 +73,7 @@ const Header = () => {
             isOpen={open}
             setOpen={setOpen}
             user={userData?.userByToken}
+            unreadAlerts={unreadAlerts}
           />
 
           <div className="hidden md:block min-w-65 lg:min-w-64">

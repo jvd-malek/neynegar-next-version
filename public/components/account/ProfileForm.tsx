@@ -13,7 +13,7 @@ import { mutate } from 'swr';
 import { Input, handleFormValidator } from '@/public/components/login/Input';
 import { formType } from '@/public/types/input';
 import { userType } from '@/public/types/user';
-import { fetcher, revalidateOneHour } from '@/public/utils/fetcher';
+import { fetcher } from '@/public/utils/fetcher';
 
 type postCost = {
     cost: number

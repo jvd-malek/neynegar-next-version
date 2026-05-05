@@ -25,12 +25,13 @@ import { GET_USER_BY_TOKEN } from "@/public/graphql/userQueries";
 import { GET_ORDERS_BY_USER } from "@/public/graphql/orderQueries";
 import { GET_COMMENTS_BY_USER } from "@/public/graphql/commentQueries";
 import { GET_TICKETS_BY_USER } from "@/public/graphql/ticketQueries";
-
+import { GET_USER_ALERTS } from "@/public/graphql/userQueries";
 // types
 import { userType } from "@/public/types/user";
 import { paginatedOrdersType } from "@/public/types/order";
 import { paginatedCommentsType } from "@/public/types/comment";
 import { paginatedTicketsType } from "@/public/types/ticket";
+import { paginatedAlertsType } from "@/public/types/alert";
 
 // Lazy load heavy components with better loading states
 const BookmarkArticle = dynamic(() => import("@/public/components/account/BookmarkArticleSection"), {
@@ -116,6 +117,10 @@ const ticketDataFetcher = async (jwt: string, variable: variableType) => {
     return ticketData.ticketsByUser
 }
 
+const alertDataFetcher = async (jwt: string, variable: variableType) => {
+    const alertData = await fetcher(GET_USER_ALERTS, variable, noCaching, jwt);
+    return alertData.userAlerts;
+};
 
 const Account = async ({ searchParams }: any) => {
 
@@ -144,7 +149,12 @@ const Account = async ({ searchParams }: any) => {
     const tickets: paginatedTicketsType | null = (user && jwt) ? await ticketDataFetcher(jwt, {
         page: page.page,
         limit: page.count
-    }) : null    
+    }) : null
+
+    const alerts: paginatedAlertsType | null = (user && jwt) ? await alertDataFetcher(jwt, {
+        page: page.page,
+        limit: page.count
+    }) : null;
 
     if (!user || !jwt) {
         redirect("/login");
@@ -185,9 +195,9 @@ const Account = async ({ searchParams }: any) => {
                                 className="text-mist-600 text-5xl relative"
                             >
                                 <CircleNotificationsRoundedIcon fontSize='inherit' />
-                                {user?.alert?.length > 0 &&
+                                {/* {user?.alert?.length > 0 &&
                                     <span className="absolute left-0 bg-red-600 text-xs rounded-full w-6 h-6 top-2 flex justify-center items-center text-white">{user?.alert.length}</span>
-                                }
+                                } */}
                             </Link>
                         </div>
                     </div>
@@ -227,7 +237,7 @@ const Account = async ({ searchParams }: any) => {
 
                     {
                         activeLink === 'اعلان‌ها' &&
-                        <NotificatinSection {...user} />
+                        <NotificatinSection alerts={alerts} />
                     }
 
                 </div>

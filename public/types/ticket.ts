@@ -1,10 +1,10 @@
 import { userType } from "./user"
 
-export type ticketType = {
+export interface ticketType {
     _id: string,
     userId: userType,
-    createdAt?: string,
-    updatedAt?: string,
+    createdAt: string,
+    updatedAt: string,
     response?: string,
     status: string,
     title: string,

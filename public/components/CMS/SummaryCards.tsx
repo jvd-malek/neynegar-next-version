@@ -99,7 +99,7 @@ export default function SummaryCards({ data, isLoading, selectedYear, onYearChan
                         key={index}
                         className="bg-white rounded-xl shadow hover:shadow-md transition-shadow overflow-hidden"
                     >
-                        <div className={`bg-gradient-to-r ${card.color} p-3 text-white`}>
+                        <div className={`bg-linear-to-r ${card.color} p-3 text-white`}>
                             <div className="flex items-center justify-between">
                                 <span className="text-xs opacity-90">{card.label}</span>
                                 <span className="text-lg">{card.icon}</span>
