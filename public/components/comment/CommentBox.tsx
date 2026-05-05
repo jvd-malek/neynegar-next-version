@@ -9,6 +9,7 @@ import { commentType } from "@/public/types/comment";
 import Image from 'next/image';
 import Link from 'next/link';
 import LOGO from '@/public/images/Logo.webp';
+import { formatDateTime } from '@/public/utils/dateFormatter';
 
 type CommentBoxProps = commentType & {
     account?: boolean;
@@ -104,13 +105,7 @@ function CommentBox({
                             </p>
                         )}
                         <p className="text-sm text-slate-500 leading-6">
-                            {new Intl.DateTimeFormat('fa-IR', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            }).format(new Date(Number(createdAt)))}
+                            {formatDateTime(Number(createdAt))}
                         </p>
                         {ticket && (
                             <div className="sm:hidden">{status}</div>

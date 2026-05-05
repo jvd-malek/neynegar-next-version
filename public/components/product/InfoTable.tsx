@@ -24,6 +24,9 @@ import ProductFeatures from './ProductFeatures';
 import { Product } from '@/public/types/product';
 import PriceChart from './PriceChart';
 
+// utils
+import { formatPersianDate } from '@/public/utils/dateFormatter';
+
 interface ProductInfoAccordionProps {
     product: Product;
 }
@@ -177,11 +180,7 @@ const ProductInfoAccordion: React.FC<ProductInfoAccordionProps> = ({ product }) 
                                 const daysLeft = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
                                 // فرمت تاریخ شمسی
-                                const formattedDate = new Intl.DateTimeFormat('fa-IR', {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric'
-                                }).format(expiryDate);
+                                const formattedDate = formatPersianDate(expiryDate);
 
                                 return (
                                     <div className="flex items-center justify-between bg-red-50 rounded-lg p-2 border border-red-200">

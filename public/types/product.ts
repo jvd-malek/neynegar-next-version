@@ -12,17 +12,17 @@ export interface ValidationRule {
     message?: string;
 }
 
-interface Feature {
+export type Feature = {
     key: string;
     value: string;
 }
 
-interface FAQ {
+export type FAQ = {
     question: string;
     answer: string;
 }
 
-export type Product ={
+export type Product = {
     _id: string;
     authorId: Author;
     totalSell: number;
@@ -51,6 +51,7 @@ export type Product ={
     currentDiscount: number,
     finalPrice: number,
     features: Feature[],
+    faqTemplateIds: string[];
     faqs: FAQ[],
     authorArticleId?: articleCoverProductType,
     publisherArticleId?: articleCoverProductType,

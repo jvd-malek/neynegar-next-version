@@ -5,6 +5,9 @@ import CopyDiscountCode from "@/public/components/account/CopyDiscountCode";
 // type
 import { userType } from "@/public/types/user";
 
+// utils
+import { formatPersianDate } from "@/public/utils/dateFormatter";
+
 
 const DiscountSection = (user: userType) => {
     return (
@@ -38,11 +41,7 @@ const DiscountSection = (user: userType) => {
                                     انقضا:
                                     <span className="font-bold text-black text-base">
                                         {d.date ?
-                                            new Intl.DateTimeFormat('fa-IR', {
-                                                year: 'numeric',
-                                                month: 'long',
-                                                day: 'numeric'
-                                            }).format(new Date(Number(d.date)))
+                                           formatPersianDate(Number(d.date))
                                             : 'نامشخص'
                                         }
                                     </span>

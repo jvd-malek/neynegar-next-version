@@ -10,6 +10,7 @@ import domtoimage from 'dom-to-image';
 import { fetcher } from '@/public/utils/fetcher';
 import { generateReceiptText } from "@/public/utils/receipt/generateReceiptText";
 import ReceiptCopyButton from "@/public/utils/receipt/ReceiptCopyButton";
+import { formatDateTime } from "@/public/utils/dateFormatter";
 
 // icons
 import DiscountInput from "@/public/components/basket/DiscountInput";
@@ -34,13 +35,7 @@ function Receipt({ products, data }: {
     }
 }) {
 
-    const today = new Intl.DateTimeFormat('fa-IR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    }).format(new Date())
+    const today = formatDateTime(new Date())
 
     const basket = getCookie('basketForm');
     const [DiscountCode, setDiscountCode] = useState(0)

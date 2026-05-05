@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import useSWR from 'swr';
 import { fetcher } from '@/public/utils/fetcher';
+import { formatPersianDate } from '@/public/utils/dateFormatter';
 
 const GET_SHIPPING_COSTS = `
   query ShippingCosts {
@@ -199,11 +200,7 @@ function ShippingCost() {
                   )}
                 </td>
                 <td className="px-3 py-1.5">
-                  {new Intl.DateTimeFormat('fa-IR', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  }).format(new Date(Number(item.createdAt)))}
+                  {formatPersianDate(Number(item.createdAt))}
                 </td>
                 <td className="px-3 py-1.5">
                   {editing === item._id ? (

@@ -17,6 +17,7 @@ import { linksType } from '@/public/types/links';
 import InternalLinkSelector from '@/public/components/CMS/InternalLinkSelector';
 import LinkPreview from '@/public/components/CMS/LinkPreview';
 import { formType } from '@/public/types/input';
+import { Feature } from '@/public/types/product';
 import { CREATE_PRODUCT } from '@/public/graphql/productQueries';
 
 type CMSAddProductProps = {
@@ -33,6 +34,7 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
     const [imageFiles, setImageFiles] = useState<File[]>([]);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [features, setFeatures] = useState<Feature[]>([]);
     const Authors = authors.map(author => (
         {
             label: author.fullName || author.lastname,
@@ -41,8 +43,8 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
     ))
 
     // حالت‌های فرم
-    const [formData, setFormData] = useState<formType[]>([
-        {
+    const [formData, setFormData] = useState<Record<string, formType>>({
+        title: {
             name: "title",
             type: "text",
             value: "",
@@ -50,7 +52,7 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
             error: false,
             errorMessage: "عنوان باید بین 3 تا 60 کاراکتر باشد"
         },
-        {
+        desc: {
             name: "desc",
             type: "text",
             value: "",
@@ -58,7 +60,7 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
             error: false,
             errorMessage: "توضیحات باید بین 3 تا 600 کاراکتر باشد"
         },
-        {
+        price: {
             name: "price",
             type: "number",
             value: "",
@@ -66,7 +68,7 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
             error: false,
             errorMessage: "قیمت باید به تومان باشد"
         },
-        {
+        cost: {
             name: "cost",
             type: "number",
             value: "",
@@ -74,7 +76,7 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
             error: false,
             errorMessage: ""
         },
-        {
+        costCount: {
             name: "costCount",
             type: "number",
             value: "",
@@ -82,7 +84,7 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
             error: false,
             errorMessage: ""
         },
-        {
+        count: {
             name: "count",
             type: "number",
             value: "",
@@ -90,7 +92,7 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
             error: false,
             errorMessage: ""
         },
-        {
+        showCount: {
             name: "showCount",
             type: "number",
             value: "",
@@ -98,7 +100,7 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
             error: false,
             errorMessage: ""
         },
-        {
+        discount: {
             name: "discount",
             type: "number",
             value: "",
@@ -106,7 +108,7 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
             error: false,
             errorMessage: ""
         },
-        {
+        date: {
             name: "date",
             type: "number",
             value: "",
@@ -114,7 +116,7 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
             error: false,
             errorMessage: ""
         },
-        {
+        majorCat: {
             name: "majorCat",
             type: "text",
             value: "",
@@ -122,7 +124,7 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
             error: false,
             errorMessage: 'دسته‌بندی اصلی الزامی است'
         },
-        {
+        minorCat: {
             name: "minorCat",
             type: "text",
             value: "",
@@ -130,7 +132,7 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
             error: false,
             errorMessage: 'دسته‌بندی فرعی الزامی است'
         },
-        {
+        brand: {
             name: "brand",
             type: "text",
             value: "",
@@ -138,7 +140,7 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
             error: false,
             errorMessage: ""
         },
-        {
+        status: {
             name: "status",
             type: "text",
             value: "",
@@ -146,7 +148,7 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
             error: false,
             errorMessage: 'وضعیت کیفیت بسته الزامی است'
         },
-        {
+        state: {
             name: "state",
             type: "text",
             value: "",
@@ -154,7 +156,7 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
             error: false,
             errorMessage: 'وضعیت نمایش بسته الزامی است'
         },
-        {
+        weight: {
             name: "weight",
             type: "number",
             value: "",
@@ -162,7 +164,7 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
             error: false,
             errorMessage: "وزن محصول الزامی است"
         },
-        {
+        authorId: {
             name: "authorId",
             type: "text",
             value: "",
@@ -170,7 +172,7 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
             error: false,
             errorMessage: ""
         },
-        {
+        publisher: {
             name: "publisher",
             type: "text",
             value: "",
@@ -178,7 +180,7 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
             error: false,
             errorMessage: ""
         },
-        {
+        publishDate: {
             name: "publishDate",
             type: "text",
             value: "",
@@ -186,7 +188,7 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
             error: false,
             errorMessage: ""
         },
-        {
+        size: {
             name: "size",
             type: "text",
             value: "",
@@ -194,7 +196,31 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
             error: false,
             errorMessage: ""
         },
-        {
+        featureKey: {
+            name: "featureKey",
+            type: "text",
+            value: "",
+            validateRule: null,
+            error: false,
+            errorMessage: ""
+        },
+        featureValue: {
+            name: "featureValue",
+            type: "text",
+            value: "",
+            validateRule: null,
+            error: false,
+            errorMessage: ""
+        },
+        faqTemplateIds: {
+            name: "faqTemplateIds",
+            type: "text",
+            value: "",
+            validateRule: null,
+            error: false,
+            errorMessage: ""
+        },
+        instagramLink: {
             name: "instagramLink",
             type: "text",
             value: "",
@@ -202,11 +228,32 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
             error: false,
             errorMessage: ""
         }
-    ]);
+    });
+
+    // A stable setForm that updates the whole forms object
+    const setForm: React.Dispatch<React.SetStateAction<Record<string, formType>>> = useCallback((updater) => {
+        setFormData(prev => {
+            const next = typeof updater === 'function' ? updater(prev) : updater;
+            return next;
+        });
+    }, []);
+
+    // For inputs that need a setForm compatible with array (like instagram-link), we wrap
+    const arraySetForm: React.Dispatch<React.SetStateAction<formType[]>> = useCallback((updater) => {
+        setForm(prev => {
+            const asArray = Object.values(prev);
+            const newArray = typeof updater === 'function' ? updater(asArray) : updater;
+            const newObj: Record<string, formType> = {};
+            newArray.forEach(f => newObj[f.name] = f);
+            return newObj;
+        });
+    }, [setForm]);
 
     const handleSubmit = useCallback(async () => {
-        if (!handleFormValidator(formData)) return;
-        setIsSubmitting(true);
+        const formsArray = Object.values(formData);
+        if (!handleFormValidator(formsArray)) return; setIsSubmitting(true);
+
+        const getValue = (field: string) => formData[field]?.value ?? '';
 
         // upload and add cover
         let cover = ""
@@ -253,51 +300,57 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
 
             // Create product data
             const productData = {
-                title: formData[0].value,
-                desc: formData[1].value,
+                title: getValue("title"),
+                desc: getValue("desc"),
                 price: {
-                    price: Number(formData[2].value),
+                    price: Number(getValue("price")),
                     date
                 },
                 cost: {
-                    cost: Number(formData[3].value),
+                    cost: Number(getValue("cost")),
                     date,
-                    count: Number(formData[4].value)
+                    count: Number(getValue("costCount"))
                 },
-                count: Number(formData[5].value),
-                showCount: Number(formData[6].value),
+                count: Number(getValue("count")),
+                showCount: Number(getValue("showCount")),
                 discount: {
-                    discount: Number(formData[7].value),
-                    date: Number(formData[8].value) * 24 * 60 * 60 * 1000 + Date.now()
+                    discount: Number(getValue("discount")),
+                    date: Number(getValue("date")) * 24 * 60 * 60 * 1000 + Date.now()
                 },
-                majorCat: formData[9].value,
-                minorCat: formData[10].value,
-                brand: formData[11].value || '',
-                status: formData[12].value,
-                state: formData[13].value,
-                weight: Number(formData[14].value) || 0,
-                authorId: formData[15].value || null,
-                publisher: formData[16].value || '',
-                publishDate: formData[17].value || '',
-                size: formData[18].value || '',
+                majorCat: getValue("majorCat"),
+                minorCat: getValue("minorCat"),
+                brand: getValue("brand") || '',
+                status: getValue("status"),
+                state: getValue("state"),
+                weight: Number(getValue("weight")) || 0,
+                authorId: getValue("authorId") || null,
+                publisher: getValue("publisher") || '',
+                publishDate: getValue("publishDate") || '',
+                size: getValue("size") || '',
                 popularity: 5,
                 totalSell: 0,
                 images,
-                cover
+                cover,
+                features: features.length > 0 ? features : undefined,
+                faqTemplateIds: getValue("faqTemplateIds") ? [getValue("faqTemplateIds")] : undefined
             };
 
             await fetcher(CREATE_PRODUCT, { input: productData });
 
             notify("محصول با موفقیت ذخیره شد.", 'success');
+
+            handleClearForm(arraySetForm)
+            setImageFiles([])
+            setPreviewUrls([])
+            setFeatures([]);
+            setIsSubmitting(false);
+
         } catch (error) {
             console.log(error);
             notify("عدم برقراری ارتباط با سرور", 'error');
-        } finally {
-            handleClearForm(setFormData)
-            setImageFiles([])
-            setPreviewUrls([])
             setIsSubmitting(false);
         }
+
     }, [formData]);
 
     return (
@@ -389,102 +442,109 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
                 </button>
 
                 <div className="col-start-1 col-end-2 row-start-2 flex flex-col gap-2 mt-4 w-full md:pb-6 h-full">
+
                     <div className="bg-black p-2 rounded-lg">
                         <Input
-                            id={formData[0].name}
+                            id={formData.title.name}
                             label="عنوان"
-                            form={formData[0]}
-                            setForm={setFormData}
+                            form={formData.title}
+                            setForm={arraySetForm}
                             disabled={isSubmitting}
                             placeholder="عنوان باید بین 3 تا 60 کاراکتر باشد."
                             required
                         />
                     </div>
+
                     <div className="bg-black p-2 rounded-lg">
                         <Input
                             type='textarea'
-                            id={formData[1].name}
+                            id={formData.desc.name}
                             label="توضیحات"
-                            form={formData[1]}
-                            setForm={setFormData}
+                            form={formData.desc}
+                            setForm={arraySetForm}
                             disabled={isSubmitting}
                             placeholder="توضیحات باید بین 3 تا 600 کاراکتر باشد."
                             required
                         />
                     </div>
+
                     <div className="bg-black p-2 rounded-lg">
                         <Input
-                            id={formData[2].name}
+                            id={formData.price.name}
                             label="قیمت فروش"
-                            form={formData[2]}
-                            setForm={setFormData}
+                            form={formData.price}
+                            setForm={arraySetForm}
                             disabled={isSubmitting}
                             placeholder={placeholderForRequired("قیمت فروش")}
                             required
                         />
                     </div>
+
                     <div className="bg-black p-2 rounded-lg flex justify-between gap-2 items-center">
                         <Input
-                            id={formData[3].name}
+                            id={formData.cost.name}
                             label="قیمت خرید"
-                            form={formData[3]}
-                            setForm={setFormData}
+                            form={formData.cost}
+                            setForm={arraySetForm}
                             disabled={isSubmitting}
                             placeholder={placeholderForRequired("قیمت خرید")}
                             required
                         />
                         <Input
-                            id={formData[4].name}
+                            id={formData.costCount.name}
                             label="تعداد خرید"
-                            form={formData[4]}
-                            setForm={setFormData}
+                            form={formData.costCount}
+                            setForm={arraySetForm}
                             disabled={isSubmitting}
                             placeholder={placeholderForRequired("تعداد خرید")}
                             required
                         />
                     </div>
+
                     <div className="bg-black p-2 rounded-lg flex justify-between gap-2 items-center">
                         <Input
-                            id={formData[5].name}
+                            id={formData.count.name}
                             label="تعداد انبار"
-                            form={formData[5]}
-                            setForm={setFormData}
+                            form={formData.count}
+                            setForm={arraySetForm}
                             disabled={isSubmitting}
                             placeholder={placeholderForRequired("تعداد انبار")}
                             required
                         />
                         <Input
-                            id={formData[6].name}
+                            id={formData.showCount.name}
                             label="تعداد نمایشی"
-                            form={formData[6]}
-                            setForm={setFormData}
+                            form={formData.showCount}
+                            setForm={arraySetForm}
                             disabled={isSubmitting}
                             placeholder={placeholderForRequired("تعداد نمایشی")}
                             required
                         />
                     </div>
+
                     <div className="bg-black p-2 rounded-lg flex justify-between gap-2 items-center">
                         <Input
-                            id={formData[7].name}
+                            id={formData.discount.name}
                             label="درصد تخفیف"
-                            form={formData[7]}
-                            setForm={setFormData}
+                            form={formData.discount}
+                            setForm={arraySetForm}
                             disabled={isSubmitting}
                         />
                         <Input
-                            id={formData[8].name}
+                            id={formData.date.name}
                             label="مدت تخفیف (روز)"
-                            form={formData[8]}
-                            setForm={setFormData}
+                            form={formData.date}
+                            setForm={arraySetForm}
                             disabled={isSubmitting}
                         />
                     </div>
+
                     <div className="bg-black p-2 rounded-lg">
                         <Input
-                            id={formData[9].name}
+                            id={formData.majorCat.name}
                             label="دسته‌بندی اصلی"
-                            form={formData[9]}
-                            setForm={setFormData}
+                            form={formData.majorCat}
+                            setForm={arraySetForm}
                             disabled={isSubmitting}
                             required
                             type='select'
@@ -496,36 +556,38 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
                             ]}
                         />
                     </div>
+
                     <div className="bg-black p-2 rounded-lg">
                         <Input
-                            id={formData[10].name}
+                            id={formData.minorCat.name}
                             label="دسته‌بندی فرعی"
-                            form={formData[10]}
-                            setForm={setFormData}
+                            form={formData.minorCat}
+                            setForm={arraySetForm}
                             disabled={isSubmitting}
                             required
                             type='select'
                             options={[
                                 { value: "", label: "--دسته‌بندی اصلی را انتخاب کنید--" },
-                                ...links.find(l => l.txt === formData[9].value)?.subLinks?.map((l: any) => ({
+                                ...links.find(l => l.txt === formData.majorCat.value)?.subLinks?.map((l: any) => ({
                                     value: l.link,
                                     label: l.link
                                 })) || []
                             ]}
                         />
                     </div>
+
                     <div className="bg-black p-2 rounded-lg">
                         <Input
-                            id={formData[11].name}
+                            id={formData.brand.name}
                             label="برند"
-                            form={formData[11]}
-                            setForm={setFormData}
+                            form={formData.brand}
+                            setForm={arraySetForm}
                             disabled={isSubmitting}
                             type='select'
                             options={[
                                 { value: "", label: "--دسته‌بندی فرعی را انتخاب کنید--" },
-                                ...links.find(l => l.txt === formData[9].value)
-                                    ?.subLinks.find(sl => sl.link === formData[10].value)
+                                ...links.find(l => l.txt === formData.majorCat.value)
+                                    ?.subLinks.find(sl => sl.link === formData.minorCat.value)
                                     ?.brand?.filter(brand => brand !== "همه")
                                     .map((brand: string) => ({
                                         value: brand,
@@ -534,50 +596,55 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
                             ]}
                         />
                     </div>
+
+                    <div className="bg-black p-2 rounded-lg">
+                        <Input
+                            id={formData.weight.name}
+                            label="وزن"
+                            form={formData.weight}
+                            setForm={arraySetForm}
+                            disabled={isSubmitting}
+                            placeholder={placeholderForRequired("وزن")}
+                            required
+                        />
+                    </div>
+
                 </div>
 
                 <div className="md:col-start-2 md:col-end-3 col-start-1 col-end-2 md:row-start-2 row-start-3 flex flex-col gap-2 md:mt-4 w-full pb-6 h-full">
+
                     <div className="bg-black p-2 rounded-lg">
                         <Input
-                            id={formData[12].name}
+                            id={formData.status.name}
                             label="وضعیت"
-                            form={formData[12]}
-                            setForm={setFormData}
+                            form={formData.status}
+                            setForm={arraySetForm}
                             disabled={isSubmitting}
                             required
                             type='select'
                             options={status}
                         />
                     </div>
+
                     <div className="bg-black p-2 rounded-lg">
                         <Input
-                            id={formData[13].name}
+                            id={formData.state.name}
                             label="وضعیت نمایش"
-                            form={formData[13]}
-                            setForm={setFormData}
+                            form={formData.state}
+                            setForm={arraySetForm}
                             disabled={isSubmitting}
                             required
                             type='select'
                             options={state}
                         />
                     </div>
+
                     <div className="bg-black p-2 rounded-lg">
                         <Input
-                            id={formData[14].name}
-                            label="وزن"
-                            form={formData[14]}
-                            setForm={setFormData}
-                            disabled={isSubmitting}
-                            placeholder={placeholderForRequired("وزن")}
-                            required
-                        />
-                    </div>
-                    <div className="bg-black p-2 rounded-lg">
-                        <Input
-                            id={formData[15].name}
+                            id={formData.authorId.name}
                             label="نویسنده (امکان افزودن نویسنده در پنل مدیریت)"
-                            form={formData[15]}
-                            setForm={setFormData}
+                            form={formData.authorId}
+                            setForm={arraySetForm}
                             disabled={isSubmitting}
                             type='select'
                             options={[
@@ -586,45 +653,81 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
                             ]}
                         />
                     </div>
+
                     <div className="bg-black p-2 rounded-lg">
                         <Input
-                            id={formData[16].name}
+                            id={formData.publisher.name}
                             label="ناشر"
-                            form={formData[16]}
-                            setForm={setFormData}
+                            form={formData.publisher}
+                            setForm={arraySetForm}
                             disabled={isSubmitting}
                         />
                     </div>
+
                     <div className="bg-black p-2 rounded-lg">
                         <Input
-                            id={formData[17].name}
+                            id={formData.publishDate.name}
                             label="تاریخ انتشار"
-                            form={formData[17]}
-                            setForm={setFormData}
+                            form={formData.publishDate}
+                            setForm={arraySetForm}
                             disabled={isSubmitting}
                         />
                     </div>
+
                     <div className="bg-black p-2 rounded-lg">
                         <Input
-                            id={formData[18].name}
+                            id={formData.size.name}
                             label="سایز"
-                            form={formData[18]}
-                            setForm={setFormData}
+                            form={formData.size}
+                            setForm={arraySetForm}
                             disabled={isSubmitting}
                         />
                     </div>
+
+                    <div className="bg-black p-2 rounded-lg flex justify-between gap-2 items-center w-fit h-fit">
+                        <Input
+                            id={formData.featureKey.name}
+                            label="عنوان ویژگی"
+                            form={formData.featureKey}
+                            setForm={arraySetForm}
+                            disabled={isSubmitting}
+                        />
+                        <Input
+                            type="features"
+                            id={formData.featureValue.name}
+                            label="مقدار ویژگی"
+                            form={formData.featureValue}
+                            setForm={arraySetForm}
+                            setFeatures={setFeatures}
+                            disabled={isSubmitting}
+                            titleForm={formData.featureKey}
+                        />
+                    </div>
+
+                    <div className="bg-black p-2 rounded-lg">
+                        <Input
+                            id={formData.faqTemplateIds.name}
+                            label="آیدی FAQ"
+                            form={formData.faqTemplateIds}
+                            setForm={arraySetForm}
+                            disabled={isSubmitting}
+                            placeholder="آیدی قالب سوالات متداول"
+                        />
+                    </div>
+
                     <div className="bg-black p-2 rounded-lg">
                         <Input
                             type="instagram-link"
-                            id={formData[19].name}
+                            id={formData.instagramLink.name}
                             label="لینک اینستاگرام"
-                            form={formData[19]}
-                            setForm={setFormData}
+                            form={formData.instagramLink}
+                            setForm={arraySetForm}
                             disabled={isSubmitting}
-                            descForm={formData[1]}
-                            titleForm={formData[0]}
+                            descForm={formData.desc}
+                            titleForm={formData.title}
                         />
                     </div>
+
                     <div className="p-2 rounded-lg flex justify-between gap-2 items-center">
                         <div className="md:col-span-2 col-span-1">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -636,9 +739,9 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
                                         type="article"
                                         placeholder="جستجوی مقاله..."
                                         onSelect={(link) => {
-                                            const value = `${formData[1].value}\n${link}`
+                                            const value = `${formData.desc.value}\n${link}`
 
-                                            handleChangeForm(setFormData, value, formData[1].name)
+                                            handleChangeForm(arraySetForm, value, formData.desc.name)
                                         }}
                                     />
                                 </div>
@@ -647,9 +750,9 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
                                         type="product"
                                         placeholder="جستجوی محصول..."
                                         onSelect={(link) => {
-                                            const value = `${formData[1].value}\n${link}`
+                                            const value = `${formData.desc.value}\n${link}`
 
-                                            handleChangeForm(setFormData, value, formData[1].name)
+                                            handleChangeForm(arraySetForm, value, formData.desc.name)
                                         }}
                                     />
                                 </div>
@@ -657,9 +760,28 @@ function CMSAddProduct({ links = [], authors = [] }: CMSAddProductProps) {
                         </div>
                     </div>
 
+                    {features.length > 0 && (
+                        <div className="space-y-2 mt-2">
+                            {features.map((feature, index) => (
+                                <div key={index} className="flex items-center gap-3 bg-gray-800 p-2 rounded">
+                                    <span className="text-blue-400 font-medium text-sm">{feature.key}:</span>
+                                    <span className="text-white text-sm">{feature.value}</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFeatures(prev => prev.filter((_, i) => i !== index))}
+                                        className="mr-auto text-red-400 hover:text-red-300 text-sm"
+                                        disabled={isSubmitting}
+                                    >
+                                        ❌ حذف
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
                     <div className="md:col-span-2 col-span-1">
                         <LinkPreview
-                            content={`${formData[1].value}` || ''}
+                            content={`${formData.desc.value}` || ''}
                             title="پیش‌نمایش لینک‌های توضیحات"
                         />
                     </div>

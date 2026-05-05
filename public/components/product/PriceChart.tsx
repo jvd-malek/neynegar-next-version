@@ -7,6 +7,9 @@ import React, { useRef, useEffect, useState } from 'react';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 
+// utils
+import { formatDateTime, formatMonthYear } from '@/public/utils/dateFormatter';
+
 interface PriceHistory {
     price: number;
     date: string;
@@ -54,18 +57,11 @@ const PriceChart: React.FC<PriceChartProps> = ({ priceHistory }) => {
     };
 
     const formatDate = (timestamp: number): string => {
-        return new Intl.DateTimeFormat('fa-IR', {
-            month: 'short',
-            day: 'numeric'
-        }).format(new Date(timestamp));
+        return formatMonthYear(timestamp);
     };
 
     const formatFullDate = (timestamp: number): string => {
-        return new Intl.DateTimeFormat('fa-IR', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        }).format(new Date(timestamp));
+        return formatDateTime(timestamp);
     };
 
     useEffect(() => {

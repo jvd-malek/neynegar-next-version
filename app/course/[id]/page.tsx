@@ -5,6 +5,7 @@ import { Metadata } from "next";
 
 // utils
 import ContentWithLinks from '@/public/utils/link/linkParser';
+import { formatPersianDate } from '@/public/utils/dateFormatter';
 
 // components
 import CourseProgressObserver from "@/public/components/course/CourseProgressObserver";
@@ -161,11 +162,7 @@ export default async function CoursePage({ params }: any) {
                         <span>محبوبیت: {course.popularity}</span>
                         {course.createdAt && <span>
                             {` تاریخ ایجاد: 
-                            ${new Intl.DateTimeFormat('fa-IR', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                            }).format(new Date(Number(course.createdAt)))}`}
+                            ${formatPersianDate(Number(course.createdAt))}`}
                         </span>}
                     </div>
                     {course.cover && (

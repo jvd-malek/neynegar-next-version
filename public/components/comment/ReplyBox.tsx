@@ -8,6 +8,9 @@ import { repliesType } from '@/public/types/replies';
 import AccountCircleTwoToneIcon from '@mui/icons-material/AccountCircleTwoTone';
 import Logo from '@/public/images/Logo.webp';
 
+// utils
+import { formatDateTime } from '@/public/utils/dateFormatter';
+
 const getReplyStatus = (status: string): string => {
     switch (status) {
         case "owner": return "مدیر";
@@ -39,13 +42,7 @@ function ReplyBox({ txt, userId, createdAt }: repliesType) {
                         {userId.name} <span className="font-bold">| {status}</span>
                     </p>
                     <p className="text-sm text-slate-500">
-                        {new Intl.DateTimeFormat('fa-IR', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        }).format(new Date(Number(createdAt)))}
+                        {formatDateTime(Number(createdAt))}
                     </p>
                 </div>
             </div>

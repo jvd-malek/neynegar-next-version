@@ -163,7 +163,7 @@ async function Product({ params, searchParams }: any) {
     const lastPrice = product?.currentPrice || 0
     const isDiscountValid = lastDiscount && lastDiscount.discount > 0 && lastDiscount.date > Date.now()
 
-
+    
     return (
         <>
             <Header />
@@ -232,13 +232,16 @@ async function Product({ params, searchParams }: any) {
 
                             <div className="flex justify-center items-center">
                                 {product?.images.length > 0 &&
-                                    <div className="flex justify-center gap-2 overflow-x-auto w-fit mt-8 bg-mist-100 shadow p-2 rounded-xl h-fit">
+                                    <div className="flex justify-start gap-2 overflow-x-auto scrollable-section max-w-[80vw] mt-6 bg-mist-100 shadow p-2 rounded-xl h-fit">
                                         {product && (
                                             <Link href={`?img=${product.cover}`} scroll={false} aria-label="تصویر اصلی محصول">
-                                                <img
-                                                    src={`https://api.neynegar1.ir/uploads/${product.cover}`}
+                                                <Image
+                                                    src={product.cover}
                                                     alt={product.title}
-                                                    className="w-20 h-22 bg-contain cursor-pointer rounded-lg transition-transform duration-300 hover:scale-110 active:scale-110"
+                                                    width={80}
+                                                    height={80}
+                                                    loader={customLoader}
+                                                    className="w-20 h-20 min-w-20 bg-contain cursor-pointer rounded-lg transition-opacity duration-300 hover:opacity-70"
                                                     loading='lazy'
                                                 />
                                             </Link>
@@ -251,10 +254,13 @@ async function Product({ params, searchParams }: any) {
                                                 aria-label="تصویر محصول"
                                                 className={i.length <= 0 ? "hidden" : ""}
                                             >
-                                                <img
-                                                    src={`https://api.neynegar1.ir/uploads/${i}`}
-                                                    alt={product?.title || "تصویر محصول"}
-                                                    className="w-20 h-22 bg-contain cursor-pointer rounded-lg transition-transform duration-300 hover:scale-110 active:scale-110"
+                                                <Image
+                                                    src={i}
+                                                    alt={i}
+                                                    width={80}
+                                                    height={80}
+                                                    loader={customLoader}
+                                                    className="w-20 h-20 min-w-20 bg-contain cursor-pointer rounded-lg transition-opacity duration-300 hover:opacity-70"
                                                     loading='lazy'
                                                 />
                                             </Link>

@@ -47,9 +47,13 @@ function CMSProductBox({ type, page, links, authors }: CMSProductBoxProps) {
     const handleSave = useCallback(async (productId: string, input: any) => {
         try {
             setIsSaving(true);
-            await fetcher(UPDATE_PRODUCT, { id: productId, input });
+            const res = await fetcher(UPDATE_PRODUCT, { id: productId, input });
             mutate();
-            notify("تغییرات ذخیره شد", "success");
+            if (res) {
+                notify("تغییرات ذخیره شد", "success");
+            } else {
+                notify("خطا در ذخیره‌سازی", "error");
+            }
         } catch (error) {
             console.error(error);
             notify("خطا در ذخیره‌سازی", "error");
@@ -213,7 +217,7 @@ function CMSProductBox({ type, page, links, authors }: CMSProductBoxProps) {
                     setSelectedProduct(null);
                 }}
             >
-                <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white border rounded-lg shadow-lg px-6 py-8 max-w-md mx-auto absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 font-[Vazir] w-[95vw] h-[80vh] overflow-y-scroll scroll-smooth scrollbar-hidden flex flex-col justify-between" dir="rtl">
+                <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white border rounded-lg shadow-lg px-6 py-8 max-w-md mx-auto absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 w-[95vw] h-[80vh] overflow-y-scroll scroll-smooth scrollbar-hidden flex flex-col justify-between" dir="rtl">
                     <div>
                         <h3 className="text-lg font-bold mb-4">ویرایش تصاویر محصول</h3>
                         <div className="mb-4">
@@ -297,7 +301,7 @@ function CMSProductBox({ type, page, links, authors }: CMSProductBoxProps) {
                     setSelectedProduct(null);
                 }}
             >
-                <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white border rounded-lg shadow-lg px-6 py-8 max-w-md mx-auto absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 font-[Vazir]">
+                <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white border rounded-lg shadow-lg px-6 py-8 max-w-md mx-auto absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2">
                     <h3 className="text-lg font-bold mb-4">حذف محصول</h3>
                     <p className="mb-6">
                         آیا از حذف محصول "{selectedProduct?.title}" اطمینان دارید؟

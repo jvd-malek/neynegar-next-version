@@ -6,6 +6,7 @@ import { useState } from 'react';
 import useSWR from 'swr';
 import { Modal } from '@mui/material';
 import { fetcher } from '@/public/utils/fetcher';
+import { formatDateTime } from '@/public/utils/dateFormatter';
 
 interface CMSTicketBoxProps {
     type: string;
@@ -189,13 +190,7 @@ function CMSTicketBox({ type, page }: CMSTicketBoxProps) {
                             <h2 className="md:text-lg text-shadow">{ticket.title}</h2>
                             <div className="flex items-center gap-2">
                                 <span className="text-xs text-gray-500">
-                                    {new Intl.DateTimeFormat('fa-IR', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                    }).format(new Date(Number(ticket.createdAt)))}
+                                    {formatDateTime(Number(ticket.createdAt))}
                                 </span>
                                 <select
                                     value={ticket.status}

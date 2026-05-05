@@ -3,6 +3,7 @@ import { getCookie } from 'cookies-next';
 
 // types
 import { UserBasket } from '@/public/types/user';
+import { formatDateTime } from '../dateFormatter';
 
 interface BasketForm {
     name: string;
@@ -29,13 +30,7 @@ export const generateReceiptText = (
     basketForm: BasketForm,
     isBeforePayment?: boolean
 ): string => {
-    const today = new Intl.DateTimeFormat('fa-IR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    }).format(new Date(Number()))
+    const today = formatDateTime(new Date(Number()))
 
 
     // Read applied discount (if any) from cookie to mirror UI calculations

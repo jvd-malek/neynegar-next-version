@@ -1,6 +1,5 @@
 // next and react
 import { Suspense } from 'react';
-import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
@@ -22,9 +21,7 @@ import CMSFreeOrders from '@/public/components/CMS/CMSFreeOrders';
 import CMSAnalytics from '@/public/components/CMS/CMSAnalytics';
 
 // types
-import { ticketType } from '@/public/types/ticket';
 import { linksType } from '@/public/types/links';
-import { orderType } from '@/public/types/order';
 import Header from '@/public/components/header/Header';
 import Footer from '@/public/components/footer/Footer';
 import CMSAddPackage from '@/public/components/CMS/CMSAddPackage';

@@ -26,12 +26,12 @@ ChartJS.register(
     Filler
 );
 
-interface SalesChartProps {
+interface ProfitChartProps {
     data: any;
     isLoading?: boolean;
 }
 
-export default function SalesChart({ data, isLoading }: SalesChartProps) {
+export default function ProfitChart({ data, isLoading }: ProfitChartProps) {
     if (isLoading) {
         return (
             <div className="bg-white rounded-xl shadow p-6 animate-pulse">
@@ -44,57 +44,68 @@ export default function SalesChart({ data, isLoading }: SalesChartProps) {
     if (!data?.monthlyData) return null;
 
     const months = data.monthlyData.map((m: any) => m.month);
-    const paidRevenue = data.monthlyData.map((m: any) => m.paidOrderRevenue);
-    const freeRevenue = data.monthlyData.map((m: any) => m.freeOrderRevenue);
-    const paidOrders = data.monthlyData.map((m: any) => m.paidOrders);
-    const freeOrders = data.monthlyData.map((m: any) => m.freeOrders);
+    const netProfit = data.monthlyData.map((m: any) => m.netProfit);
+    const totalProfit = data.monthlyData.map((m: any) => m.totalProfit);
+    const profitMargin = data.monthlyData.map((m: any) => m.profitMargin);
+    const netProfitMargin = data.monthlyData.map((m: any) => m.netProfitMargin);
+    const shippingCost = data.monthlyData.map((m: any) => m.totalShippingCost);
 
     const chartData = {
         labels: months,
         datasets: [
             {
-                label: 'درآمد پرداختی',
-                data: paidRevenue,
-                backgroundColor: 'rgba(34, 197, 94, 0.7)',
-                borderColor: 'rgb(34, 197, 94)',
+                label: 'سود ناخالص',
+                data: totalProfit,
+                backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                borderColor: 'rgb(16, 185, 129)',
                 borderWidth: 1,
                 borderRadius: 4,
                 yAxisID: 'y',
                 order: 2,
             },
             {
-                label: 'درآمد آزاد',
-                data: freeRevenue,
-                backgroundColor: 'rgba(249, 115, 22, 0.7)',
-                borderColor: 'rgb(249, 115, 22)',
+                label: 'سود خالص',
+                data: netProfit,
+                backgroundColor: 'rgba(20, 184, 166, 0.6)',
+                borderColor: 'rgb(20, 184, 166)',
                 borderWidth: 1,
                 borderRadius: 4,
                 yAxisID: 'y',
                 order: 2,
             },
             {
-                label: 'تعداد سفارش پرداختی',
-                data: paidOrders,
+                label: 'هزینه ارسال',
+                data: shippingCost,
+                backgroundColor: 'rgba(251, 146, 60, 0.6)',
+                borderColor: 'rgb(251, 146, 60)',
+                borderWidth: 1,
+                borderRadius: 4,
+                yAxisID: 'y',
+                order: 2,
+            },
+            {
+                label: 'حاشیه سود ناخالص',
+                data: profitMargin,
                 type: 'line' as const,
-                borderColor: 'rgb(59, 130, 246)',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderColor: 'rgb(99, 102, 241)',
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',
                 borderWidth: 2,
-                pointRadius: 4,
-                pointHoverRadius: 6,
+                pointRadius: 5,
+                pointHoverRadius: 7,
                 tension: 0.3,
                 fill: true,
                 yAxisID: 'y1',
                 order: 1,
             },
             {
-                label: 'تعداد سفارش آزاد',
-                data: freeOrders,
+                label: 'حاشیه سود خالص',
+                data: netProfitMargin,
                 type: 'line' as const,
-                borderColor: 'rgb(236, 72, 153)',
-                backgroundColor: 'rgba(236, 72, 153, 0.1)',
+                borderColor: 'rgb(139, 92, 246)',
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
                 borderWidth: 2,
-                pointRadius: 4,
-                pointHoverRadius: 6,
+                pointRadius: 5,
+                pointHoverRadius: 7,
                 tension: 0.3,
                 fill: true,
                 yAxisID: 'y1',
@@ -117,10 +128,10 @@ export default function SalesChart({ data, isLoading }: SalesChartProps) {
                 labels: {
                     font: {
                         family: 'IRANSans, Vazirmatn, sans-serif',
-                        size: 12,
+                        size: 11,
                     },
                     usePointStyle: true,
-                    padding: 15,
+                    padding: 12,
                 },
             },
             tooltip: {
@@ -135,7 +146,7 @@ export default function SalesChart({ data, isLoading }: SalesChartProps) {
                         if (context.dataset.yAxisID === 'y') {
                             label += (context.parsed.y / 1000000).toFixed(1) + ' میلیون تومان';
                         } else {
-                            label += context.parsed.y.toLocaleString('fa-IR') + ' سفارش';
+                            label += context.parsed.y.toFixed(1) + '%';
                         }
                         return label;
                     },
@@ -149,7 +160,7 @@ export default function SalesChart({ data, isLoading }: SalesChartProps) {
                 position: 'right' as const,
                 title: {
                     display: true,
-                    text: 'درآمد (تومان)',
+                    text: 'مبلغ (تومان)',
                     font: {
                         family: 'IRANSans, Vazirmatn, sans-serif',
                     },
@@ -167,13 +178,15 @@ export default function SalesChart({ data, isLoading }: SalesChartProps) {
                 position: 'left' as const,
                 title: {
                     display: true,
-                    text: 'تعداد سفارش',
+                    text: 'درصد (%)',
                     font: {
                         family: 'IRANSans, Vazirmatn, sans-serif',
                     },
                 },
+                min: 0,
+                max: 100,
                 ticks: {
-                    stepSize: 1,
+                    callback: (value: any) => value + '%',
                 },
                 grid: {
                     drawOnChartArea: false,
@@ -190,7 +203,7 @@ export default function SalesChart({ data, isLoading }: SalesChartProps) {
     return (
         <div className="bg-white rounded-xl shadow p-6">
             <h3 className="text-lg font-bold text-gray-800 mb-4">
-                روند درآمد و سفارشات
+                تحلیل سود و هزینه‌ها
             </h3>
             <div className="h-72">
                 <Chart type='bar' data={chartData} options={options} />

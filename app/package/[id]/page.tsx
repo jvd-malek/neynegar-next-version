@@ -225,13 +225,16 @@ async function Package({ params, searchParams }: any) {
 
                             <div className="flex justify-center items-center">
                                 {Package?.products.length > 0 &&
-                                    <div className="flex justify-center gap-2 overflow-x-auto w-fit mt-6 bg-mist-100 shadow p-2 rounded-xl h-fit">
+                                    <div className="flex justify-start gap-2 overflow-x-auto scrollable-section max-w-[80vw] mt-6 bg-mist-100 shadow p-2 rounded-xl h-fit">
                                         {Package && (
                                             <Link href={`?img=${Package.cover}`} scroll={false} aria-label="تصویر اصلی محصول">
-                                                <img
-                                                    src={`https://api.neynegar1.ir/uploads/${Package.cover}`}
+                                                <Image
+                                                    src={Package.cover}
                                                     alt={Package.title}
-                                                    className="w-20 h-22 bg-contain cursor-pointer rounded-lg transition-transform duration-300 hover:scale-110 active:scale-110"
+                                                    width={80}
+                                                    height={80}
+                                                    loader={customLoader}
+                                                    className="w-20 h-20 min-w-20 bg-contain cursor-pointer rounded-lg transition-opacity duration-300 hover:opacity-70"
                                                     loading='lazy'
                                                 />
                                             </Link>
@@ -243,10 +246,13 @@ async function Package({ params, searchParams }: any) {
                                                 key={item.product._id}
                                                 aria-label={`تصویر محصول ${item.product.title}`}
                                             >
-                                                <img
-                                                    src={`https://api.neynegar1.ir/uploads/${item.product.cover}`}
+                                                <Image
+                                                    src={item.product.cover}
                                                     alt={item.product.title}
-                                                    className="w-20 h-22 bg-contain cursor-pointer rounded-lg transition-transform duration-300 hover:scale-110 active:scale-110"
+                                                    width={80}
+                                                    height={80}
+                                                    loader={customLoader}
+                                                    className="w-20 h-20 min-w-20 bg-contain cursor-pointer rounded-lg transition-opacity duration-300 hover:opacity-70"
                                                     loading='lazy'
                                                 />
                                             </Link>

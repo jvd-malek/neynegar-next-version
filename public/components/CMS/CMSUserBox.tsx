@@ -8,6 +8,7 @@ import useSWR from 'swr';
 import { userType } from '@/public/types/user';
 import { Modal } from '@mui/material';
 import { fetcher } from '@/public/utils/fetcher';
+import { formatPersianDate } from '@/public/utils/dateFormatter';
 
 interface CMSUserBoxProps {
     type: string;
@@ -779,11 +780,7 @@ function CMSUserBox({ type, page }: CMSUserBoxProps) {
                                                         <td className="px-3 py-1.5">{discount.code}</td>
                                                         <td className="px-3 py-1.5">{discount.discount}%</td>
                                                         <td className="px-3 py-1.5">
-                                                            {new Intl.DateTimeFormat('fa-IR', {
-                                                                year: 'numeric',
-                                                                month: 'long',
-                                                                day: 'numeric'
-                                                            }).format(new Date(Number(discount.date)))}
+                                                            {formatPersianDate(Number(discount.date))}
                                                         </td>
                                                         <td className="px-3 py-1.5">
                                                             <button

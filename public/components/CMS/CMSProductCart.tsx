@@ -9,6 +9,9 @@ import { handleFormValidator, Input, placeholderForRequired } from "@/public/com
 import { state, status } from "@/public/utils/cms/variables";
 import { notify } from "@/public/utils/notify";
 
+// mui components
+import Modal from '@mui/material/Modal';
+
 // types
 import { formType } from "@/public/types/input";
 import { linksType } from "@/public/types/links";
@@ -25,13 +28,15 @@ interface CMSProductCartProps {
 
 const CMSProductCart: React.FunctionComponent<CMSProductCartProps> = memo(({ product, links, authors, onSave, onDelete, onImageClick }) => {
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [features, setFeatures] = useState(product.features ?? []);
+    const [featuresModalOpen, setFeaturesModalOpen] = useState("");
     const Authors = authors.map(author => (
         {
             label: author.fullName || author.lastname,
             value: author._id
         }
     ))
-
+    
     // حالت‌های فرم
     const [formData, setFormData] = useState<Record<string, formType>>(() => {
         const lastPrice = product.price[product.price.length - 1].price;
@@ -212,6 +217,30 @@ const CMSProductCart: React.FunctionComponent<CMSProductCartProps> = memo(({ pro
                 error: false,
                 errorMessage: ""
             },
+            featureKey: {
+                name: "featureKey",
+                type: "text",
+                value: "",
+                validateRule: null,
+                error: false,
+                errorMessage: ""
+            },
+            featureValue: {
+                name: "featureValue",
+                type: "text",
+                value: "",
+                validateRule: null,
+                error: false,
+                errorMessage: ""
+            },
+            faqTemplateIds: {
+                name: "faqTemplateIds",
+                type: "text",
+                value: "",
+                validateRule: null,
+                error: false,
+                errorMessage: ""
+            },
             instagramLink: {
                 name: "instagramLink",
                 type: "text",
@@ -301,6 +330,18 @@ const CMSProductCart: React.FunctionComponent<CMSProductCartProps> = memo(({ pro
             images: product.images,
         };
 
+        // Feature change detection
+        const newFeatures = features;
+        if (newFeatures.length > 0) {
+            input.features = newFeatures
+        }
+
+        // FAQ change detection
+        const newFaq = getValue("faqTemplateIds") ? [`${getValue("faqTemplateIds")}`] : []
+        if (newFaq.length > 0) {
+            input.faqTemplateIds = newFaq
+        }
+
         // Author change detection
         const currentAuthorId = product.authorId?._id ?? '';
         const newAuthorId = getValue("authorId");
@@ -335,6 +376,7 @@ const CMSProductCart: React.FunctionComponent<CMSProductCartProps> = memo(({ pro
         if (newDiscount !== currentDiscount || newDuration !== currentDuration) {
             input.discount = { discount: newDiscount, date: newDuration };
         }
+
         await onSave(product._id, input);
         setIsSubmitting(false)
     }, [formData, product, onSave]);
@@ -670,6 +712,39 @@ const CMSProductCart: React.FunctionComponent<CMSProductCartProps> = memo(({ pro
                         />
                     </div>
 
+                    <div className="bg-black p-2 rounded-lg w-fit h-fit">
+                        <Input
+                            box
+                            id={`faqTemplateIds-${product._id}`}
+                            label="لینک FAQ"
+                            form={formData.faqTemplateIds}
+                            setForm={arraySetForm}
+                            disabled={isSubmitting}
+                        />
+                    </div>
+
+                    <div className="bg-black p-2 rounded-lg flex justify-between gap-2 items-center w-fit h-fit">
+                        <Input
+                            box
+                            id={`feature-key-${product._id}`}
+                            label="عنوان ویژگی"
+                            form={formData.featureKey}
+                            setForm={arraySetForm}
+                            disabled={isSubmitting}
+                        />
+                        <Input
+                            box
+                            type="features"
+                            id={`feature-value-${product._id}`}
+                            label="مقدار ویژگی"
+                            form={formData.featureValue}
+                            setForm={arraySetForm}
+                            setFeatures={setFeatures}
+                            disabled={isSubmitting}
+                            titleForm={formData.featureKey}
+                        />
+                    </div>
+
                     <div className="bg-black p-2 rounded-lg flex justify-between gap-2 items-center w-fit h-fit">
                         <Input
                             box
@@ -728,8 +803,47 @@ const CMSProductCart: React.FunctionComponent<CMSProductCartProps> = memo(({ pro
                         />
                     </div>
 
+                    <button
+                        className="px-2 py-1 rounded text-sm text-white bg-cyan-500 hover:bg-cyan-600"
+                        onClick={() => setFeaturesModalOpen(product._id)}
+                    >
+                        لیست ویژگی‌ها
+                    </button>
                 </div>
             </div>
+
+            {/* Image Edit Modal */}
+            <Modal
+                open={featuresModalOpen == product._id}
+                onClose={() => {
+                    setFeaturesModalOpen("");
+                }}
+            >
+                <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white border rounded-lg shadow-lg px-6 py-8 max-w-md mx-auto absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 w-[95vw] h-[80vh] overflow-y-scroll scroll-smooth scrollbar-hidden flex flex-col justify-between" dir="rtl">
+                    <div>
+                        <h3 className="text-lg font-bold mb-4">لیست ویژگی‌های محصول</h3>
+                        {features.length > 0 ?
+                            <div className="space-y-2 mt-2">
+                                {features.map((feature, index) => (
+                                    <div key={index} className="flex items-center gap-3 bg-gray-800 p-2 rounded">
+                                        <span className="text-blue-400 font-medium text-sm">{feature.key}:</span>
+                                        <span className="text-white text-sm">{feature.value}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setFeatures(prev => prev.filter((_, i) => i !== index))}
+                                            className="mr-auto text-red-400 hover:text-red-300 text-sm"
+                                            disabled={isSubmitting}
+                                        >
+                                            ❌ حذف
+                                        </button>
+                                    </div>
+                                ))}
+                            </div> :
+                            <p className="bg-gray-800 p-2 rounded text-blue-400 font-medium text-sm">هنوز ویژگی اضافه نکرده‌اید.</p>
+                        }
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 })

@@ -171,6 +171,15 @@ export const GET_PRODUCTS = `
         productArticleId {
           _id
         }
+        features {
+          key
+          value
+        }
+        faqs {
+          question
+          answer
+        }
+        faqTemplateIds
         publisher
         publishDate
         brand
@@ -353,6 +362,7 @@ export const GET_PRODUCT_BY_ID = `
         question
         answer
       }
+      faqTemplateIds
       publisher
       publishDate
       brand

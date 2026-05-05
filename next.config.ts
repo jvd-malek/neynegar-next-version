@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   images: {
-    remotePatterns:[
+    remotePatterns: [
       {
         protocol: 'https',
         hostname: 'api.neynegar1.ir',
@@ -11,7 +11,10 @@ const nextConfig: NextConfig = {
         pathname: '/**'
       }
     ]
-  }
+  },
+  experimental: {
+    optimizePackageImports: ['chart.js', 'react-chartjs-2'],
+  },
 };
 
 export default nextConfig;

@@ -13,6 +13,7 @@ import { fetcher } from '@/public/utils/fetcher';
 import { notify } from '@/public/utils/notify';
 import ReceiptCopyButton from '@/public/utils/receipt/ReceiptCopyButton';
 import { generateReceiptText } from '@/public/utils/receipt/generateReceiptText';
+import { formatDateTime } from '@/public/utils/dateFormatter';
 
 // icons
 import ReceiptRoundedIcon from '@mui/icons-material/ReceiptRounded';
@@ -127,14 +128,7 @@ function OrderListBox({ orders, user, demo = false }: OrderListBoxProps) {
                         <div className='sm:border-none border-b border-mist-300 w-full sm:pb-0 pb-4'>
                             <h2 className="md:text-lg text-shadow">سفارش {order._id}</h2>
                             <p className="text-sm text-gray-600">
-                                {`تاریخ: ${order.createdAt ?
-                                    new Intl.DateTimeFormat('fa-IR', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                    }).format(new Date(Number(order.createdAt)))
+                                {`تاریخ: ${order.createdAt ? formatDateTime(Number(order.createdAt))
                                     : 'نامشخص'}
                                     `}
                             </p>
@@ -253,13 +247,7 @@ function OrderListBox({ orders, user, demo = false }: OrderListBoxProps) {
                         <div className="flex justify-between mb-4">
                             <div className="text-gray-700 leading-7">
                                 <div>
-                                    {`تاریخ: ${new Intl.DateTimeFormat('fa-IR', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                    }).format(new Date(Number(selectedOrder?.createdAt)))}`}
+                                    {`تاریخ: ${formatDateTime(Number(selectedOrder?.createdAt))}`}
                                 </div>
                                 <div>{`سفارش: ${selectedOrder?._id}`}</div>
                                 {selectedOrder?.paymentId &&

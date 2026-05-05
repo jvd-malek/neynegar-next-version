@@ -7,6 +7,9 @@ import "./globals.css";
 // fonts
 import { Mahoor } from "./fonts";
 
+// mui config
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
+
 // components
 import { Bounce, ToastContainer } from 'react-toastify';
 // import MaintenanceMode from "@/public/components/home/MaintenanceMode";
@@ -96,7 +99,9 @@ export default function RootLayout({
             borderRadius: '8px'
           }}
         />
-        {children}
+        <AppRouterCacheProvider options={{ enableCssLayer: true }}>
+          {children}
+        </AppRouterCacheProvider>
         {/* <MaintenanceMode /> */}
       </body>
     </html>

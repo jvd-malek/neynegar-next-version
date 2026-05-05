@@ -33,6 +33,7 @@ const RelatedLinks = dynamic(() => import('@/public/components/article/RelatedLi
 // utils
 import { fetcher, noCaching, revalidateOneHourByTags } from '@/public/utils/fetcher';
 import { BLUR_IMAGE, customLoader } from '@/public/utils/product/ProductBoxUtils';
+import { formatPersianDate } from '@/public/utils/dateFormatter';
 
 const ContentWithLinks = dynamic(() => import('@/public/utils/link/linkParser'), {
     loading: () => (
@@ -186,11 +187,7 @@ async function Article({ params, searchParams }: any) {
                                 <div className="flex items-center gap-2">
                                     <CalendarMonthRoundedIcon />
                                     <span className="pt-1">
-                                        {new Intl.DateTimeFormat('fa-IR', {
-                                            year: 'numeric',
-                                            month: 'long',
-                                            day: 'numeric'
-                                        }).format(new Date(Number(article?.createdAt)))}
+                                        {formatPersianDate(Number(article?.createdAt))}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">

@@ -1,9 +1,13 @@
 'use client';
 
+// react and next
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
+
+// utils
+import { formatDateTime } from '@/public/utils/dateFormatter';
 import { fetcher } from '@/public/utils/fetcher';
 import useSWR from 'swr';
-import Image from 'next/image';
 
 interface Product {
     _id: string;
@@ -549,13 +553,7 @@ function CMSFreeOrders() {
                                         <div className="font-medium">مشتری: {order.userId.name}</div>
                                         <div className="text-sm text-gray-600">تلفن: {order.userId.phone}</div>
                                         <div className="text-sm text-gray-600">
-                                            {`تاریخ: ${new Intl.DateTimeFormat('fa-IR', {
-                                                year: 'numeric',
-                                                month: 'long',
-                                                day: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit'
-                                            }).format(new Date(Number(order.createdAt)))}`}
+                                            {`تاریخ: ${formatDateTime(Number(order.createdAt))}`}
                                         </div>
                                     </div>
                                     <div className="text-left">
